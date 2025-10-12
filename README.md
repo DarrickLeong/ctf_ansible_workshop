@@ -2,46 +2,45 @@
 
 This repository contains a comprehensive CTF (Capture the Flag) infrastructure management system with centralized deployment capabilities.
 
-## 📁 Repository Structure
+## 📁 Clean Repository Structure
 
 ```
 ctf-ansible-workshop/
-├── ctf-app/                           # CTF Tracker Web Application
-│   ├── app.py                         # Main Flask application
-│   ├── requirements.txt               # Python dependencies
-│   ├── Dockerfile                     # Container image definition
-│   ├── config.template                # Configuration template
-│   ├── deploy-interactive.sh          # Interactive deployment script
-│   └── sanitize-for-github.sh         # Security sanitization script
+├── ctf-app/                    # 🎯 CTF Tracker Web Application
+│   ├── app.py                  # Main Flask application
+│   ├── requirements.txt        # Python dependencies
+│   ├── Dockerfile              # Container definition
+│   ├── deploy-interactive.sh   # OpenShift deployment
+│   ├── config.template         # Environment variables
+│   └── README.md               # App setup guide
 │
-├── central-controller/                # Central Ansible Platform Controller
-│   ├── deploy-to-sub-controllers.yml  # Main deployment playbook
-│   ├── test-sub-controllers.yml       # Connectivity test playbook
-│   ├── central-aap-inventory.ini      # Inventory template
-│   ├── central-controller-job-templates.yml  # Job template configs
-│   ├── host_vars/                     # Host-specific variables
+├── central-controller/         # 🎛️ Central AAP Controller
+│   ├── test-sub-controllers.yml          # ⚡ RUN FIRST - Connectivity test
+│   ├── deploy-to-sub-controllers.yml     # 🚀 RUN SECOND - Deploy playbooks
+│   ├── central-aap-inventory.ini         # Sub controller inventory
+│   ├── host_vars/                        # Individual controller configs
 │   │   ├── sub-controller-east.yml
 │   │   └── sub-controller-west.yml
-│   └── group_vars/all/
-│       └── vault.yml                  # Encrypted credentials
+│   ├── group_vars/all/vault.yml          # Encrypted passwords
+│   └── README.md                         # Central controller guide
 │
-├── sub-controllers/                   # Playbooks for Sub Controllers
-│   ├── comprehensive-ctf-playbook.yml # Challenge verification playbook
-│   └── connectivity-test-playbook.yml # System health check playbook
+├── sub-controllers/            # 🎯 Playbooks for Sub Controllers
+│   ├── comprehensive-ctf-playbook.yml    # Challenge verification
+│   ├── connectivity-test-playbook.yml    # System health checks
+│   └── README.md                         # Playbook guide
 │
-├── openshift/                         # OpenShift Deployment
+├── openshift/                  # 🐳 Container Deployment
 │   ├── openshift-deployment.template.yaml
-│   └── openshift-configs.template.yaml
+│   ├── openshift-configs.template.yaml
+│   └── README.md               # Template guide
 │
-├── docs/                              # Documentation
-│   ├── README.md                      # This file
-│   ├── CENTRAL_AAP_SETUP_GUIDE.md     # Central controller setup
-│   ├── ENHANCED_CTF_GUIDE.md          # Detailed CTF guide
-│   ├── AAP_SETUP_GUIDE.md             # AAP setup instructions
-│   └── COMMIT_CHECKLIST.md            # Development checklist
+├── docs/                       # 📚 Additional Documentation
+│   ├── AAP_SETUP_GUIDE.md      # Detailed AAP configuration
+│   ├── ENHANCED_CTF_GUIDE.md   # Extended feature guide
+│   └── COMMIT_CHECKLIST.md     # Development checklist
 │
-├── LICENSE                            # Apache License 2.0
-└── README.md                          # Main documentation
+├── README.md                   # This file - main guide
+└── LICENSE                     # Apache License 2.0
 ```
 
 ## 🏗️ System Architecture
@@ -114,169 +113,100 @@ ctf-ansible-workshop/
   - Network policies and security
   - Service discovery and load balancing
 
-## 📋 Quick Start Guide
+## 🚀 Quick Start - Essential Steps
 
-### **Phase 1: Deploy CTF Tracker Application** 🎯
-
+### **Step 1: Deploy CTF Tracker** 🎯
 ```bash
-# 1. Navigate to CTF app directory
 cd ctf-app/
-
-# 2. Login to OpenShift
-oc login <your-openshift-cluster-url>
-
-# 3. Run interactive deployment
+oc login <your-openshift-url>
 ./deploy-interactive.sh
-
-# The script will prompt for:
-# - OpenShift cluster domain
-# - Project name
-# - Storage configuration
-# - Application security settings
-# - CTF Tracker URL (save this for later steps)
+# Save the CTF Tracker URL for later steps
 ```
 
-**Expected Result**: CTF Tracker web application running on OpenShift
-
-### **Phase 2: Configure Central Controller** 🎛️
-
+### **Step 2: Configure Central Controller** 🎛️
 ```bash
-# 1. Navigate to central controller directory
 cd central-controller/
 
-# 2. Configure your sub controllers inventory
-cp central-aap-inventory.ini my-inventory.ini
-vim my-inventory.ini
-# Edit with your actual sub controller hostnames
+# Edit inventory with your sub controllers
+vim central-aap-inventory.ini
 
-# 3. Configure host variables for each sub controller
+# Configure credentials for each sub controller
 vim host_vars/sub-controller-east.yml
-# Set: sub_controller_host, username, organization
-
 vim host_vars/sub-controller-west.yml
-# Set: sub_controller_host, username, organization
 
-# 4. Set up encrypted passwords
+# Set up encrypted passwords
 vim group_vars/all/vault.yml
-# Add your actual sub controller passwords
-
-# 5. Encrypt the vault file
 ansible-vault encrypt group_vars/all/vault.yml
-# Enter a vault password (remember this!)
 ```
 
-### **Phase 3: Set Up Central AAP Controller** 🏗️
-
-**In Central AAP Controller Web Interface:**
-
-1. **Create Project**:
-   - Name: `CTF Sub Controller Management`
-   - SCM Type: `Git`
-   - SCM URL: `https://github.com/your-org/ctf-ansible-workshop.git`
-   - SCM Branch: `main`
-   - Update on Launch: ✅
-
-2. **Create Inventory**:
-   - Name: `CTF Sub Controllers Inventory`
-   - Import from: Upload `my-inventory.ini`
-   - Configure host variables from `host_vars/` files
-
-3. **Create Vault Credential**:
-   - Name: `CTF Sub Controllers Vault`
-   - Type: `Vault`
-   - Vault Password: (from step 2.5 above)
-
+### **Step 3: Set Up Central AAP Controller** 🏗️
+1. **Create Project**: "CTF Sub Controller Management" (Git SCM)
+2. **Create Inventory**: "CTF Sub Controllers Inventory" 
+3. **Create Vault Credential**: For encrypted passwords
 4. **Create Job Templates**:
+   - `Test Sub Controller Connectivity` 
+   - `Deploy CTF Playbooks to Sub Controllers`
 
-   **Template 1: Test Connectivity** ⚡
-   - Name: `Test Sub Controller Connectivity`
-   - Job Type: `Run`
-   - Inventory: `CTF Sub Controllers Inventory`
-   - Project: `CTF Sub Controller Management`
-   - Playbook: `central-controller/test-sub-controllers.yml`
-   - Credentials: `CTF Sub Controllers Vault`
+### **Step 4: Execute (CRITICAL ORDER)** ⚡
+```bash
+# FIRST: Test connectivity - MUST PASS before deployment
+Run: "Test Sub Controller Connectivity"
+# ✅ Verify all controllers show PASS
 
-   **Template 2: Deploy Playbooks** 🚀
-   - Name: `Deploy CTF Playbooks to Sub Controllers`
-   - Job Type: `Run`
-   - Inventory: `CTF Sub Controllers Inventory`
-   - Project: `CTF Sub Controller Management`
-   - Playbook: `central-controller/deploy-to-sub-controllers.yml`
-   - Credentials: `CTF Sub Controllers Vault`
-   - Prompt on launch: `Variables` ✅
-   - Survey: Enable with these questions:
-     - Repository URL: `https://github.com/your-org/ctf-ansible-workshop.git`
-     - Branch: `main`
-     - CTF Tracker URL: (from Phase 1)
-
-### **Phase 4: Execute Deployment** 🚀
-
-**CRITICAL: Launch in this exact order!**
-
-1. **First: Test Connectivity** ⚡
-   ```
-   Run Job Template: "Test Sub Controller Connectivity"
-   ```
-   - **Must show**: All sub controllers `PASS` status
-   - **If failures**: Fix authentication/network issues before proceeding
-
-2. **Second: Deploy CTF Playbooks** 🎯
-   ```
-   Run Job Template: "Deploy CTF Playbooks to Sub Controllers"
-   ```
-   - **Survey inputs**:
-     - Repository URL: `https://github.com/your-org/ctf-ansible-workshop.git`
-     - Branch: `main`
-     - CTF Tracker URL: `https://ctf-tracker-project.apps.your-cluster.com`
-     - Project Name: `CTF Challenge Playbooks`
-
-### **Phase 5: Verification** ✅
-
-**Check each sub controller has**:
-- ✅ Project: "CTF Challenge Playbooks"
-- ✅ Job Template: "CTF Challenge Verification"
-- ✅ Job Template: "CTF Connectivity Test"
-- ✅ Playbooks synced from Git
-
-**Test the complete flow**:
-1. In CTF Tracker web interface: "Onboard AAP Cluster"
-2. Add a sub controller with its details
-3. Add RHEL machines from the sub controller's inventory
-4. Run "Check All Machines (AAP)" to test CTF challenges
-
-## 🎯 Execution Order Summary
-
-```
-Phase 1: Deploy CTF App → OpenShift
-Phase 2: Configure Files → Local setup
-Phase 3: Setup AAP → Create templates
-Phase 4: Execute → Test FIRST, then Deploy
-Phase 5: Verify → Check sub controllers
+# SECOND: Deploy playbooks  
+Run: "Deploy CTF Playbooks to Sub Controllers"
+# ✅ Verify deployment success on all controllers
 ```
 
-**🔥 Critical Success Path:**
-1. **Test connectivity** → Must pass before deployment
-2. **Deploy playbooks** → Creates infrastructure on sub controllers  
-3. **Verify setup** → Confirm job templates created
-4. **Test end-to-end** → Run actual CTF challenges
+### **Step 5: Start Your CTF** 🎮
+1. Open CTF Tracker web interface
+2. Onboard your sub controllers 
+3. Add RHEL machines
+4. Run challenges and monitor scores
 
-## 🔧 Configuration
+## 🎯 Success Path Summary
+```
+Deploy App → Configure Files → Setup AAP → Test → Deploy → CTF Ready
+```
 
-### **Environment-Specific Settings**
-- **Central Controller**: Configure in `central-controller/host_vars/`
-- **Sub Controllers**: Managed via central deployment
-- **CTF Application**: Configure via `ctf-app/config.template`
+## 📋 What We Cleaned Up
 
-### **Security**
-- **Vault Encryption**: All sensitive data in `group_vars/all/vault.yml`
-- **Network Policies**: OpenShift network security
-- **RBAC**: Role-based access control in AAP
+### **✅ Removed Unnecessary Files**
+- ❌ `central-controller/central-controller-job-templates.yml` - Redundant config (info moved to README)
+- ❌ `central-controller/inventories/` - Empty directory
+- ❌ `docs/CENTRAL_AAP_SETUP_GUIDE.md` - Duplicate (info in central-controller README)
+- ❌ `docs/README.md` - Redundant index file
+
+### **✅ Simplified Documentation**
+- 📄 **Main README** - Focus on essential 5-step process
+- 📄 **Component READMEs** - Streamlined with only essential information
+- 📄 **Clear execution order** - ⚡ Test FIRST, 🚀 Deploy SECOND
+
+### **✅ Clean File Structure**
+- **12 executable files** - Only what you need to run
+- **5 README files** - One per component + main guide
+- **3 docs files** - Extended guides and checklists
+- **Zero redundancy** - No duplicate information
+
+## 🎯 Final Summary
+
+**You now have a clean, organized CTF infrastructure with:**
+
+✅ **Clear execution path**: 5 simple steps to get running  
+✅ **Component separation**: Each folder has a specific purpose  
+✅ **Simplified documentation**: Essential information only  
+✅ **No confusion**: 2 playbooks to run in clear order  
+✅ **Easy maintenance**: Everything in its logical place  
+
+**Total files reduced from complex structure to essential components only!**
 
 ## 📖 Documentation
 
-- **[Central AAP Setup Guide](docs/CENTRAL_AAP_SETUP_GUIDE.md)**: Complete setup instructions
-- **[Enhanced CTF Guide](docs/ENHANCED_CTF_GUIDE.md)**: Detailed feature documentation
-- **[AAP Setup Guide](docs/AAP_SETUP_GUIDE.md)**: Ansible Platform configuration
+For detailed setup instructions, see component-specific guides:
+- **[Central Controller Setup](central-controller/README.md)**: Complete AAP controller configuration
+- **[CTF Application Setup](ctf-app/README.md)**: OpenShift deployment guide  
+- **[Sub Controller Playbooks](sub-controllers/README.md)**: Challenge and connectivity playbooks
+- **[OpenShift Templates](openshift/README.md)**: Container deployment templates
 
 ## 🤝 Contributing
 

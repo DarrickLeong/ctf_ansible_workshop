@@ -1,26 +1,52 @@
 # OpenShift Deployment Templates
 
-This folder contains OpenShift/Kubernetes deployment templates for the CTF Tracker application.
+Container deployment templates for the CTF Tracker application.
 
-## 📁 Contents
+## 📁 Templates
 
 - **`openshift-deployment.template.yaml`** - Main application deployment template
 - **`openshift-configs.template.yaml`** - ConfigMaps and Secrets template
 
-## 🚀 Deployment
+## 🚀 Usage
 
-These templates are used by the interactive deployment script (`ctf-app/deploy-interactive.sh`) to deploy the CTF Tracker to OpenShift.
+These templates are used automatically by the **CTF app deployment script**:
 
-### **Template Variables**
-The templates use the following variables that get substituted during deployment:
+```bash
+cd ctf-app/
+./deploy-interactive.sh
+```
+
+The script processes these templates with your configuration and deploys to OpenShift.
+
+## 🔧 Template Variables
+
+The templates use these variables (automatically substituted):
 
 - **`${OPENSHIFT_DOMAIN}`** - Your OpenShift cluster domain
-- **`${PROJECT_NAME}`** - OpenShift project/namespace name
+- **`${PROJECT_NAME}`** - OpenShift project/namespace name  
 - **`${APP_NAME}`** - Application name (default: ctf-tracker)
 - **`${STORAGE_CLASS}`** - Storage class for persistent volumes
 - **`${CTF_TRACKER_URL}`** - Full URL of the deployed application
 
-### **Manual Deployment**
+## 🏗️ What Gets Created
+
+### **Application Resources**
+- **Deployment**: CTF Tracker application pods with security contexts
+- **Service**: Internal service discovery  
+- **Route**: External HTTPS access
+- **PersistentVolumeClaim**: SQLite database storage
+
+### **Configuration**
+- **ConfigMap**: Application environment variables
+- **Secret**: Sensitive credentials (encrypted)
+
+### **Security**
+- **SecurityContext**: Non-root container execution
+- **NetworkPolicy**: Traffic restriction rules  
+- **RBAC**: Minimal required permissions
+
+## 🔧 Manual Deployment
+
 If you prefer to deploy manually:
 
 ```bash
@@ -29,71 +55,35 @@ export OPENSHIFT_DOMAIN="apps.your-cluster.com"
 export PROJECT_NAME="ctf-tracker"
 export APP_NAME="ctf-tracker"
 export STORAGE_CLASS="gp2"
-export CTF_TRACKER_URL="https://ctf-tracker-ctf-tracker.apps.your-cluster.com"
 
 # Process and apply templates
 oc process -f openshift-configs.template.yaml \
-  --param-file=<(env | grep -E '^(OPENSHIFT_DOMAIN|PROJECT_NAME|APP_NAME)=') \
-  | oc apply -f -
+  -p OPENSHIFT_DOMAIN=${OPENSHIFT_DOMAIN} \
+  -p PROJECT_NAME=${PROJECT_NAME} \
+  -p APP_NAME=${APP_NAME} | oc apply -f -
 
 oc process -f openshift-deployment.template.yaml \
-  --param-file=<(env | grep -E '^(OPENSHIFT_DOMAIN|PROJECT_NAME|APP_NAME|STORAGE_CLASS)=') \
-  | oc apply -f -
+  -p OPENSHIFT_DOMAIN=${OPENSHIFT_DOMAIN} \
+  -p PROJECT_NAME=${PROJECT_NAME} \
+  -p APP_NAME=${APP_NAME} \
+  -p STORAGE_CLASS=${STORAGE_CLASS} | oc apply -f -
 ```
 
-## 🏗️ Architecture
+## ✅ Verification
 
-The deployment creates:
+After deployment:
 
-### **Application Components**
-- **Deployment**: CTF Tracker application pods
-- **Service**: Internal service discovery
-- **Route**: External access via OpenShift router
-- **PersistentVolumeClaim**: Storage for SQLite database
+```bash
+# Check all resources
+oc get all -l app=ctf-tracker
 
-### **Configuration**
-- **ConfigMap**: Application configuration
-- **Secret**: Sensitive credentials (encrypted)
+# Check persistent storage
+oc get pvc
 
-### **Security**
-- **SecurityContext**: Non-root container execution
-- **NetworkPolicy**: Traffic restriction rules
-- **RBAC**: Minimal required permissions
-
-## 🔧 Customization
-
-### **Resource Requirements**
-Modify in `openshift-deployment.template.yaml`:
-```yaml
-resources:
-  requests:
-    memory: "256Mi"
-    cpu: "250m"
-  limits:
-    memory: "512Mi"
-    cpu: "500m"
-```
-
-### **Storage Configuration**
-Adjust storage size and class:
-```yaml
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: ${STORAGE_CLASS}
-```
-
-### **Environment Variables**
-Add new environment variables in the deployment template:
-```yaml
-env:
-  - name: NEW_SETTING
-    value: "${NEW_SETTING}"
+# Get application URL
+oc get route
 ```
 
 ---
 
-**Container-ready CTF infrastructure!** 🐳
+**Templates ready for container deployment!** 🐳
