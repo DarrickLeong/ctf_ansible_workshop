@@ -1,6 +1,6 @@
 # Central Controller - Setup Guide
 
-Manage deployment to multiple sub Ansible controllers from a central AAP controller.
+Manage deployment to multiple sub Ansible controllers from a central AAP controller using dynamic inventory.
 
 ## 📁 Files Overview
 
@@ -8,43 +8,58 @@ Manage deployment to multiple sub Ansible controllers from a central AAP control
 1. **`test-sub-controllers.yml`** ⚡ - **RUN FIRST** - Test connectivity to all sub controllers
 2. **`deploy-to-sub-controllers.yml`** 🚀 - **RUN SECOND** - Deploy CTF playbooks to sub controllers
 
-### **Configuration Files**
-- **`central-aap-inventory.ini`** - Sub controller hostnames and settings
-- **`host_vars/`** - Individual sub controller credentials and settings  
-- **`group_vars/all/vault.yml`** - Encrypted passwords (Ansible Vault)
+### **Configuration Files** (Reference Only)
+- **`central-aap-inventory.ini`** - Static inventory template (for reference)
+- **`host_vars/`** - Example host variable templates  
+- **`group_vars/all/vault.yml`** - Example vault structure
+- **`AAP_INVENTORY_SETUP.md`** - Complete AAP inventory setup guide
 
-## 🚀 Quick Setup
+## 🎯 New AAP Inventory Integration
 
-### **Step 1: Configure Sub Controllers** 📝
-```bash
-# Edit inventory with your actual sub controller hostnames
-vim central-aap-inventory.ini
+The playbooks now work directly with **AAP inventory** instead of static files!
 
-# Configure credentials for each sub controller
-vim host_vars/sub-controller-east.yml    # Set: host, username, password
-vim host_vars/sub-controller-west.yml    # Set: host, username, password
+### **Key Changes** ✨
+- ✅ **Dynamic host discovery** - Add/remove sub controllers via AAP web interface
+- ✅ **Auto-filtering** - Playbooks automatically detect sub controllers
+- ✅ **Credential management** - Use AAP credential system
+- ✅ **No static files** - Everything managed through AAP
 
-# Set up encrypted passwords
-vim group_vars/all/vault.yml             # Add actual passwords
-ansible-vault encrypt group_vars/all/vault.yml
+### **How It Works** 🔄
+```
+AAP Inventory → Dynamic Host Selection → Playbook Execution → Results
 ```
 
-### **Step 2: Import into Central AAP Controller** 🎛️
-1. **Create Project**: "CTF Sub Controller Management" (Git SCM)
-2. **Create Inventory**: "CTF Sub Controllers Inventory" (upload inventory file)
-3. **Create Vault Credential**: Use your vault password
-4. **Create Job Templates**:
+## 🚀 Quick Setup (AAP Inventory Method)
 
-   **Template 1** ⚡:
-   - **Name**: `Test Sub Controller Connectivity`
-   - **Playbook**: `central-controller/test-sub-controllers.yml`
-   - **Purpose**: Test all sub controllers (RUN FIRST)
+### **Step 1: Configure AAP Inventory** 📝
+1. **Create Inventory**: "CTF Sub Controllers" in AAP
+2. **Add Hosts**: Each sub controller as a host with variables
+3. **Set Credentials**: Use AAP credential system for passwords
 
-   **Template 2** 🚀:
-   - **Name**: `Deploy CTF Playbooks to Sub Controllers`  
-   - **Playbook**: `central-controller/deploy-to-sub-controllers.yml`
-   - **Survey**: Enable with Repository URL, Branch, CTF Tracker URL
-   - **Purpose**: Deploy infrastructure (RUN SECOND)
+**Example Host Variables in AAP**:
+```yaml
+sub_controller_host: "aap-east.company.com"
+sub_controller_username: "admin"
+sub_controller_password: "{{ vault_east_password }}"
+sub_controller_organization: "CTF Organization"
+```
+
+📋 **[Complete AAP Inventory Setup Guide](AAP_INVENTORY_SETUP.md)**
+
+### **Step 2: Create Job Templates** 🎛️
+
+**Template 1** ⚡:
+- **Name**: `Test Sub Controller Connectivity`
+- **Inventory**: `CTF Sub Controllers` (your AAP inventory)
+- **Playbook**: `central-controller/test-sub-controllers.yml`
+- **Credentials**: Your sub controller passwords credential
+
+**Template 2** 🚀:
+- **Name**: `Deploy CTF Playbooks to Sub Controllers`  
+- **Inventory**: `CTF Sub Controllers` (your AAP inventory)
+- **Playbook**: `central-controller/deploy-to-sub-controllers.yml`
+- **Credentials**: Your sub controller passwords credential
+- **Survey**: Repository URL, Branch, CTF Tracker URL
 
 ## 🔥 Critical Execution Order
 
@@ -52,50 +67,71 @@ ansible-vault encrypt group_vars/all/vault.yml
 ```bash
 Run: "Test Sub Controller Connectivity"
 ```
-**Must show**: All controllers `PASS` status
+**Auto-discovers**: All hosts with sub controller variables  
 **Expected output**: 
 ```
 ✅ sub-controller-east: aap-east.company.com
 ✅ sub-controller-west: aap-west.company.com
-✅ sub-controller-central: aap-central.company.com
 ```
 
 ### **2. SECOND: Deploy Infrastructure** 🚀
 ```bash
 Run: "Deploy CTF Playbooks to Sub Controllers"
 ```
-**Survey inputs**: Repository URL, Branch, CTF Tracker URL
+**Auto-discovers**: Same hosts as connectivity test  
 **Expected result**: Job templates created on all sub controllers
 
-## ✅ Verification
+## ✅ Benefits of AAP Inventory
 
-Each sub controller should have:
-- ✅ Project: "CTF Challenge Playbooks"
-- ✅ Job Template: "CTF Challenge Verification"  
-- ✅ Job Template: "CTF Connectivity Test"
+### **Dynamic Management** 🎛️
+- Add sub controllers via web interface
+- Update credentials without file changes
+- Group-based organization
+- API-driven management
 
-## 🛠️ Troubleshooting
+### **Better Security** 🔐
+- Encrypted credential storage
+- Role-based access control
+- No plaintext passwords in files
+- Audit trail for changes
 
-**Authentication Issues**:
+### **Scalability** 📈
+- Handle hundreds of sub controllers
+- Organize by region/environment
+- Bulk operations on groups
+- External system integration
+
+## 🛠️ Migration from Static Files
+
+If you're migrating from the static `.ini` approach:
+
+1. **Keep existing files** as reference
+2. **Create AAP inventory** with same host information
+3. **Test with new method** using job templates
+4. **Remove static files** once confirmed working
+
+## 🔧 Troubleshooting
+
+**No hosts found**:
 ```bash
-# Check vault passwords
-ansible-vault view group_vars/all/vault.yml
-
-# Test sub controller access
-curl -k https://aap-east.company.com/api/v2/ping/
+# Check your AAP inventory has hosts with required variables:
+# - sub_controller_host
+# - sub_controller_username  
+# - sub_controller_password (or sub_controller_token)
 ```
 
-**Network Issues**:
+**Authentication issues**:
 ```bash
-# Test connectivity
-ping aap-east.company.com
-telnet aap-east.company.com 443
+# Verify credentials are properly configured in AAP
+# Check credential type injection settings
 ```
 
-**Deployment Issues**:
+**Host filtering issues**:
 ```bash
-# Local testing
-ansible-playbook test-sub-controllers.yml -i central-aap-inventory.ini --ask-vault-pass -v
+# Add debug task to see which hosts are being processed
+- name: Debug discovered hosts
+  debug:
+    msg: "Found sub controller: {{ inventory_hostname }} -> {{ sub_controller_host }}"
 ```
 
 ---

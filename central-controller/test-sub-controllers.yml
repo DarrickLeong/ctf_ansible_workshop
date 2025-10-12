@@ -1,13 +1,23 @@
 ---
 # Test Sub Controllers Connectivity Playbook
 # This playbook tests connectivity to all sub controllers before deployment
+# Works with AAP inventory - dynamically discovers sub controllers based on group membership
 
 - name: Test Sub Controller Connectivity
-  hosts: sub_controllers
+  hosts: all  # Run against all inventory hosts, filter by variables below
   gather_facts: no
   serial: 5  # Test up to 5 controllers in parallel
   vars:
     test_timeout: 30
+
+  # Only run on hosts that have sub controller configuration
+  pre_tasks:
+    - name: Skip hosts that are not sub controllers
+      meta: end_host
+      when: >
+        sub_controller_host is not defined or
+        sub_controller_username is not defined or
+        (sub_controller_password is not defined and sub_controller_token is not defined)
 
   tasks:
     - name: Set controller connection facts

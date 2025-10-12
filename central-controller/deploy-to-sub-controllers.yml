@@ -1,28 +1,28 @@
 ---
 # CTF Playbook Deployment to Sub Ansible Controllers
 # This playbook deploys CTF playbooks and creates job templates on multiple sub controllers
-# Designed to run on Central AAP Controller
+# Designed to run on Central AAP Controller - works with AAP inventory
 # Requires: ansible-core >= 2.12, awx.awx collection
 
 - name: Deploy CTF Playbooks to Sub Ansible Controllers
-  hosts: sub_controllers
+  hosts: all  # Run against all inventory hosts, filter by variables below
   gather_facts: no
   serial: 1  # Deploy to one controller at a time to avoid overwhelming central controller
   vars:
     # Central CTF Tracker Configuration
     ctf_tracker_base_url: "{{ ctf_tracker_url | default('https://ctf-tracker.apps.your-cluster.com') }}"
-    
+
     # Project and SCM Configuration
     ctf_project_name: "{{ project_name | default('CTF Challenge Playbooks') }}"
     ctf_project_description: "CTF Challenge Verification and Connectivity Test Playbooks"
     scm_type: "{{ scm_type | default('git') }}"  # git, manual, or archive
     scm_url: "{{ scm_repository_url | default('') }}"  # Git repo URL if using git
     scm_branch: "{{ scm_branch | default('main') }}"
-    
+
     # Job Template Configuration
     job_templates:
       - name: "CTF Challenge Verification"
-        playbook: "comprehensive-ctf-playbook.yml"
+        playbook: "sub-controllers/comprehensive-ctf-playbook.yml"
         description: "Execute CTF challenges and report results"
         job_type: "run"
         verbosity: 1
@@ -32,7 +32,7 @@
         variables:
           ctf_tracker_url: "{{ ctf_tracker_base_url }}"
       - name: "CTF Connectivity Test"
-        playbook: "connectivity-test-playbook.yml"
+        playbook: "sub-controllers/connectivity-test-playbook.yml"
         description: "Test RHEL host connectivity and system health"
         job_type: "run"
         verbosity: 1
@@ -41,9 +41,18 @@
         ask_credential_on_launch: true
         variables:
           ctf_tracker_url: "{{ ctf_tracker_base_url }}"
-    
+
     # Default execution environment (optional)
     execution_environment: "{{ default_execution_environment | default('Default execution environment') }}"
+
+  # Only run on hosts that have sub controller configuration
+  pre_tasks:
+    - name: Skip hosts that are not sub controllers
+      meta: end_host
+      when: >
+        sub_controller_host is not defined or
+        sub_controller_username is not defined or
+        (sub_controller_password is not defined and sub_controller_token is not defined)
 
   tasks:
     - name: Validate deployment variables for current controller

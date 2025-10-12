@@ -124,28 +124,42 @@ oc login <your-openshift-url>
 ```
 
 ### **Step 2: Configure Central Controller** 🎛️
+
+**NEW: AAP Inventory Integration** ✨
+The central controller now works directly with AAP inventory - no more static files needed!
+
 ```bash
 cd central-controller/
 
-# Edit inventory with your sub controllers
-vim central-aap-inventory.ini
+# Option A: Use AAP Inventory (Recommended)
+# 1. Create "CTF Sub Controllers" inventory in AAP web interface
+# 2. Add each sub controller as a host with these variables:
+#    - sub_controller_host: "aap-east.company.com"
+#    - sub_controller_username: "admin"  
+#    - sub_controller_password: "{{ vault_east_password }}"
+# 3. Create credential for passwords
+# See: central-controller/AAP_INVENTORY_SETUP.md
 
-# Configure credentials for each sub controller
-vim host_vars/sub-controller-east.yml
-vim host_vars/sub-controller-west.yml
-
-# Set up encrypted passwords
-vim group_vars/all/vault.yml
+# Option B: Static Files (Legacy)
+vim central-aap-inventory.ini          # Edit sub controller hostnames
+vim host_vars/sub-controller-east.yml  # Configure credentials
+vim group_vars/all/vault.yml           # Set encrypted passwords
 ansible-vault encrypt group_vars/all/vault.yml
 ```
 
 ### **Step 3: Set Up Central AAP Controller** 🏗️
+
+**Using AAP Inventory (Recommended)**:
 1. **Create Project**: "CTF Sub Controller Management" (Git SCM)
-2. **Create Inventory**: "CTF Sub Controllers Inventory" 
+2. **Create Inventory**: "CTF Sub Controllers" (dynamic inventory in AAP)
+3. **Create Credential**: For sub controller passwords
+4. **Create Job Templates**: Point to your AAP inventory
+
+**Using Static Files (Legacy)**:
+1. **Create Project**: "CTF Sub Controller Management" (Git SCM)  
+2. **Upload Inventory**: Use `central-aap-inventory.ini`
 3. **Create Vault Credential**: For encrypted passwords
-4. **Create Job Templates**:
-   - `Test Sub Controller Connectivity` 
-   - `Deploy CTF Playbooks to Sub Controllers`
+4. **Create Job Templates**: Point to uploaded inventory
 
 ### **Step 4: Execute (CRITICAL ORDER)** ⚡
 ```bash
@@ -178,14 +192,16 @@ Deploy App → Configure Files → Setup AAP → Test → Deploy → CTF Ready
 - ❌ `docs/README.md` - Redundant index file
 
 ### **✅ Simplified Documentation**
-- 📄 **Main README** - Focus on essential 5-step process
-- 📄 **Component READMEs** - Streamlined with only essential information
+- 📄 **Main README** - Focus on essential 5-step process with AAP inventory option
+- 📄 **Component READMEs** - Streamlined with AAP inventory integration
 - 📄 **Clear execution order** - ⚡ Test FIRST, 🚀 Deploy SECOND
+- 📄 **Dynamic inventory** - No more static file management needed
 
 ### **✅ Clean File Structure**
 - **12 executable files** - Only what you need to run
 - **5 README files** - One per component + main guide
 - **3 docs files** - Extended guides and checklists
+- **1 AAP setup guide** - Complete inventory integration guide
 - **Zero redundancy** - No duplicate information
 
 ## 🎯 Final Summary
@@ -197,6 +213,8 @@ Deploy App → Configure Files → Setup AAP → Test → Deploy → CTF Ready
 ✅ **Simplified documentation**: Essential information only  
 ✅ **No confusion**: 2 playbooks to run in clear order  
 ✅ **Easy maintenance**: Everything in its logical place  
+✅ **AAP inventory integration**: Dynamic host management via web interface
+✅ **Better credential security**: No plaintext passwords in files
 
 **Total files reduced from complex structure to essential components only!**
 
