@@ -242,7 +242,7 @@
         - name: Build successful deployments list
           set_fact:
             successful_deployments: "{{ successful_deployments + [item] }}"
-          loop: "{{ ansible_play_hosts_all }}"
+          loop: "{{ ansible_play_hosts }}"
           when: 
             - hostvars[item]['deployment_success'] is defined
             - hostvars[item]['deployment_success'] == true
@@ -250,7 +250,7 @@
         - name: Build failed deployments list  
           set_fact:
             failed_deployments: "{{ failed_deployments + [item] }}"
-          loop: "{{ ansible_play_hosts_all }}"
+          loop: "{{ ansible_play_hosts }}"
           when: 
             - hostvars[item]['deployment_success'] is defined
             - hostvars[item]['deployment_success'] == false
@@ -261,7 +261,7 @@
           ==========================================
           FINAL DEPLOYMENT SUMMARY
           ==========================================
-          Total Sub Controllers: {{ ansible_play_hosts_all | length }}
+          Total Sub Controllers: {{ ansible_play_hosts | length }}
           Successful Deployments: {{ successful_deployments | length }}
           Failed Deployments: {{ failed_deployments | length }}
           
