@@ -59,14 +59,24 @@
           failed_when: false
           delegate_to: localhost
 
+        - name: Debug authentication method
+          debug:
+            msg: |
+              Authentication Debug:
+              - awx_token defined: {{ awx_token is defined }}
+              - awx_token value: "{{ awx_token | default('NOT_DEFINED') }}"
+              - awx_token empty: {{ awx_token == '' if awx_token is defined else 'N/A' }}
+              - Will use Basic Auth: {{ (awx_password and (awx_token == '' or awx_token is not defined)) }}
+              - Will use Bearer Token: {{ (awx_token != '' and awx_token is defined) }}
+
         # TEST API CONNECTIVITY
         - name: Test API connectivity with authentication
           uri:
             url: "https://{{ awx_host }}/api/controller/v2/"
             method: GET
-            user: "{{ awx_username if awx_password and not awx_token else omit }}"
-            password: "{{ awx_password if awx_password and not awx_token else omit }}"
-            headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else {} }}"
+            user: "{{ awx_username if (awx_password and (awx_token == '' or awx_token is not defined)) else omit }}"
+            password: "{{ awx_password if (awx_password and (awx_token == '' or awx_token is not defined)) else omit }}"
+            headers: "{{ {'Authorization': 'Bearer ' + awx_token} if (awx_token != '' and awx_token is defined) else {} }}"
             validate_certs: "{{ awx_validate_certs }}"
             timeout: "{{ test_timeout }}"
           register: api_test
@@ -78,9 +88,9 @@
           uri:
             url: "https://{{ awx_host }}/api/controller/v2/me/"
             method: GET
-            user: "{{ awx_username if awx_password and not awx_token else omit }}"
-            password: "{{ awx_password if awx_password and not awx_token else omit }}"
-            headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else {} }}"
+            user: "{{ awx_username if (awx_password and (awx_token == '' or awx_token is not defined)) else omit }}"
+            password: "{{ awx_password if (awx_password and (awx_token == '' or awx_token is not defined)) else omit }}"
+            headers: "{{ {'Authorization': 'Bearer ' + awx_token} if (awx_token != '' and awx_token is defined) else {} }}"
             validate_certs: "{{ awx_validate_certs }}"
             timeout: "{{ test_timeout }}"
           register: permissions_test
