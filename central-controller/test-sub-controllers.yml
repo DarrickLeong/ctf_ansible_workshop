@@ -147,8 +147,8 @@
         - name: Debug - checking hostvars for results
           debug:
             msg: |
-              Checking results for hosts: {{ ansible_play_hosts }}
-              {% for host in ansible_play_hosts %}
+              Checking results for all inventory hosts: {{ groups['all'] }}
+              {% for host in groups['all'] %}
               Host: {{ host }}
               - connectivity_test_results defined: {{ 'YES' if hostvars[host]['connectivity_test_results'] is defined else 'NO' }}
               {% if hostvars[host]['connectivity_test_results'] is defined %}
@@ -164,7 +164,7 @@
         - name: Build passed controllers list
           set_fact:
             passed_controllers: "{{ passed_controllers + [item] }}"
-          loop: "{{ ansible_play_hosts }}"
+          loop: "{{ groups['all'] }}"
           when: 
             - hostvars[item]['connectivity_test_results'] is defined
             - hostvars[item]['connectivity_test_results']['overall_status'] == 'PASS'
@@ -172,7 +172,7 @@
         - name: Build failed controllers list  
           set_fact:
             failed_controllers: "{{ failed_controllers + [item] }}"
-          loop: "{{ ansible_play_hosts }}"
+          loop: "{{ groups['all'] }}"
           when: 
             - hostvars[item]['connectivity_test_results'] is defined
             - hostvars[item]['connectivity_test_results']['overall_status'] == 'FAIL'
@@ -183,7 +183,7 @@
           ==========================================
           FINAL CONNECTIVITY TEST SUMMARY
           ==========================================
-          Total Controllers Tested: {{ ansible_play_hosts | length }}
+          Total Controllers Tested: {{ (passed_controllers | length) + (failed_controllers | length) }}
           Passed: {{ passed_controllers | length }}
           Failed: {{ failed_controllers | length }}
           
