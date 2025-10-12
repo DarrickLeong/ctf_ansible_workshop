@@ -77,19 +77,22 @@ controller_description: "Central CTF Management Controller"
 
 ### **Step 3: Create Groups (Optional)** 📂
 
-Create logical groups for better organization:
+Create logical groups for better organization (not required for playbook execution):
 
-1. **Group**: `sub_controllers`
+1. **Group**: `sub_controllers` *(Optional)*
    - **Description**: All CTF sub controllers
    - **Add hosts**: All your sub controller hosts
+   - **Note**: Playbooks work with or without this group
 
-2. **Group**: `east_region`
+2. **Group**: `east_region` *(Optional)*
    - **Description**: East coast controllers
    - **Add hosts**: `sub-controller-east`
 
-3. **Group**: `west_region`
+3. **Group**: `west_region` *(Optional)*
    - **Description**: West coast controllers
    - **Add hosts**: `sub-controller-west`
+
+**Important**: The playbooks automatically work with all hosts in the inventory that have the required sub controller variables, regardless of group membership.
 
 ### **Step 4: Set Global Variables** 🌐
 
@@ -244,6 +247,62 @@ The updated playbooks automatically filter hosts based on required variables:
 - ✅ Organize by region, environment, etc.
 - ✅ Bulk operations on groups
 - ✅ Integration with external systems
+
+## 🔍 How Host Selection Works
+
+### **Automatic Host Discovery** 🎯
+
+The playbooks use this logic to automatically find sub controllers:
+
+1. **Start with all inventory hosts** - `hosts: all` in playbook
+2. **Filter by required variables** - Skip hosts missing:
+   - `sub_controller_host`
+   - `sub_controller_username`  
+   - `sub_controller_password` OR `sub_controller_token`
+3. **Process selected hosts** - Only configured sub controllers run
+4. **Generate reports** - Use `ansible_play_hosts_all` for summaries
+
+### **No Group Dependency** ✨
+
+**This means**:
+- ✅ You can add hosts directly to inventory without groups
+- ✅ You can still use groups for organization if desired
+- ✅ Playbooks work the same way either approach
+- ✅ Mix and match - some hosts in groups, some not
+
+**Example inventory scenarios that all work**:
+
+**Scenario 1: No Groups** (Simple)
+```
+Inventory: CTF Sub Controllers
+├── sub-controller-east (with variables)
+├── sub-controller-west (with variables)
+└── sub-controller-central (with variables)
+```
+
+**Scenario 2: With Groups** (Organized)
+```
+Inventory: CTF Sub Controllers
+├── Group: sub_controllers
+│   ├── sub-controller-east
+│   ├── sub-controller-west
+│   └── sub-controller-central
+└── Group: regions
+    ├── Group: east (contains sub-controller-east)
+    └── Group: west (contains sub-controller-west)
+```
+
+**Scenario 3: Mixed** (Flexible)
+```
+Inventory: CTF Sub Controllers
+├── sub-controller-legacy (no groups, has variables)
+├── Group: new_controllers
+│   ├── sub-controller-east
+│   └── sub-controller-west
+└── other-host (no sub_controller variables - ignored)
+```
+
+All three scenarios work identically with the same playbooks!
 
 ---
 

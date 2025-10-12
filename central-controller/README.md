@@ -21,6 +21,7 @@ The playbooks now work directly with **AAP inventory** instead of static files!
 ### **Key Changes** ✨
 - ✅ **Dynamic host discovery** - Add/remove sub controllers via AAP web interface
 - ✅ **Auto-filtering** - Playbooks automatically detect sub controllers
+- ✅ **No group dependency** - Works with all inventory hosts (groups optional)
 - ✅ **Credential management** - Use AAP credential system
 - ✅ **No static files** - Everything managed through AAP
 

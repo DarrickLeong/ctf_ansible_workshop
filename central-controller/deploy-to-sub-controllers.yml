@@ -225,10 +225,10 @@
   tasks:
     - name: Collect deployment results
       set_fact:
-        successful_deployments: "{{ groups['sub_controllers'] | 
+        successful_deployments: "{{ ansible_play_hosts_all | 
           select('extract', hostvars, 'deployment_success') | 
           select('equalto', true) | list }}"
-        failed_deployments: "{{ groups['sub_controllers'] | 
+        failed_deployments: "{{ ansible_play_hosts_all | 
           select('extract', hostvars, 'deployment_success') | 
           select('equalto', false) | list }}"
 
@@ -238,7 +238,7 @@
           ==========================================
           FINAL DEPLOYMENT SUMMARY
           ==========================================
-          Total Sub Controllers: {{ groups['sub_controllers'] | length }}
+          Total Sub Controllers: {{ ansible_play_hosts_all | length }}
           Successful Deployments: {{ successful_deployments | length }}
           Failed Deployments: {{ failed_deployments | length }}
           

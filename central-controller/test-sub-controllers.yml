@@ -113,10 +113,10 @@
   tasks:
     - name: Collect test results
       set_fact:
-        passed_controllers: "{{ groups['sub_controllers'] | 
+        passed_controllers: "{{ ansible_play_hosts_all | 
           select('extract', hostvars, 'connectivity_test_results') | 
           selectattr('overall_status', 'equalto', 'PASS') | list }}"
-        failed_controllers: "{{ groups['sub_controllers'] | 
+        failed_controllers: "{{ ansible_play_hosts_all | 
           select('extract', hostvars, 'connectivity_test_results') | 
           selectattr('overall_status', 'equalto', 'FAIL') | list }}"
 
@@ -126,7 +126,7 @@
           ==========================================
           FINAL CONNECTIVITY TEST SUMMARY
           ==========================================
-          Total Controllers Tested: {{ groups['sub_controllers'] | length }}
+          Total Controllers Tested: {{ ansible_play_hosts_all | length }}
           Passed: {{ passed_controllers | length }}
           Failed: {{ failed_controllers | length }}
           
