@@ -57,6 +57,7 @@
             status_code: 200, 302, 401, 403  # Expected responses
           register: http_test
           failed_when: false
+          delegate_to: localhost
 
         # TEST API CONNECTIVITY
         - name: Test API connectivity with authentication
@@ -70,6 +71,7 @@
             timeout: "{{ test_timeout }}"
           register: api_test
           failed_when: false
+          delegate_to: localhost
 
         # TEST PERMISSIONS
         - name: Test permissions by listing organizations
@@ -83,6 +85,7 @@
             timeout: "{{ test_timeout }}"
           register: permissions_test
           failed_when: false
+          delegate_to: localhost
 
         # RECORD RESULTS
         - name: Record test results
