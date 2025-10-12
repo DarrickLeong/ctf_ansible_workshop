@@ -12,6 +12,15 @@
 
   # Only run on hosts that have sub controller configuration
   pre_tasks:
+    - name: Check if host is a sub controller
+      debug:
+        msg: |
+          Checking host {{ inventory_hostname }}:
+          - sub_controller_host: {{ sub_controller_host | default('NOT DEFINED') }}
+          - sub_controller_username: {{ sub_controller_username | default('NOT DEFINED') }}
+          - has_password: {{ 'YES' if sub_controller_password is defined else 'NO' }}
+          - has_token: {{ 'YES' if sub_controller_token is defined else 'NO' }}
+    
     - name: Skip hosts that are not sub controllers
       meta: end_host
       when: >
@@ -112,13 +121,27 @@
   gather_facts: no
   tasks:
     - name: Collect test results
-      set_fact:
-        passed_controllers: "{{ ansible_play_hosts_all | 
-          select('extract', hostvars, 'connectivity_test_results') | 
-          selectattr('overall_status', 'equalto', 'PASS') | list }}"
-        failed_controllers: "{{ ansible_play_hosts_all | 
-          select('extract', hostvars, 'connectivity_test_results') | 
-          selectattr('overall_status', 'equalto', 'FAIL') | list }}"
+      block:
+        - name: Initialize controller lists
+          set_fact:
+            passed_controllers: []
+            failed_controllers: []
+            
+        - name: Build passed controllers list
+          set_fact:
+            passed_controllers: "{{ passed_controllers + [item] }}"
+          loop: "{{ ansible_play_hosts_all }}"
+          when: 
+            - hostvars[item]['connectivity_test_results'] is defined
+            - hostvars[item]['connectivity_test_results']['overall_status'] == 'PASS'
+            
+        - name: Build failed controllers list  
+          set_fact:
+            failed_controllers: "{{ failed_controllers + [item] }}"
+          loop: "{{ ansible_play_hosts_all }}"
+          when: 
+            - hostvars[item]['connectivity_test_results'] is defined
+            - hostvars[item]['connectivity_test_results']['overall_status'] == 'FAIL'
 
     - name: Display final connectivity summary
       debug:

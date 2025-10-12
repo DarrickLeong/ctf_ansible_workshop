@@ -47,6 +47,15 @@
 
   # Only run on hosts that have sub controller configuration
   pre_tasks:
+    - name: Check if host is a sub controller
+      debug:
+        msg: |
+          Checking host {{ inventory_hostname }}:
+          - sub_controller_host: {{ sub_controller_host | default('NOT DEFINED') }}
+          - sub_controller_username: {{ sub_controller_username | default('NOT DEFINED') }}
+          - has_password: {{ 'YES' if sub_controller_password is defined else 'NO' }}
+          - has_token: {{ 'YES' if sub_controller_token is defined else 'NO' }}
+    
     - name: Skip hosts that are not sub controllers
       meta: end_host
       when: >
@@ -224,13 +233,27 @@
   gather_facts: no
   tasks:
     - name: Collect deployment results
-      set_fact:
-        successful_deployments: "{{ ansible_play_hosts_all | 
-          select('extract', hostvars, 'deployment_success') | 
-          select('equalto', true) | list }}"
-        failed_deployments: "{{ ansible_play_hosts_all | 
-          select('extract', hostvars, 'deployment_success') | 
-          select('equalto', false) | list }}"
+      block:
+        - name: Initialize deployment lists
+          set_fact:
+            successful_deployments: []
+            failed_deployments: []
+            
+        - name: Build successful deployments list
+          set_fact:
+            successful_deployments: "{{ successful_deployments + [item] }}"
+          loop: "{{ ansible_play_hosts_all }}"
+          when: 
+            - hostvars[item]['deployment_success'] is defined
+            - hostvars[item]['deployment_success'] == true
+            
+        - name: Build failed deployments list  
+          set_fact:
+            failed_deployments: "{{ failed_deployments + [item] }}"
+          loop: "{{ ansible_play_hosts_all }}"
+          when: 
+            - hostvars[item]['deployment_success'] is defined
+            - hostvars[item]['deployment_success'] == false
 
     - name: Display final deployment summary
       debug:
