@@ -29,110 +29,112 @@
         (sub_controller_password is not defined and sub_controller_token is not defined)
 
   tasks:
-    - name: Set controller connection facts
-      set_fact:
-        awx_host: "{{ sub_controller_host }}"
-        awx_username: "{{ sub_controller_username }}"
-        awx_password: "{{ sub_controller_password | default('') }}"
-        awx_token: "{{ sub_controller_token | default('') }}"
-        awx_validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
+    - name: Run connectivity tests
+      block:
+        - name: Set controller connection facts
+          set_fact:
+            awx_host: "{{ sub_controller_host }}"
+            awx_username: "{{ sub_controller_username }}"
+            awx_password: "{{ sub_controller_password | default('') }}"
+            awx_token: "{{ sub_controller_token | default('') }}"
+            awx_validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
 
-    - name: Display test information
-      debug:
-        msg: |
-          Testing connectivity to {{ inventory_hostname }}
-          Host: {{ awx_host }}
-          Username: {{ awx_username }}
-          Using Token: {{ 'Yes' if awx_token else 'No' }}
+        - name: Display test information
+          debug:
+            msg: |
+              Testing connectivity to {{ inventory_hostname }}
+              Host: {{ awx_host }}
+              Username: {{ awx_username }}
+              Using Token: {{ 'Yes' if awx_token else 'No' }}
 
-    # TEST BASIC CONNECTIVITY
-    - name: Test basic HTTP connectivity
-      uri:
-        url: "https://{{ awx_host }}"
-        method: GET
-        validate_certs: "{{ awx_validate_certs }}"
-        timeout: "{{ test_timeout }}"
-        status_code: 200, 302, 401, 403  # Expected responses
-      register: http_test
-      failed_when: false
+        # TEST BASIC CONNECTIVITY
+        - name: Test basic HTTP connectivity
+          uri:
+            url: "https://{{ awx_host }}"
+            method: GET
+            validate_certs: "{{ awx_validate_certs }}"
+            timeout: "{{ test_timeout }}"
+            status_code: 200, 302, 401, 403  # Expected responses
+          register: http_test
+          failed_when: false
 
-    # TEST API CONNECTIVITY
-    - name: Test API connectivity with authentication
-      uri:
-        url: "https://{{ awx_host }}/api/v2/ping/"
-        method: GET
-        user: "{{ awx_username if awx_password else omit }}"
-        password: "{{ awx_password if awx_password else omit }}"
-        headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else omit }}"
-        validate_certs: "{{ awx_validate_certs }}"
-        timeout: "{{ test_timeout }}"
-      register: api_test
-      failed_when: false
+        # TEST API CONNECTIVITY
+        - name: Test API connectivity with authentication
+          uri:
+            url: "https://{{ awx_host }}/api/v2/ping/"
+            method: GET
+            user: "{{ awx_username if awx_password else omit }}"
+            password: "{{ awx_password if awx_password else omit }}"
+            headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else omit }}"
+            validate_certs: "{{ awx_validate_certs }}"
+            timeout: "{{ test_timeout }}"
+          register: api_test
+          failed_when: false
 
-    # TEST PERMISSIONS
-    - name: Test permissions by listing organizations
-      uri:
-        url: "https://{{ awx_host }}/api/v2/organizations/"
-        method: GET
-        user: "{{ awx_username if awx_password else omit }}"
-        password: "{{ awx_password if awx_password else omit }}"
-        headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else omit }}"
-        validate_certs: "{{ awx_validate_certs }}"
-        timeout: "{{ test_timeout }}"
-      register: permissions_test
-      failed_when: false
+        # TEST PERMISSIONS
+        - name: Test permissions by listing organizations
+          uri:
+            url: "https://{{ awx_host }}/api/v2/organizations/"
+            method: GET
+            user: "{{ awx_username if awx_password else omit }}"
+            password: "{{ awx_password if awx_password else omit }}"
+            headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else omit }}"
+            validate_certs: "{{ awx_validate_certs }}"
+            timeout: "{{ test_timeout }}"
+          register: permissions_test
+          failed_when: false
 
-    # RECORD RESULTS
-    - name: Record test results
-      set_fact:
-        connectivity_test_results:
-          http_accessible: "{{ http_test.status in [200, 302, 401, 403] }}"
-          api_accessible: "{{ api_test.status == 200 }}"
-          has_permissions: "{{ permissions_test.status == 200 }}"
-          http_status: "{{ http_test.status | default('N/A') }}"
-          api_status: "{{ api_test.status | default('N/A') }}"
-          permissions_status: "{{ permissions_test.status | default('N/A') }}"
-          overall_status: "{{ 'PASS' if (api_test.status == 200 and permissions_test.status == 200) else 'FAIL' }}"
+        # RECORD RESULTS
+        - name: Record test results
+          set_fact:
+            connectivity_test_results:
+              http_accessible: "{{ http_test.status in [200, 302, 401, 403] }}"
+              api_accessible: "{{ api_test.status == 200 }}"
+              has_permissions: "{{ permissions_test.status == 200 }}"
+              http_status: "{{ http_test.status | default('N/A') }}"
+              api_status: "{{ api_test.status | default('N/A') }}"
+              permissions_status: "{{ permissions_test.status | default('N/A') }}"
+              overall_status: "{{ 'PASS' if (api_test.status == 200 and permissions_test.status == 200) else 'FAIL' }}"
 
-    - name: Display connectivity test results
-      debug:
-        msg: |
-          ==========================================
-          CONNECTIVITY TEST RESULTS
-          ==========================================
-          Controller: {{ inventory_hostname }} ({{ awx_host }})
-          Overall Status: {{ connectivity_test_results.overall_status }}
+        - name: Display connectivity test results
+          debug:
+            msg: |
+              ==========================================
+              CONNECTIVITY TEST RESULTS
+              ==========================================
+              Controller: {{ inventory_hostname }} ({{ awx_host }})
+              Overall Status: {{ connectivity_test_results.overall_status }}
+              
+              Detailed Results:
+              - HTTP Accessible: {{ 'PASS' if connectivity_test_results.http_accessible else 'FAIL' }} ({{ connectivity_test_results.http_status }})
+              - API Accessible: {{ 'PASS' if connectivity_test_results.api_accessible else 'FAIL' }} ({{ connectivity_test_results.api_status }})
+              - Has Permissions: {{ 'PASS' if connectivity_test_results.has_permissions else 'FAIL' }} ({{ connectivity_test_results.permissions_status }})
+              ==========================================
+
+        - name: Fail if connectivity test failed
+          fail:
+            msg: "Connectivity test failed for {{ inventory_hostname }}"
+          when: connectivity_test_results.overall_status == 'FAIL'
           
-          Detailed Results:
-          - HTTP Accessible: {{ 'PASS' if connectivity_test_results.http_accessible else 'FAIL' }} ({{ connectivity_test_results.http_status }})
-          - API Accessible: {{ 'PASS' if connectivity_test_results.api_accessible else 'FAIL' }} ({{ connectivity_test_results.api_status }})
-          - Has Permissions: {{ 'PASS' if connectivity_test_results.has_permissions else 'FAIL' }} ({{ connectivity_test_results.permissions_status }})
-          ==========================================
+        - name: Debug - connectivity test completed successfully
+          debug:
+            msg: "✅ Connectivity test completed for {{ inventory_hostname }} with status: {{ connectivity_test_results.overall_status }}"
 
-    - name: Fail if connectivity test failed
-      fail:
-        msg: "Connectivity test failed for {{ inventory_hostname }}"
-      when: connectivity_test_results.overall_status == 'FAIL'
-      
-    - name: Debug - connectivity test completed successfully
-      debug:
-        msg: "✅ Connectivity test completed for {{ inventory_hostname }} with status: {{ connectivity_test_results.overall_status }}"
-
-  rescue:
-    - name: Handle connectivity test failure
-      debug:
-        msg: |
-          ❌ Connectivity test failed for {{ inventory_hostname }}
-          Error: {{ ansible_failed_result.msg | default('Unknown error') }}
-          
-    - name: Set failed connectivity result
-      set_fact:
-        connectivity_test_results:
-          overall_status: "FAIL"
-          error: "{{ ansible_failed_result.msg | default('Connectivity test failed') }}"
-          http_accessible: false
-          api_accessible: false
-          has_permissions: false
+      rescue:
+        - name: Handle connectivity test failure
+          debug:
+            msg: |
+              ❌ Connectivity test failed for {{ inventory_hostname }}
+              Error: {{ ansible_failed_result.msg | default('Unknown error') }}
+              
+        - name: Set failed connectivity result
+          set_fact:
+            connectivity_test_results:
+              overall_status: "FAIL"
+              error: "{{ ansible_failed_result.msg | default('Connectivity test failed') }}"
+              http_accessible: false
+              api_accessible: false
+              has_permissions: false
 
 # SUMMARY REPORT
 - name: Connectivity Test Summary
