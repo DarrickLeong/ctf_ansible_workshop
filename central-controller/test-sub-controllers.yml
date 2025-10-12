@@ -74,9 +74,9 @@
           delegate_to: localhost
 
         # TEST PERMISSIONS
-        - name: Test permissions by listing users (alternative endpoint)
+        - name: Test permissions by accessing authenticated API root
           uri:
-            url: "https://{{ awx_host }}/api/controller/v2/users/"
+            url: "https://{{ awx_host }}/api/controller/v2/me/"
             method: GET
             user: "{{ awx_username if awx_password else omit }}"
             password: "{{ awx_password if awx_password else omit }}"
