@@ -96,18 +96,18 @@
           SCM URL: {{ scm_url if scm_url else 'Manual/Local files' }}
           ==========================================
 
-    # TEST CONTROLLER CONNECTIVITY
-    - name: Test sub controller connectivity
-      uri:
-        url: "https://{{ awx_host }}/api/v2/ping/"
-        method: GET
-        user: "{{ awx_username if awx_password else omit }}"
-        password: "{{ awx_password if awx_password else omit }}"
-        headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else omit }}"
-        validate_certs: "{{ awx_validate_certs }}"
-        timeout: 30
-      register: ping_result
-      failed_when: false
+            # TEST CONTROLLER CONNECTIVITY
+            - name: Test sub controller connectivity
+              uri:
+                url: "https://{{ awx_host }}/api/controller/v2/"
+                method: GET
+                user: "{{ awx_username if awx_password else omit }}"
+                password: "{{ awx_password if awx_password else omit }}"
+                headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else omit }}"
+                validate_certs: "{{ awx_validate_certs }}"
+                timeout: 30
+              register: ping_result
+              failed_when: false
 
     - name: Fail if controller unreachable
       fail:

@@ -62,7 +62,7 @@
         # TEST API CONNECTIVITY
         - name: Test API connectivity with authentication
           uri:
-            url: "https://{{ awx_host }}/api/v2/ping/"
+            url: "https://{{ awx_host }}/api/controller/v2/"
             method: GET
             user: "{{ awx_username if awx_password else omit }}"
             password: "{{ awx_password if awx_password else omit }}"
@@ -74,9 +74,9 @@
           delegate_to: localhost
 
         # TEST PERMISSIONS
-        - name: Test permissions by listing organizations
+        - name: Test permissions by listing users (alternative endpoint)
           uri:
-            url: "https://{{ awx_host }}/api/v2/organizations/"
+            url: "https://{{ awx_host }}/api/controller/v2/users/"
             method: GET
             user: "{{ awx_username if awx_password else omit }}"
             password: "{{ awx_password if awx_password else omit }}"
