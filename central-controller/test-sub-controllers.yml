@@ -113,6 +113,26 @@
       fail:
         msg: "Connectivity test failed for {{ inventory_hostname }}"
       when: connectivity_test_results.overall_status == 'FAIL'
+      
+    - name: Debug - connectivity test completed successfully
+      debug:
+        msg: "✅ Connectivity test completed for {{ inventory_hostname }} with status: {{ connectivity_test_results.overall_status }}"
+
+  rescue:
+    - name: Handle connectivity test failure
+      debug:
+        msg: |
+          ❌ Connectivity test failed for {{ inventory_hostname }}
+          Error: {{ ansible_failed_result.msg | default('Unknown error') }}
+          
+    - name: Set failed connectivity result
+      set_fact:
+        connectivity_test_results:
+          overall_status: "FAIL"
+          error: "{{ ansible_failed_result.msg | default('Connectivity test failed') }}"
+          http_accessible: false
+          api_accessible: false
+          has_permissions: false
 
 # SUMMARY REPORT
 - name: Connectivity Test Summary
@@ -122,6 +142,18 @@
   tasks:
     - name: Collect test results
       block:
+        - name: Debug - checking hostvars for results
+          debug:
+            msg: |
+              Checking results for hosts: {{ ansible_play_hosts }}
+              {% for host in ansible_play_hosts %}
+              Host: {{ host }}
+              - connectivity_test_results defined: {{ 'YES' if hostvars[host]['connectivity_test_results'] is defined else 'NO' }}
+              {% if hostvars[host]['connectivity_test_results'] is defined %}
+              - overall_status: {{ hostvars[host]['connectivity_test_results']['overall_status'] }}
+              {% endif %}
+              {% endfor %}
+        
         - name: Initialize controller lists
           set_fact:
             passed_controllers: []
