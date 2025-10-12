@@ -1,0 +1,8 @@
+---
+# Ansible Galaxy requirements for Central Controller playbooks
+# Install with: ansible-galaxy install -r requirements.yml
+
+collections:
+  - name: awx.awx
+    version: ">=23.0.0"
+    source: https://galaxy.ansible.com
