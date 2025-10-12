@@ -1,0 +1,262 @@
+---
+# CTF RHEL Connectivity Test Playbook
+# This playbook tests connectivity and basic system information from user's AAP cluster
+# Used for onboarding and connectivity verification
+
+- name: CTF RHEL Connectivity and System Check
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: yes
+  vars:
+    ctf_tracker_url: "{{ ctf_tracker_url | default('') }}"
+    ctf_tracker_token: "{{ ctf_tracker_token | default('') }}"
+    attendee_id: "{{ attendee_id | default('') }}"
+    test_type: "{{ test_type | default('connectivity') }}"
+
+  tasks:
+    - name: Display connectivity test information
+      debug:
+        msg: |
+          ========================================
+          CTF RHEL CONNECTIVITY TEST
+          ========================================
+          Target Host: {{ inventory_hostname }}
+          Attendee ID: {{ attendee_id }}
+          Test Type: {{ test_type }}
+          CTF Tracker: {{ ctf_tracker_url }}
+          ========================================
+
+    # BASIC CONNECTIVITY TESTS
+    - name: Test basic connectivity
+      ping:
+      register: ping_result
+
+    - name: Gather system information
+      setup:
+        gather_subset:
+          - '!all'
+          - '!any'
+          - network
+          - hardware
+          - virtual
+          - distribution
+      register: system_info
+
+    # NETWORK CONNECTIVITY TESTS
+    - name: Test DNS resolution
+      command: nslookup google.com
+      register: dns_test
+      ignore_errors: yes
+
+    - name: Test internet connectivity
+      uri:
+        url: https://www.google.com
+        method: GET
+        timeout: 10
+      register: internet_test
+      ignore_errors: yes
+
+    # SYSTEM HEALTH CHECKS
+    - name: Check system uptime
+      command: uptime
+      register: uptime_info
+
+    - name: Check disk space
+      command: df -h
+      register: disk_space
+
+    - name: Check memory usage
+      command: free -m
+      register: memory_info
+
+    - name: Check running services
+      command: systemctl list-units --type=service --state=running
+      register: running_services
+
+    # RHEL VERSION AND SUBSCRIPTION INFO
+    - name: Check RHEL version
+      command: cat /etc/redhat-release
+      register: rhel_version
+      ignore_errors: yes
+
+    - name: Check subscription status
+      command: subscription-manager status
+      register: subscription_status
+      ignore_errors: yes
+
+    # SECURITY AND FIREWALL STATUS
+    - name: Check SELinux status
+      command: getenforce
+      register: selinux_status
+      ignore_errors: yes
+
+    - name: Check firewall status
+      systemd:
+        name: firewalld
+      register: firewall_status
+      ignore_errors: yes
+
+    # COMPILE RESULTS
+    - name: Compile connectivity test results
+      set_fact:
+        connectivity_results:
+          basic_connectivity:
+            ping_success: "{{ ping_result is succeeded }}"
+            ansible_reachable: true
+          system_info:
+            hostname: "{{ ansible_hostname }}"
+            ip_address: "{{ ansible_default_ipv4.address | default('unknown') }}"
+            os_family: "{{ ansible_os_family }}"
+            distribution: "{{ ansible_distribution }}"
+            distribution_version: "{{ ansible_distribution_version }}"
+            architecture: "{{ ansible_architecture }}"
+            processor_count: "{{ ansible_processor_count }}"
+            memory_mb: "{{ ansible_memtotal_mb }}"
+            uptime: "{{ uptime_info.stdout | default('unknown') }}"
+          network_tests:
+            dns_resolution: "{{ dns_test is succeeded }}"
+            internet_access: "{{ internet_test is succeeded }}"
+          security_status:
+            selinux_status: "{{ selinux_status.stdout | default('unknown') }}"
+            firewall_running: "{{ firewall_status.status.ActiveState == 'active' if firewall_status.status is defined else false }}"
+          rhel_info:
+            version: "{{ rhel_version.stdout | default('unknown') }}"
+            subscription_status: "{{ 'active' in subscription_status.stdout if subscription_status is succeeded else false }}"
+          health_metrics:
+            disk_usage: "{{ disk_space.stdout_lines | default([]) }}"
+            memory_usage: "{{ memory_info.stdout | default('unknown') }}"
+            services_running: "{{ running_services.stdout_lines | length | default(0) }}"
+
+    # CALCULATE CONNECTIVITY SCORE
+    - name: Calculate connectivity score
+      set_fact:
+        connectivity_score: "{{ 
+          (connectivity_results.basic_connectivity.ping_success | int * 20) +
+          (connectivity_results.network_tests.dns_resolution | int * 15) +
+          (connectivity_results.network_tests.internet_access | int * 10) +
+          (connectivity_results.security_status.firewall_running | int * 10) +
+          (connectivity_results.rhel_info.subscription_status | int * 15) +
+          30
+        }}"
+        max_connectivity_score: 100
+
+    - name: Determine connectivity status
+      set_fact:
+        connectivity_status: "{{ 'excellent' if connectivity_score | int >= 80 else ('good' if connectivity_score | int >= 60 else ('fair' if connectivity_score | int >= 40 else 'poor')) }}"
+        connectivity_ready: "{{ connectivity_score | int >= 60 }}"
+
+    # REPORT BACK TO CTF TRACKER
+    - name: Report connectivity results to CTF Tracker
+      uri:
+        url: "{{ ctf_tracker_url }}/api/connectivity_test"
+        method: POST
+        body_format: json
+        headers:
+          Authorization: "Bearer {{ ctf_tracker_token }}"
+          Content-Type: "application/json"
+        body:
+          hostname: "{{ ansible_hostname }}"
+          ip_address: "{{ ansible_default_ipv4.address | default('unknown') }}"
+          attendee_id: "{{ attendee_id }}"
+          test_type: "{{ test_type }}"
+          connectivity_results: "{{ connectivity_results }}"
+          connectivity_score: "{{ connectivity_score }}"
+          connectivity_status: "{{ connectivity_status }}"
+          connectivity_ready: "{{ connectivity_ready }}"
+          timestamp: "{{ ansible_date_time.iso8601 }}"
+        validate_certs: no
+      register: tracker_response
+      ignore_errors: yes
+      when: ctf_tracker_url != '' and ctf_tracker_token != ''
+
+    # DISPLAY RESULTS
+    - name: Display connectivity test results
+      debug:
+        msg: |
+          ==========================================
+          CTF RHEL CONNECTIVITY TEST RESULTS
+          ==========================================
+          Host: {{ ansible_hostname }}
+          IP Address: {{ ansible_default_ipv4.address | default('unknown') }}
+          Attendee: {{ attendee_id }}
+          
+          CONNECTIVITY SCORE: {{ connectivity_score }}/{{ max_connectivity_score }}
+          STATUS: {{ connectivity_status | upper }}
+          READY FOR CTF: {{ 'YES' if connectivity_ready else 'NO' }}
+          
+          DETAILED RESULTS:
+          ----------------
+          ✓ Basic Connectivity: {{ 'PASS' if connectivity_results.basic_connectivity.ping_success else 'FAIL' }}
+          ✓ DNS Resolution: {{ 'PASS' if connectivity_results.network_tests.dns_resolution else 'FAIL' }}
+          ✓ Internet Access: {{ 'PASS' if connectivity_results.network_tests.internet_access else 'FAIL' }}
+          ✓ Firewall Status: {{ 'ACTIVE' if connectivity_results.security_status.firewall_running else 'INACTIVE' }}
+          ✓ RHEL Subscription: {{ 'ACTIVE' if connectivity_results.rhel_info.subscription_status else 'INACTIVE' }}
+          
+          SYSTEM INFO:
+          ------------
+          OS: {{ connectivity_results.system_info.distribution }} {{ connectivity_results.system_info.distribution_version }}
+          Architecture: {{ connectivity_results.system_info.architecture }}
+          Memory: {{ connectivity_results.system_info.memory_mb }}MB
+          CPUs: {{ connectivity_results.system_info.processor_count }}
+          
+          SECURITY STATUS:
+          ---------------
+          SELinux: {{ connectivity_results.security_status.selinux_status }}
+          Firewall: {{ 'Running' if connectivity_results.security_status.firewall_running else 'Stopped' }}
+          
+          Tracker Update: {{ 'SUCCESS' if tracker_response is succeeded else 'FAILED' }}
+          ==========================================
+
+    # RECOMMENDATIONS BASED ON RESULTS
+    - name: Provide recommendations
+      debug:
+        msg: |
+          ==========================================
+          RECOMMENDATIONS FOR IMPROVEMENT
+          ==========================================
+          {% if not connectivity_results.network_tests.dns_resolution %}
+          ⚠️  DNS Resolution Failed - Check /etc/resolv.conf
+          {% endif %}
+          {% if not connectivity_results.network_tests.internet_access %}
+          ⚠️  Internet Access Failed - Check network configuration
+          {% endif %}
+          {% if not connectivity_results.security_status.firewall_running %}
+          ⚠️  Firewall Not Running - Consider starting firewalld service
+          {% endif %}
+          {% if not connectivity_results.rhel_info.subscription_status %}
+          ⚠️  RHEL Subscription Inactive - Register with subscription-manager
+          {% endif %}
+          {% if connectivity_ready %}
+          ✅ System is ready for CTF challenges!
+          {% else %}
+          ❌ System needs improvements before CTF participation
+          {% endif %}
+          ==========================================
+
+    # CREATE CONNECTIVITY REPORT FILE
+    - name: Create connectivity report file
+      copy:
+        content: |
+          CTF RHEL Connectivity Test Report
+          =================================
+          Generated: {{ ansible_date_time.iso8601 }}
+          Host: {{ ansible_hostname }}
+          IP: {{ ansible_default_ipv4.address | default('N/A') }}
+          Attendee: {{ attendee_id }}
+          
+          Connectivity Score: {{ connectivity_score }}/{{ max_connectivity_score }}
+          Status: {{ connectivity_status }}
+          Ready for CTF: {{ connectivity_ready }}
+          
+          Full Results:
+          {{ connectivity_results | to_nice_json }}
+        dest: "/tmp/ctf_connectivity_report_{{ ansible_hostname }}_{{ ansible_date_time.epoch }}.json"
+      ignore_errors: yes
+
+    # FAIL THE PLAYBOOK IF CONNECTIVITY IS POOR
+    - name: Fail if connectivity is insufficient
+      fail:
+        msg: "Connectivity test failed - Score: {{ connectivity_score }}/{{ max_connectivity_score }}. System not ready for CTF."
+      when: 
+        - connectivity_score | int < 40
+        - test_type == 'validation'
+

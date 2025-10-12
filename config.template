@@ -1,0 +1,30 @@
+# CTF Tracker Configuration Template
+# This file will be populated during deployment with user-provided values
+
+# OpenShift Cluster Configuration
+OPENSHIFT_CLUSTER_DOMAIN=
+OPENSHIFT_PROJECT_NAME=ctf-project
+
+# Default AAP Configuration (Optional - users can add more via web interface)
+DEFAULT_AAP_ENABLED=false
+DEFAULT_AAP_BASE_URL=
+DEFAULT_AAP_USERNAME=
+DEFAULT_AAP_PASSWORD=
+DEFAULT_AAP_JOB_TEMPLATE_ID=1
+DEFAULT_AAP_CONNECTIVITY_TEMPLATE_ID=2
+DEFAULT_AAP_VERIFY_SSL=true
+
+# Application Configuration
+APP_SECRET_KEY=
+DATABASE_DIR=/app/data
+AUTO_REFRESH_INTERVAL=30
+MAX_CONCURRENT_CHECKS=5
+
+# Storage Configuration
+STORAGE_CLASS=gp3-csi
+STORAGE_SIZE=1Gi
+
+# Security Configuration
+FLASK_DEBUG=false
+
+

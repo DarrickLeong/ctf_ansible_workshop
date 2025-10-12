@@ -1,0 +1,150 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ctf-tracker
+  labels:
+    app: ctf-tracker
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/instance: ctf-tracker
+    app.kubernetes.io/name: ctf-tracker
+    app.kubernetes.io/part-of: ctf-tracker-app
+    app.openshift.io/runtime: python
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ctf-tracker
+  template:
+    metadata:
+      labels:
+        app: ctf-tracker
+        deploymentconfig: ctf-tracker
+    spec:
+      containers:
+      - name: ctf-tracker
+        image: ctf-tracker:latest
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        - name: DATABASE_DIR
+          value: "${DATABASE_DIR}"
+        - name: AAP_BASE_URL
+          value: "${DEFAULT_AAP_BASE_URL}"
+        - name: AAP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: ctf-tracker-secrets
+              key: aap-username
+        - name: AAP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ctf-tracker-secrets
+              key: aap-password
+        - name: AAP_JOB_TEMPLATE_ID
+          value: "${DEFAULT_AAP_JOB_TEMPLATE_ID}"
+        - name: AAP_VERIFY_SSL
+          value: "${DEFAULT_AAP_VERIFY_SSL}"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: data-volume
+          mountPath: /app/data
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+      volumes:
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: ctf-tracker-data
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ctf-tracker-service
+  labels:
+    app: ctf-tracker
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/instance: ctf-tracker
+    app.kubernetes.io/name: ctf-tracker
+    app.kubernetes.io/part-of: ctf-tracker-app
+spec:
+  ports:
+  - name: 8080-tcp
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: ctf-tracker
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: ctf-tracker-route
+  labels:
+    app: ctf-tracker
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/instance: ctf-tracker
+    app.kubernetes.io/name: ctf-tracker
+    app.kubernetes.io/part-of: ctf-tracker-app
+spec:
+  host: ctf-tracker-${OPENSHIFT_PROJECT_NAME}.${OPENSHIFT_CLUSTER_DOMAIN}
+  to:
+    kind: Service
+    name: ctf-tracker-service
+    weight: 100
+  port:
+    targetPort: 8080-tcp
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ctf-tracker-data
+  labels:
+    app: ctf-tracker
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: ${STORAGE_SIZE}
+  storageClassName: ${STORAGE_CLASS}
+
+

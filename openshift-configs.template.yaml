@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ctf-tracker-config
+  labels:
+    app: ctf-tracker
+data:
+  # SSH configuration for connecting to RHEL machines
+  ssh_config: |
+    Host *
+        StrictHostKeyChecking no
+        UserKnownHostsFile /dev/null
+        ConnectTimeout 10
+        ServerAliveInterval 60
+        ServerAliveCountMax 3
+  
+  # Application configuration
+  app_config.py: |
+    import os
+    
+    # Flask configuration
+    DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    SECRET_KEY = os.getenv('SECRET_KEY', '${APP_SECRET_KEY}')
+    
+    # Database configuration
+    DATABASE_PATH = os.getenv('DATABASE', '${DATABASE_DIR}/ctf_tracker.db')
+    
+    # AAP integration settings
+    AAP_BASE_URL = os.getenv('AAP_BASE_URL', '${DEFAULT_AAP_BASE_URL}')
+    AAP_USERNAME = os.getenv('AAP_USERNAME', '${DEFAULT_AAP_USERNAME}')
+    AAP_PASSWORD = os.getenv('AAP_PASSWORD', '${DEFAULT_AAP_PASSWORD}')
+    AAP_JOB_TEMPLATE_ID = os.getenv('AAP_JOB_TEMPLATE_ID', '${DEFAULT_AAP_JOB_TEMPLATE_ID}')
+    AAP_VERIFY_SSL = os.getenv('AAP_VERIFY_SSL', '${DEFAULT_AAP_VERIFY_SSL}').lower() == 'true'
+    
+    # Application settings
+    AUTO_REFRESH_INTERVAL = int(os.getenv('AUTO_REFRESH_INTERVAL', '${AUTO_REFRESH_INTERVAL}'))  # seconds
+    MAX_CONCURRENT_CHECKS = int(os.getenv('MAX_CONCURRENT_CHECKS', '${MAX_CONCURRENT_CHECKS}'))
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ctf-tracker-secrets
+  labels:
+    app: ctf-tracker
+type: Opaque
+data:
+  # Base64 encoded secret key
+  secret-key: ${APP_SECRET_KEY_B64}
+  # AAP credentials (base64 encoded) - Optional if using default AAP
+  aap-username: ${DEFAULT_AAP_USERNAME_B64}
+  aap-password: ${DEFAULT_AAP_PASSWORD_B64}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ctf-tracker-role
+  labels:
+    app: ctf-tracker
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ctf-tracker-rolebinding
+  labels:
+    app: ctf-tracker
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: ${OPENSHIFT_PROJECT_NAME}
+roleRef:
+  kind: Role
+  name: ctf-tracker-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ctf-tracker-netpol
+  labels:
+    app: ctf-tracker
+spec:
+  podSelector:
+    matchLabels:
+      app: ctf-tracker
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 22  # SSH to RHEL machines
+    - protocol: TCP
+      port: 53  # DNS
+    - protocol: UDP
+      port: 53  # DNS
+    - protocol: TCP
+      port: 80   # HTTP (if needed for health checks)
+    - protocol: TCP
+      port: 443  # HTTPS (if needed for health checks)
+
+
