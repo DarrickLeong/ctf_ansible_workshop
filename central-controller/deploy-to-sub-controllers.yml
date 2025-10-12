@@ -1,0 +1,411 @@
+---
+# CTF Playbook Deployment to Sub Ansible Controllers
+# This playbook deploys CTF playbooks and creates job templates on multiple sub controllers
+# Designed to run on Central AAP Controller
+# Requires: ansible-core >= 2.12, awx.awx collection
+
+- name: Deploy CTF Playbooks to Sub Ansible Controllers
+  hosts: sub_controllers
+  gather_facts: no
+  serial: 1  # Deploy to one controller at a time to avoid overwhelming central controller
+  vars:
+    # Central CTF Tracker Configuration
+    ctf_tracker_base_url: "{{ ctf_tracker_url | default('https://ctf-tracker.apps.your-cluster.com') }}"
+    
+    # Project and SCM Configuration
+    ctf_project_name: "{{ project_name | default('CTF Challenge Playbooks') }}"
+    ctf_project_description: "CTF Challenge Verification and Connectivity Test Playbooks"
+    scm_type: "{{ scm_type | default('git') }}"  # git, manual, or archive
+    scm_url: "{{ scm_repository_url | default('') }}"  # Git repo URL if using git
+    scm_branch: "{{ scm_branch | default('main') }}"
+    
+    # Job Template Configuration
+    job_templates:
+      - name: "CTF Challenge Verification"
+        playbook: "comprehensive-ctf-playbook.yml"
+        description: "Execute CTF challenges and report results"
+        job_type: "run"
+        verbosity: 1
+        ask_variables_on_launch: true
+        ask_inventory_on_launch: true
+        ask_credential_on_launch: true
+        variables:
+          ctf_tracker_url: "{{ ctf_tracker_base_url }}"
+      - name: "CTF Connectivity Test"
+        playbook: "connectivity-test-playbook.yml"
+        description: "Test RHEL host connectivity and system health"
+        job_type: "run"
+        verbosity: 1
+        ask_variables_on_launch: true
+        ask_inventory_on_launch: true
+        ask_credential_on_launch: true
+        variables:
+          ctf_tracker_url: "{{ ctf_tracker_base_url }}"
+    
+    # Default execution environment (optional)
+    execution_environment: "{{ default_execution_environment | default('Default execution environment') }}"
+
+  tasks:
+    - name: Validate deployment variables for current controller
+      assert:
+        that:
+          - sub_controller_host is defined
+          - sub_controller_username is defined
+          - sub_controller_password is defined or sub_controller_token is defined
+          - ctf_tracker_base_url is defined
+        fail_msg: "Required variables missing for controller {{ inventory_hostname }}"
+
+    - name: Set controller connection facts
+      set_fact:
+        awx_host: "{{ sub_controller_host }}"
+        awx_username: "{{ sub_controller_username }}"
+        awx_password: "{{ sub_controller_password | default('') }}"
+        awx_token: "{{ sub_controller_token | default('') }}"
+        awx_validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
+        target_organization: "{{ sub_controller_organization | default('Default') }}"
+
+    - name: Display current deployment target
+      debug:
+        msg: |
+          ==========================================
+          DEPLOYING TO SUB CONTROLLER
+          ==========================================
+          Controller: {{ inventory_hostname }}
+          Host: {{ awx_host }}
+          Organization: {{ target_organization }}
+          Project: {{ ctf_project_name }}
+          SCM Type: {{ scm_type }}
+          SCM URL: {{ scm_url if scm_url else 'Manual/Local files' }}
+          ==========================================
+
+    # TEST CONTROLLER CONNECTIVITY
+    - name: Test sub controller connectivity
+      uri:
+        url: "https://{{ awx_host }}/api/v2/ping/"
+        method: GET
+        user: "{{ awx_username if awx_password else omit }}"
+        password: "{{ awx_password if awx_password else omit }}"
+        headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else omit }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        timeout: 30
+      register: ping_result
+      failed_when: false
+
+    - name: Fail if controller unreachable
+      fail:
+        msg: "Cannot reach sub controller {{ inventory_hostname }} at {{ awx_host }}"
+      when: ping_result.status != 200
+
+    # CREATE OR UPDATE ORGANIZATION (if specified)
+    - name: Create/Update Organization on sub controller
+      awx.awx.organization:
+        controller_host: "{{ awx_host }}"
+        controller_username: "{{ awx_username if awx_password else omit }}"
+        controller_password: "{{ awx_password if awx_password else omit }}"
+        controller_oauthtoken: "{{ awx_token if awx_token else omit }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        name: "{{ target_organization }}"
+        description: "Organization for CTF challenges - managed by central controller"
+        state: present
+      when: target_organization != "Default"
+
+    # CREATE PROJECT ON SUB CONTROLLER
+    - name: Create CTF Project on sub controller
+      awx.awx.project:
+        controller_host: "{{ awx_host }}"
+        controller_username: "{{ awx_username if awx_password else omit }}"
+        controller_password: "{{ awx_password if awx_password else omit }}"
+        controller_oauthtoken: "{{ awx_token if awx_token else omit }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        name: "{{ ctf_project_name }}"
+        description: "{{ ctf_project_description }} - Deployed from central controller"
+        organization: "{{ target_organization }}"
+        scm_type: "{{ scm_type }}"
+        scm_url: "{{ scm_url if scm_type == 'git' else omit }}"
+        scm_branch: "{{ scm_branch if scm_type == 'git' else omit }}"
+        scm_update_on_launch: "{{ scm_type == 'git' }}"
+        state: present
+      register: project_result
+
+    # SYNC PROJECT FROM SCM (if using SCM)
+    - name: Sync project from SCM on sub controller
+      awx.awx.project_update:
+        controller_host: "{{ awx_host }}"
+        controller_username: "{{ awx_username if awx_password else omit }}"
+        controller_password: "{{ awx_password if awx_password else omit }}"
+        controller_oauthtoken: "{{ awx_token if awx_token else omit }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        project: "{{ ctf_project_name }}"
+        wait: true
+        timeout: 180
+      when: scm_type != "manual"
+      register: sync_result
+
+    # CREATE JOB TEMPLATES ON SUB CONTROLLER
+    - name: Create CTF Job Templates on sub controller
+      awx.awx.job_template:
+        controller_host: "{{ awx_host }}"
+        controller_username: "{{ awx_username if awx_password else omit }}"
+        controller_password: "{{ awx_password if awx_password else omit }}"
+        controller_oauthtoken: "{{ awx_token if awx_token else omit }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        name: "{{ item.name }}"
+        description: "{{ item.description }} - Managed by central controller"
+        job_type: "{{ item.job_type }}"
+        project: "{{ ctf_project_name }}"
+        playbook: "{{ item.playbook }}"
+        verbosity: "{{ item.verbosity | default(0) }}"
+        ask_variables_on_launch: "{{ item.ask_variables_on_launch | default(true) }}"
+        ask_inventory_on_launch: "{{ item.ask_inventory_on_launch | default(true) }}"
+        ask_credential_on_launch: "{{ item.ask_credential_on_launch | default(true) }}"
+        extra_vars: "{{ item.variables | default({}) }}"
+        execution_environment: "{{ execution_environment if execution_environment != 'Default execution environment' else omit }}"
+        state: present
+      loop: "{{ job_templates }}"
+      register: job_template_results
+
+    # VERIFY DEPLOYMENT
+    - name: Verify job templates were created on sub controller
+      awx.awx.job_template:
+        controller_host: "{{ awx_host }}"
+        controller_username: "{{ awx_username if awx_password else omit }}"
+        controller_password: "{{ awx_password if awx_password else omit }}"
+        controller_oauthtoken: "{{ awx_token if awx_token else omit }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        name: "{{ item.name }}"
+        state: present
+      loop: "{{ job_templates }}"
+      register: verification_results
+
+    - name: Record successful deployment
+      set_fact:
+        deployment_success: true
+        deployment_project_id: "{{ project_result.id }}"
+        deployment_templates: "{{ job_template_results.results | map(attribute='id') | list }}"
+
+    - name: Report deployment success for current controller
+      debug:
+        msg: |
+          ✅ Successfully deployed to {{ inventory_hostname }}:
+          - Controller: {{ awx_host }}
+          - Organization: {{ target_organization }}
+          - Project: {{ ctf_project_name }} (ID: {{ deployment_project_id }})
+          - Templates Created: {{ deployment_templates | length }}
+          {% for template in job_templates %}
+          - Job Template: {{ template.name }}
+          {% endfor %}
+
+  rescue:
+    - name: Record deployment failure
+      set_fact:
+        deployment_success: false
+        deployment_error: "{{ ansible_failed_result.msg | default('Unknown error') }}"
+
+    - name: Report deployment failure
+      debug:
+        msg: |
+          ❌ Failed to deploy to {{ inventory_hostname }}:
+          - Controller: {{ awx_host }}
+          - Error: {{ deployment_error }}
+
+# POST-DEPLOYMENT SUMMARY
+- name: Post-Deployment Summary
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Collect deployment results
+      set_fact:
+        successful_deployments: "{{ groups['sub_controllers'] | 
+          select('extract', hostvars, 'deployment_success') | 
+          select('equalto', true) | list }}"
+        failed_deployments: "{{ groups['sub_controllers'] | 
+          select('extract', hostvars, 'deployment_success') | 
+          select('equalto', false) | list }}"
+
+    - name: Display final deployment summary
+      debug:
+        msg: |
+          ==========================================
+          FINAL DEPLOYMENT SUMMARY
+          ==========================================
+          Total Sub Controllers: {{ groups['sub_controllers'] | length }}
+          Successful Deployments: {{ successful_deployments | length }}
+          Failed Deployments: {{ failed_deployments | length }}
+          
+          SUCCESSFUL DEPLOYMENTS:
+          {% for controller in successful_deployments %}
+          ✅ {{ controller }}: {{ hostvars[controller]['awx_host'] }}
+          {% endfor %}
+          
+          {% if failed_deployments | length > 0 %}
+          FAILED DEPLOYMENTS:
+          {% for controller in failed_deployments %}
+          ❌ {{ controller }}: {{ hostvars[controller]['deployment_error'] | default('Unknown error') }}
+          {% endfor %}
+          {% endif %}
+          
+          Job Templates Deployed:
+          {% for template in job_templates %}
+          - {{ template.name }}
+          {% endfor %}
+          ==========================================
+
+    - name: Fail if any deployments failed
+      fail:
+        msg: "{{ failed_deployments | length }} deployment(s) failed. Check logs above."
+      when: failed_deployments | length > 0
+
+# TASKS FOR DEPLOYING TO A SINGLE CONTROLLER
+- name: Deploy to single controller tasks
+  block:
+    - name: Set controller facts
+      set_fact:
+        current_controller: "{{ controller }}"
+        awx_host: "{{ controller.controller_host }}"
+        awx_username: "{{ controller.username }}"
+        awx_password: "{{ controller.password }}"
+        awx_validate_certs: "{{ controller.validate_certs | default(false) }}"
+
+    - name: Display current controller
+      debug:
+        msg: "Deploying to {{ current_controller.name }} ({{ awx_host }})"
+
+    # TEST CONTROLLER CONNECTIVITY
+    - name: Test controller connectivity
+      uri:
+        url: "https://{{ awx_host }}/api/v2/ping/"
+        method: GET
+        user: "{{ awx_username }}"
+        password: "{{ awx_password }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        timeout: 30
+      register: ping_result
+      failed_when: false
+
+    - name: Fail if controller unreachable
+      fail:
+        msg: "Cannot reach controller {{ current_controller.name }} at {{ awx_host }}"
+      when: ping_result.status != 200
+
+    # CREATE OR UPDATE ORGANIZATION (if specified)
+    - name: Create/Update Organization
+      awx.awx.organization:
+        controller_host: "{{ awx_host }}"
+        controller_username: "{{ awx_username }}"
+        controller_password: "{{ awx_password }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        name: "{{ current_controller.organization | default('Default') }}"
+        description: "Organization for CTF challenges"
+        state: present
+      when: current_controller.organization is defined
+
+    # CREATE PROJECT
+    - name: Create CTF Project
+      awx.awx.project:
+        controller_host: "{{ awx_host }}"
+        controller_username: "{{ awx_username }}"
+        controller_password: "{{ awx_password }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        name: "{{ ctf_project_name }}"
+        description: "{{ ctf_project_description }}"
+        organization: "{{ current_controller.organization | default('Default') }}"
+        scm_type: "{{ scm_type }}"
+        scm_url: "{{ scm_url if scm_type == 'git' else omit }}"
+        scm_branch: "{{ scm_branch if scm_type == 'git' else omit }}"
+        scm_update_on_launch: "{{ scm_type == 'git' }}"
+        state: present
+      register: project_result
+
+    # UPLOAD PLAYBOOK FILES (if using manual SCM type)
+    - name: Upload playbook files (Manual SCM)
+      block:
+        - name: Read connectivity test playbook
+          set_fact:
+            connectivity_playbook_content: "{{ lookup('file', 'connectivity-test-playbook.yml') }}"
+
+        - name: Read comprehensive CTF playbook
+          set_fact:
+            comprehensive_playbook_content: "{{ lookup('file', 'comprehensive-ctf-playbook.yml') }}"
+
+        # Note: Manual file upload via API is complex in AWX/AAP
+        # This is a placeholder - in production, consider using git SCM instead
+        - name: Notify about manual file upload
+          debug:
+            msg: |
+              WARNING: Manual SCM type requires manual upload of playbook files.
+              Please upload the following files to the project directory:
+              - connectivity-test-playbook.yml
+              - comprehensive-ctf-playbook.yml
+              Consider using Git SCM for automatic synchronization.
+
+      when: scm_type == "manual"
+
+    # SYNC PROJECT (if using SCM)
+    - name: Sync project from SCM
+      awx.awx.project_update:
+        controller_host: "{{ awx_host }}"
+        controller_username: "{{ awx_username }}"
+        controller_password: "{{ awx_password }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        project: "{{ ctf_project_name }}"
+        wait: true
+        timeout: 120
+      when: scm_type != "manual"
+
+    # CREATE JOB TEMPLATES
+    - name: Create CTF Job Templates
+      awx.awx.job_template:
+        controller_host: "{{ awx_host }}"
+        controller_username: "{{ awx_username }}"
+        controller_password: "{{ awx_password }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        name: "{{ item.name }}"
+        description: "{{ item.description }}"
+        job_type: "{{ item.job_type }}"
+        project: "{{ ctf_project_name }}"
+        playbook: "{{ item.playbook }}"
+        verbosity: "{{ item.verbosity | default(0) }}"
+        ask_variables_on_launch: "{{ item.ask_variables_on_launch | default(true) }}"
+        ask_inventory_on_launch: "{{ item.ask_inventory_on_launch | default(true) }}"
+        ask_credential_on_launch: "{{ item.ask_credential_on_launch | default(true) }}"
+        extra_vars: "{{ item.variables | default({}) }}"
+        execution_environment: "{{ execution_environment | default(omit) }}"
+        state: present
+      loop: "{{ job_templates }}"
+      register: job_template_results
+
+    # VERIFY DEPLOYMENT
+    - name: Verify job templates were created
+      awx.awx.job_template:
+        controller_host: "{{ awx_host }}"
+        controller_username: "{{ awx_username }}"
+        controller_password: "{{ awx_password }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        name: "{{ item.name }}"
+        state: present
+      loop: "{{ job_templates }}"
+      register: verification_results
+
+    - name: Report deployment success for current controller
+      debug:
+        msg: |
+          ✅ Successfully deployed to {{ current_controller.name }}:
+          - Project: {{ ctf_project_name }} ({{ project_result.id }})
+          {% for template in job_templates %}
+          - Job Template: {{ template.name }}
+          {% endfor %}
+
+  rescue:
+    - name: Report deployment failure
+      debug:
+        msg: |
+          ❌ Failed to deploy to {{ current_controller.name }}:
+          Error: {{ ansible_failed_result.msg | default('Unknown error') }}
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+
+  # This file should be included in the main playbook above
+  when: false  # This prevents execution as it's meant to be included
+

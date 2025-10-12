@@ -1,0 +1,146 @@
+---
+# Test Sub Controllers Connectivity Playbook
+# This playbook tests connectivity to all sub controllers before deployment
+
+- name: Test Sub Controller Connectivity
+  hosts: sub_controllers
+  gather_facts: no
+  serial: 5  # Test up to 5 controllers in parallel
+  vars:
+    test_timeout: 30
+
+  tasks:
+    - name: Set controller connection facts
+      set_fact:
+        awx_host: "{{ sub_controller_host }}"
+        awx_username: "{{ sub_controller_username }}"
+        awx_password: "{{ sub_controller_password | default('') }}"
+        awx_token: "{{ sub_controller_token | default('') }}"
+        awx_validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
+
+    - name: Display test information
+      debug:
+        msg: |
+          Testing connectivity to {{ inventory_hostname }}
+          Host: {{ awx_host }}
+          Username: {{ awx_username }}
+          Using Token: {{ 'Yes' if awx_token else 'No' }}
+
+    # TEST BASIC CONNECTIVITY
+    - name: Test basic HTTP connectivity
+      uri:
+        url: "https://{{ awx_host }}"
+        method: GET
+        validate_certs: "{{ awx_validate_certs }}"
+        timeout: "{{ test_timeout }}"
+        status_code: 200, 302, 401, 403  # Expected responses
+      register: http_test
+      failed_when: false
+
+    # TEST API CONNECTIVITY
+    - name: Test API connectivity with authentication
+      uri:
+        url: "https://{{ awx_host }}/api/v2/ping/"
+        method: GET
+        user: "{{ awx_username if awx_password else omit }}"
+        password: "{{ awx_password if awx_password else omit }}"
+        headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else omit }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        timeout: "{{ test_timeout }}"
+      register: api_test
+      failed_when: false
+
+    # TEST PERMISSIONS
+    - name: Test permissions by listing organizations
+      uri:
+        url: "https://{{ awx_host }}/api/v2/organizations/"
+        method: GET
+        user: "{{ awx_username if awx_password else omit }}"
+        password: "{{ awx_password if awx_password else omit }}"
+        headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else omit }}"
+        validate_certs: "{{ awx_validate_certs }}"
+        timeout: "{{ test_timeout }}"
+      register: permissions_test
+      failed_when: false
+
+    # RECORD RESULTS
+    - name: Record test results
+      set_fact:
+        connectivity_test_results:
+          http_accessible: "{{ http_test.status in [200, 302, 401, 403] }}"
+          api_accessible: "{{ api_test.status == 200 }}"
+          has_permissions: "{{ permissions_test.status == 200 }}"
+          http_status: "{{ http_test.status | default('N/A') }}"
+          api_status: "{{ api_test.status | default('N/A') }}"
+          permissions_status: "{{ permissions_test.status | default('N/A') }}"
+          overall_status: "{{ 'PASS' if (api_test.status == 200 and permissions_test.status == 200) else 'FAIL' }}"
+
+    - name: Display connectivity test results
+      debug:
+        msg: |
+          ==========================================
+          CONNECTIVITY TEST RESULTS
+          ==========================================
+          Controller: {{ inventory_hostname }} ({{ awx_host }})
+          Overall Status: {{ connectivity_test_results.overall_status }}
+          
+          Detailed Results:
+          - HTTP Accessible: {{ 'PASS' if connectivity_test_results.http_accessible else 'FAIL' }} ({{ connectivity_test_results.http_status }})
+          - API Accessible: {{ 'PASS' if connectivity_test_results.api_accessible else 'FAIL' }} ({{ connectivity_test_results.api_status }})
+          - Has Permissions: {{ 'PASS' if connectivity_test_results.has_permissions else 'FAIL' }} ({{ connectivity_test_results.permissions_status }})
+          ==========================================
+
+    - name: Fail if connectivity test failed
+      fail:
+        msg: "Connectivity test failed for {{ inventory_hostname }}"
+      when: connectivity_test_results.overall_status == 'FAIL'
+
+# SUMMARY REPORT
+- name: Connectivity Test Summary
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Collect test results
+      set_fact:
+        passed_controllers: "{{ groups['sub_controllers'] | 
+          select('extract', hostvars, 'connectivity_test_results') | 
+          selectattr('overall_status', 'equalto', 'PASS') | list }}"
+        failed_controllers: "{{ groups['sub_controllers'] | 
+          select('extract', hostvars, 'connectivity_test_results') | 
+          selectattr('overall_status', 'equalto', 'FAIL') | list }}"
+
+    - name: Display final connectivity summary
+      debug:
+        msg: |
+          ==========================================
+          FINAL CONNECTIVITY TEST SUMMARY
+          ==========================================
+          Total Controllers Tested: {{ groups['sub_controllers'] | length }}
+          Passed: {{ passed_controllers | length }}
+          Failed: {{ failed_controllers | length }}
+          
+          {% if passed_controllers | length > 0 %}
+          PASSED CONTROLLERS:
+          {% for controller in passed_controllers %}
+          ✅ {{ controller }}: {{ hostvars[controller]['awx_host'] }}
+          {% endfor %}
+          {% endif %}
+          
+          {% if failed_controllers | length > 0 %}
+          FAILED CONTROLLERS:
+          {% for controller in failed_controllers %}
+          ❌ {{ controller }}: {{ hostvars[controller]['awx_host'] }}
+          {% endfor %}
+          {% endif %}
+          ==========================================
+
+    - name: All controllers are ready for deployment
+      debug:
+        msg: "🎉 All sub controllers passed connectivity tests! Ready for CTF deployment."
+      when: failed_controllers | length == 0
+
+    - name: Fail if any controllers failed connectivity
+      fail:
+        msg: "{{ failed_controllers | length }} controller(s) failed connectivity tests. Fix issues before deployment."
+      when: failed_controllers | length > 0

@@ -1,0 +1,21 @@
+---
+# Central AAP Controller Group Variables
+# Place this file in group_vars/all/ in your Central AAP Controller
+
+# Vault-encrypted passwords for sub controllers
+# Encrypt this file with: ansible-vault encrypt group_vars/all/vault.yml
+
+# Sub Controller Authentication
+vault_sub_controller_east_password: "your-east-controller-password"
+vault_sub_controller_west_password: "your-west-controller-password"
+vault_sub_controller_central_password: "your-central-controller-password"
+
+# Alternative: OAuth Tokens (more secure)
+# vault_sub_controller_east_token: "your-east-oauth-token"
+# vault_sub_controller_west_token: "your-west-oauth-token"
+# vault_sub_controller_central_token: "your-central-oauth-token"
+
+# Additional encrypted variables as needed
+vault_git_username: "your-git-username"
+vault_git_password: "your-git-password"
+vault_git_token: "your-git-token"

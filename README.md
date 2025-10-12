@@ -1,322 +1,294 @@
-# CTF Checkpoint Tracker - Enterprise Edition
+# CTF Ansible Workshop - Organized Structure
 
-A comprehensive containerized web application for tracking Capture the Flag (CTF) game progress, designed to run on OpenShift with Ansible Automation Platform (AAP) integration.
+This repository contains a comprehensive CTF (Capture the Flag) infrastructure management system with centralized deployment capabilities.
 
-## 🌟 Features
-
-- **Multi-AAP Cluster Support**: Users can onboard their own AAP clusters
-- **Comprehensive Challenge Verification**: Advanced playbooks for multiple service types
-- **Real-time Connectivity Testing**: RHEL machine health and readiness assessment
-- **Interactive Deployment**: Secure configuration collection during deployment
-- **Enterprise Security**: Non-root containers, RBAC, network policies
-- **Scalable Architecture**: Multi-tenant design with isolated scoring
-
-## 🏗️ Architecture
+## 📁 Repository Structure
 
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   CTF Tracker   │◄──►│   User's AAP     │◄──►│   RHEL Hosts    │
-│   (OpenShift)   │    │   Cluster        │    │   (Targets)     │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-   Web Dashboard           Job Templates           Challenge
-   AAP Management          Playbook Exec          Verification
-   Leaderboard            Results Reporting       Point Calculation
+ctf-ansible-workshop/
+├── ctf-app/                           # CTF Tracker Web Application
+│   ├── app.py                         # Main Flask application
+│   ├── requirements.txt               # Python dependencies
+│   ├── Dockerfile                     # Container image definition
+│   ├── config.template                # Configuration template
+│   ├── deploy-interactive.sh          # Interactive deployment script
+│   └── sanitize-for-github.sh         # Security sanitization script
+│
+├── central-controller/                # Central Ansible Platform Controller
+│   ├── deploy-to-sub-controllers.yml  # Main deployment playbook
+│   ├── test-sub-controllers.yml       # Connectivity test playbook
+│   ├── central-aap-inventory.ini      # Inventory template
+│   ├── central-controller-job-templates.yml  # Job template configs
+│   ├── host_vars/                     # Host-specific variables
+│   │   ├── sub-controller-east.yml
+│   │   └── sub-controller-west.yml
+│   └── group_vars/all/
+│       └── vault.yml                  # Encrypted credentials
+│
+├── sub-controllers/                   # Playbooks for Sub Controllers
+│   ├── comprehensive-ctf-playbook.yml # Challenge verification playbook
+│   └── connectivity-test-playbook.yml # System health check playbook
+│
+├── openshift/                         # OpenShift Deployment
+│   ├── openshift-deployment.template.yaml
+│   └── openshift-configs.template.yaml
+│
+├── docs/                              # Documentation
+│   ├── README.md                      # This file
+│   ├── CENTRAL_AAP_SETUP_GUIDE.md     # Central controller setup
+│   ├── ENHANCED_CTF_GUIDE.md          # Detailed CTF guide
+│   ├── AAP_SETUP_GUIDE.md             # AAP setup instructions
+│   └── COMMIT_CHECKLIST.md            # Development checklist
+│
+├── LICENSE                            # Apache License 2.0
+└── README.md                          # Main documentation
 ```
 
-## 🚀 Quick Start
+## 🏗️ System Architecture
 
-### Prerequisites
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CTF Infrastructure                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────────┐    ┌──────────────────────────────────┐   │
+│  │   CTF Tracker   │    │     Central AAP Controller       │   │
+│  │   (OpenShift)   │    │                                  │   │
+│  │                 │    │  • Manages Sub Controllers       │   │
+│  │  • Web Dashboard│    │  • Deploys CTF Playbooks        │   │
+│  │  • Scoring      │    │  • Orchestrates Infrastructure  │   │
+│  │  • Leaderboard  │    │                                  │   │
+│  └─────────────────┘    └──────────────────────────────────┘   │
+│           │                               │                    │
+│           │ HTTP API                      │ AAP API            │
+│           │                               │                    │
+│  ┌────────▼────────────────────────────────▼────────────────┐   │
+│  │              Sub Controllers                             │   │
+│  │                                                          │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │   │
+│  │  │Sub AAP East │  │Sub AAP West │  │Sub AAP Cent │     │   │
+│  │  │             │  │             │  │             │     │   │
+│  │  │RHEL Hosts A │  │RHEL Hosts B │  │RHEL Hosts C │     │   │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘     │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-- OpenShift cluster access with `oc` CLI installed and configured
-- Ansible Automation Platform cluster (optional for initial deployment)
-- Bash shell with `envsubst` utility
+## 🚀 Component Overview
 
-### Interactive Deployment
+### **CTF Tracker Application** (`ctf-app/`)
+- **Purpose**: Central web application for CTF management
+- **Technology**: Flask-based web application
+- **Deployment**: OpenShift container platform
+- **Features**: 
+  - Real-time challenge tracking
+  - Multi-AAP cluster support
+  - Leaderboard and scoring
+  - Web-based management interface
 
-1. **Clone and Navigate**:
-   ```bash
-   git clone <repository-url>
-   cd ctf-tracker
-   ```
+### **Central AAP Controller** (`central-controller/`)
+- **Purpose**: Orchestrates deployment to multiple sub controllers
+- **Technology**: Ansible Platform Controller
+- **Features**:
+  - Centralized sub controller management
+  - Automated playbook deployment
+  - Connectivity testing and validation
+  - Credential management with vault encryption
 
-2. **Login to OpenShift**:
-   ```bash
-   oc login <your-openshift-cluster-url>
-   ```
+### **Sub Controllers** (`sub-controllers/`)
+- **Purpose**: Execute CTF challenges on RHEL hosts
+- **Technology**: Ansible playbooks
+- **Features**:
+  - Challenge verification (Apache, Nginx, MySQL, etc.)
+  - System connectivity and health checks
+  - Results reporting back to central tracker
+  - Multi-challenge support with point calculation
 
-3. **Run Interactive Deployment**:
-   ```bash
-   ./deploy-interactive.sh
-   ```
+### **OpenShift Deployment** (`openshift/`)
+- **Purpose**: Container orchestration for CTF tracker
+- **Technology**: OpenShift/Kubernetes
+- **Features**:
+  - Scalable web application deployment
+  - Persistent storage for scoring data
+  - Network policies and security
+  - Service discovery and load balancing
 
-   The script will prompt you for:
-   - OpenShift cluster domain
-   - Project name
-   - Storage configuration
-   - Application security settings
-   - Optional default AAP cluster
-   - Application settings
+## 📋 Quick Start Guide
 
-4. **Access Application**:
-   The deployment will provide the application URL upon completion.
-
-### Configuration-Only Mode
-
-To only generate configuration without deploying:
+### **Phase 1: Deploy CTF Tracker Application** 🎯
 
 ```bash
-./deploy-interactive.sh configure
+# 1. Navigate to CTF app directory
+cd ctf-app/
+
+# 2. Login to OpenShift
+oc login <your-openshift-cluster-url>
+
+# 3. Run interactive deployment
+./deploy-interactive.sh
+
+# The script will prompt for:
+# - OpenShift cluster domain
+# - Project name
+# - Storage configuration
+# - Application security settings
+# - CTF Tracker URL (save this for later steps)
 ```
 
-### Using Existing Configuration
+**Expected Result**: CTF Tracker web application running on OpenShift
 
-If you have a `config.env` file, the deployment script will offer to reuse it.
+### **Phase 2: Configure Central Controller** 🎛️
 
-## 🎯 Challenge Types
+```bash
+# 1. Navigate to central controller directory
+cd central-controller/
 
-### Built-in Challenges
+# 2. Configure your sub controllers inventory
+cp central-aap-inventory.ini my-inventory.ini
+vim my-inventory.ini
+# Edit with your actual sub controller hostnames
 
-1. **Apache HTTP Server** (10 points)
-   - Package installation verification
-   - Service status and configuration
-   - Port accessibility testing
+# 3. Configure host variables for each sub controller
+vim host_vars/sub-controller-east.yml
+# Set: sub_controller_host, username, organization
 
-2. **Nginx Web Server** (10 points)
-   - Installation and service checks
-   - Configuration validation
-   - Network accessibility
+vim host_vars/sub-controller-west.yml
+# Set: sub_controller_host, username, organization
 
-3. **MySQL/MariaDB Database** (10 points)
-   - Database server installation
-   - Service status verification
-   - Port connectivity testing
+# 4. Set up encrypted passwords
+vim group_vars/all/vault.yml
+# Add your actual sub controller passwords
 
-4. **Firewall Configuration** (10 points)
-   - Firewalld service management
-   - Zone and rule configuration
-   - HTTP service allowlisting
+# 5. Encrypt the vault file
+ansible-vault encrypt group_vars/all/vault.yml
+# Enter a vault password (remember this!)
+```
 
-5. **User Management** (10 points)
-   - User account creation
-   - Sudo configuration validation
+### **Phase 3: Set Up Central AAP Controller** 🏗️
 
-6. **Custom Commands** (Variable points)
-   - Flexible command execution
-   - Configurable point allocation
+**In Central AAP Controller Web Interface:**
 
-## 🛠️ AAP Integration Setup
+1. **Create Project**:
+   - Name: `CTF Sub Controller Management`
+   - SCM Type: `Git`
+   - SCM URL: `https://github.com/your-org/ctf-ansible-workshop.git`
+   - SCM Branch: `main`
+   - Update on Launch: ✅
 
-### Required AAP Job Templates
+2. **Create Inventory**:
+   - Name: `CTF Sub Controllers Inventory`
+   - Import from: Upload `my-inventory.ini`
+   - Configure host variables from `host_vars/` files
 
-Create the following job templates in your AAP cluster:
+3. **Create Vault Credential**:
+   - Name: `CTF Sub Controllers Vault`
+   - Type: `Vault`
+   - Vault Password: (from step 2.5 above)
 
-#### 1. CTF Challenge Verification
-- **Name**: `CTF Challenge Verification`
-- **Playbook**: `comprehensive-ctf-playbook.yml`
-- **Variables**: Prompt on launch
-  - `target_host`
-  - `attendee_id`
-  - `ctf_tracker_url`
-  - `challenge_config`
+4. **Create Job Templates**:
 
-#### 2. RHEL Connectivity Test
-- **Name**: `CTF Connectivity Test`
-- **Playbook**: `connectivity-test-playbook.yml`
-- **Variables**: Prompt on launch
-  - `target_host`
-  - `attendee_id`
-  - `ctf_tracker_url`
-  - `test_type`
+   **Template 1: Test Connectivity** ⚡
+   - Name: `Test Sub Controller Connectivity`
+   - Job Type: `Run`
+   - Inventory: `CTF Sub Controllers Inventory`
+   - Project: `CTF Sub Controller Management`
+   - Playbook: `central-controller/test-sub-controllers.yml`
+   - Credentials: `CTF Sub Controllers Vault`
 
-### Playbook Upload
+   **Template 2: Deploy Playbooks** 🚀
+   - Name: `Deploy CTF Playbooks to Sub Controllers`
+   - Job Type: `Run`
+   - Inventory: `CTF Sub Controllers Inventory`
+   - Project: `CTF Sub Controller Management`
+   - Playbook: `central-controller/deploy-to-sub-controllers.yml`
+   - Credentials: `CTF Sub Controllers Vault`
+   - Prompt on launch: `Variables` ✅
+   - Survey: Enable with these questions:
+     - Repository URL: `https://github.com/your-org/ctf-ansible-workshop.git`
+     - Branch: `main`
+     - CTF Tracker URL: (from Phase 1)
 
-Upload these playbooks to your AAP project:
-- `comprehensive-ctf-playbook.yml`
-- `connectivity-test-playbook.yml`
+### **Phase 4: Execute Deployment** 🚀
 
-## 📱 Usage Workflow
+**CRITICAL: Launch in this exact order!**
 
-### 1. Onboard AAP Clusters
-- Access the web dashboard
-- Click "Onboard AAP Cluster"
-- Enter cluster details and credentials
-- System automatically tests connectivity
+1. **First: Test Connectivity** ⚡
+   ```
+   Run Job Template: "Test Sub Controller Connectivity"
+   ```
+   - **Must show**: All sub controllers `PASS` status
+   - **If failures**: Fix authentication/network issues before proceeding
 
-### 2. Add RHEL Machines
-- Register target machines using hostnames from AAP inventory
-- Assign machines to attendees
-- No SSH credentials required (handled by AAP)
+2. **Second: Deploy CTF Playbooks** 🎯
+   ```
+   Run Job Template: "Deploy CTF Playbooks to Sub Controllers"
+   ```
+   - **Survey inputs**:
+     - Repository URL: `https://github.com/your-org/ctf-ansible-workshop.git`
+     - Branch: `main`
+     - CTF Tracker URL: `https://ctf-tracker-project.apps.your-cluster.com`
+     - Project Name: `CTF Challenge Playbooks`
 
-### 3. Test System Readiness
-- Run connectivity tests via "Test All Connectivity"
-- Review system health scores and recommendations
-- Ensure machines are CTF-ready
+### **Phase 5: Verification** ✅
 
-### 4. Execute Challenges
-- Manual trigger: "Check All Machines (AAP)"
-- Automatic refresh: Enable 30-second intervals
-- Monitor real-time progress and scoring
+**Check each sub controller has**:
+- ✅ Project: "CTF Challenge Playbooks"
+- ✅ Job Template: "CTF Challenge Verification"
+- ✅ Job Template: "CTF Connectivity Test"
+- ✅ Playbooks synced from Git
+
+**Test the complete flow**:
+1. In CTF Tracker web interface: "Onboard AAP Cluster"
+2. Add a sub controller with its details
+3. Add RHEL machines from the sub controller's inventory
+4. Run "Check All Machines (AAP)" to test CTF challenges
+
+## 🎯 Execution Order Summary
+
+```
+Phase 1: Deploy CTF App → OpenShift
+Phase 2: Configure Files → Local setup
+Phase 3: Setup AAP → Create templates
+Phase 4: Execute → Test FIRST, then Deploy
+Phase 5: Verify → Check sub controllers
+```
+
+**🔥 Critical Success Path:**
+1. **Test connectivity** → Must pass before deployment
+2. **Deploy playbooks** → Creates infrastructure on sub controllers  
+3. **Verify setup** → Confirm job templates created
+4. **Test end-to-end** → Run actual CTF challenges
 
 ## 🔧 Configuration
 
-### Environment Variables
+### **Environment-Specific Settings**
+- **Central Controller**: Configure in `central-controller/host_vars/`
+- **Sub Controllers**: Managed via central deployment
+- **CTF Application**: Configure via `ctf-app/config.template`
 
-The application supports these environment variables:
+### **Security**
+- **Vault Encryption**: All sensitive data in `group_vars/all/vault.yml`
+- **Network Policies**: OpenShift network security
+- **RBAC**: Role-based access control in AAP
 
-- `FLASK_DEBUG`: Enable debug mode
-- `DATABASE_DIR`: Database storage directory
-- `AAP_BASE_URL`: Default AAP cluster URL
-- `AAP_USERNAME`/`AAP_PASSWORD`: Default AAP credentials
-- `AAP_JOB_TEMPLATE_ID`: Challenge verification template
-- `AUTO_REFRESH_INTERVAL`: Dashboard refresh rate
-- `MAX_CONCURRENT_CHECKS`: Concurrent job limit
+## 📖 Documentation
 
-### Custom Challenges
-
-Add custom challenges via database:
-
-```sql
-INSERT INTO challenge_types (name, description, max_points, challenge_config, active)
-VALUES (
-    'custom_service',
-    'Custom Service Check',
-    15,
-    '{"required_packages": ["myservice"], "custom_commands": [{"name": "status", "command": "systemctl is-active myservice", "points": 15}]}',
-    TRUE
-);
-```
-
-## 🔐 Security Features
-
-### Application Security
-- Non-root container execution
-- Security contexts with dropped capabilities
-- Network policies for traffic restriction
-- Encrypted secrets management
-- RBAC with minimal permissions
-
-### AAP Integration Security
-- SSL certificate verification (configurable)
-- Secure credential storage in OpenShift secrets
-- Token-based API authentication
-- Audit logging for all operations
-
-## 📊 API Endpoints
-
-### Core Endpoints
-- `GET/POST /api/attendees` - Attendee management
-- `GET /api/checkpoints` - Available challenges
-- `GET /api/progress` - Progress tracking
-- `GET/POST /api/machines` - RHEL machine management
-
-### AAP Integration Endpoints
-- `GET/POST /api/aap_clusters` - AAP cluster management
-- `POST /api/connectivity_test` - Connectivity results webhook
-- `POST /api/challenge_results` - Challenge results webhook
-- `GET /api/trigger_connectivity_test/{cluster_id}/{hostname}` - Trigger tests
-- `GET /api/trigger_challenge_check/{cluster_id}/{hostname}` - Trigger checks
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-#### AAP Connection Failed
-```bash
-# Test connectivity
-curl -k https://your-aap-cluster.com/api/v2/ping/
-
-# Check credentials in web interface
-# Verify network policies allow egress to AAP
-```
-
-#### Build Failures
-```bash
-# Check build logs
-oc logs -f bc/ctf-tracker
-
-# Verify all files are present
-ls -la templates/ *.py *.yml
-```
-
-#### Deployment Issues
-```bash
-# Check pod status
-oc get pods -l app=ctf-tracker
-
-# View application logs
-oc logs -f deployment/ctf-tracker
-
-# Verify secrets
-oc get secret ctf-tracker-secrets -o yaml
-```
-
-### Debug Mode
-
-Enable debug logging:
-```bash
-# In deployment
-oc set env deployment/ctf-tracker FLASK_DEBUG=true
-```
-
-## 🎓 Extending the Platform
-
-### Adding New Challenge Types
-
-1. **Update Playbook**: Add challenge logic to `comprehensive-ctf-playbook.yml`
-2. **Database Entry**: Insert challenge type configuration
-3. **Frontend Update**: Modify UI if needed for challenge-specific displays
-
-### Custom Integration
-
-The platform supports webhooks and REST API integration for:
-- External scoring systems
-- Custom notification services
-- Third-party monitoring tools
-
-## 📈 Performance Tuning
-
-### Scaling Recommendations
-- **Multiple Replicas**: Scale deployment for high availability
-- **Database Optimization**: Consider external database for large deployments
-- **Job Queuing**: Implement staggered execution for many machines
-- **Caching**: Add Redis for frequent queries
-
-### Resource Requirements
-- **Minimum**: 2 CPU, 4GB RAM, 1GB storage
-- **Recommended**: 4 CPU, 8GB RAM, 5GB storage
-- **Network**: Low latency to AAP clusters essential
+- **[Central AAP Setup Guide](docs/CENTRAL_AAP_SETUP_GUIDE.md)**: Complete setup instructions
+- **[Enhanced CTF Guide](docs/ENHANCED_CTF_GUIDE.md)**: Detailed feature documentation
+- **[AAP Setup Guide](docs/AAP_SETUP_GUIDE.md)**: Ansible Platform configuration
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Test with the interactive deployment script
-4. Ensure all sensitive data is properly templated
-5. Submit a pull request
+1. Follow the **[Commit Checklist](docs/COMMIT_CHECKLIST.md)**
+2. Test with all three components
+3. Update relevant documentation
+4. Ensure security sanitization
 
 ## 📄 License
 
-MIT License - see LICENSE file for details.
-
-## 🆘 Support
-
-- **Documentation**: See `ENHANCED_CTF_GUIDE.md` for detailed setup
-- **Issues**: Use GitHub issues for bug reports
-- **Security**: Report security issues privately via email
-
-## 🔄 Migration from Previous Versions
-
-If upgrading from a previous version:
-
-1. **Backup Data**: Export existing attendee and progress data
-2. **Clean Deploy**: Use `./deploy-interactive.sh clean` then redeploy
-3. **Restore Data**: Import data via web interface or API
-4. **Update Playbooks**: Replace old playbooks with new comprehensive versions
+Apache License 2.0 - see LICENSE file for details.
 
 ---
 
-**Ready to run your enterprise CTF event with confidence!** 🏆
-
-
+**Enterprise CTF Infrastructure - Simplified and Scalable!** 🏆

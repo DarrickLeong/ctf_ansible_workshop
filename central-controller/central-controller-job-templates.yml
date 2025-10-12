@@ -1,0 +1,86 @@
+---
+# Central AAP Controller Job Template Configurations
+# Use this file to define job templates for the Central Controller
+
+central_controller_project_name: "CTF Sub Controller Management"
+central_controller_organization: "Default"
+
+# Job Template: Deploy CTF Playbooks to Sub Controllers
+job_template_deploy_ctf:
+  name: "Deploy CTF Playbooks to Sub Controllers"
+  description: "Deploy CTF challenge and connectivity playbooks to all sub controllers"
+  job_type: "run"
+  project: "{{ central_controller_project_name }}"
+  playbook: "deploy-to-sub-controllers.yml"
+  inventory: "CTF Sub Controllers Inventory"
+  verbosity: 1
+  ask_variables_on_launch: true
+  ask_inventory_on_launch: false
+  ask_credential_on_launch: false
+  extra_vars:
+    scm_type: "git"
+    scm_repository_url: "https://github.com/your-org/ctf-ansible-workshop.git"
+    scm_branch: "main"
+    ctf_tracker_url: "https://ctf-tracker.apps.your-openshift-cluster.com"
+  survey_enabled: true
+  survey_spec:
+    name: "CTF Deployment Configuration"
+    description: "Configure deployment parameters"
+    spec:
+      - question_name: "Repository URL"
+        question_description: "Git repository containing CTF playbooks"
+        required: true
+        type: "text"
+        variable: "scm_repository_url"
+        default: "https://github.com/your-org/ctf-ansible-workshop.git"
+        
+      - question_name: "Branch"
+        question_description: "Git branch to deploy"
+        required: true
+        type: "text"
+        variable: "scm_branch"
+        default: "main"
+        
+      - question_name: "CTF Tracker URL"
+        question_description: "URL of the central CTF tracker application"
+        required: true
+        type: "text"
+        variable: "ctf_tracker_url"
+        default: "https://ctf-tracker.apps.your-openshift-cluster.com"
+        
+      - question_name: "Project Name"
+        question_description: "Name for the project on sub controllers"
+        required: true
+        type: "text"
+        variable: "project_name"
+        default: "CTF Challenge Playbooks"
+
+# Job Template: Test Sub Controller Connectivity
+job_template_test_connectivity:
+  name: "Test Sub Controller Connectivity"
+  description: "Test connectivity to all sub controllers"
+  job_type: "run"
+  project: "{{ central_controller_project_name }}"
+  playbook: "test-sub-controllers.yml"
+  inventory: "CTF Sub Controllers Inventory"
+  verbosity: 1
+  ask_variables_on_launch: false
+  ask_inventory_on_launch: false
+  ask_credential_on_launch: false
+
+# Workflow Template: Complete CTF Infrastructure Setup
+workflow_template_ctf_setup:
+  name: "Complete CTF Infrastructure Setup"
+  description: "Test connectivity and deploy CTF playbooks to all sub controllers"
+  organization: "{{ central_controller_organization }}"
+  workflow_nodes:
+    - identifier: "test_connectivity"
+      unified_job_template: "{{ job_template_test_connectivity.name }}"
+      success_nodes:
+        - "deploy_playbooks"
+      failure_nodes: []
+      
+    - identifier: "deploy_playbooks"
+      unified_job_template: "{{ job_template_deploy_ctf.name }}"
+      success_nodes: []
+      failure_nodes: []

@@ -1,0 +1,21 @@
+---
+# Central AAP Controller Host Variables for Sub Controllers
+# Place these files in host_vars/ directory in your Central AAP Controller
+
+# Host variables for sub-controller-east
+sub_controller_host: "aap-east.company.com"
+sub_controller_username: "admin"
+sub_controller_password: "{{ vault_sub_controller_east_password }}"
+# Alternative: Use OAuth token instead of password
+# sub_controller_token: "{{ vault_sub_controller_east_token }}"
+sub_controller_organization: "CTF Organization"
+sub_controller_validate_certs: false
+
+# Controller-specific settings (optional)
+controller_region: "east"
+controller_timezone: "America/New_York"
+controller_description: "East Coast CTF Sub Controller"
+
+# Override global settings if needed
+# scm_repository_url: "https://github.com/your-org/ctf-east-playbooks.git"
+# project_name: "CTF East Playbooks"
