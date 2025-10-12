@@ -64,9 +64,9 @@
           uri:
             url: "https://{{ awx_host }}/api/controller/v2/"
             method: GET
-            user: "{{ awx_username if awx_password else omit }}"
-            password: "{{ awx_password if awx_password else omit }}"
-            headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else omit }}"
+            user: "{{ awx_username if awx_password and not awx_token else omit }}"
+            password: "{{ awx_password if awx_password and not awx_token else omit }}"
+            headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else {} }}"
             validate_certs: "{{ awx_validate_certs }}"
             timeout: "{{ test_timeout }}"
           register: api_test
@@ -78,9 +78,9 @@
           uri:
             url: "https://{{ awx_host }}/api/controller/v2/me/"
             method: GET
-            user: "{{ awx_username if awx_password else omit }}"
-            password: "{{ awx_password if awx_password else omit }}"
-            headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else omit }}"
+            user: "{{ awx_username if awx_password and not awx_token else omit }}"
+            password: "{{ awx_password if awx_password and not awx_token else omit }}"
+            headers: "{{ {'Authorization': 'Bearer ' + awx_token} if awx_token else {} }}"
             validate_certs: "{{ awx_validate_certs }}"
             timeout: "{{ test_timeout }}"
           register: permissions_test
