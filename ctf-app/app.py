@@ -433,7 +433,7 @@ def update_attendee_progress(attendee_id, checkpoint_id, completed, points):
     cursor.execute('''
         INSERT OR REPLACE INTO progress (attendee_id, checkpoint_id, completed, points_earned, completed_at)
         VALUES (?, ?, ?, ?, ?)
-    ''', (attendee_id, checkpoint_id, completed, points if completed else 0, 
+    ''', (attendee_id, checkpoint_id, completed, points, 
           datetime.now() if completed else None))
     
     # Update total points for attendee
@@ -793,17 +793,19 @@ def challenge_results():
                 datetime.now()
             ))
             
-            # Update attendee total points
-            if result.get('completed', False):
-                # Update or create checkpoint progress
-                cursor.execute('''
-                    SELECT id FROM checkpoints WHERE check_type = ?
-                ''', (challenge_type,))
-                checkpoint = cursor.fetchone()
-                
-                if checkpoint:
-                    checkpoint_id = checkpoint[0]
-                    update_attendee_progress(attendee_id, checkpoint_id, True, result.get('points_earned', 0))
+            # Update attendee total points - FIXED: Record all points, not just completed challenges
+            # Update or create checkpoint progress
+            cursor.execute('''
+                SELECT id FROM checkpoints WHERE check_type = ?
+            ''', (challenge_type,))
+            checkpoint = cursor.fetchone()
+            
+            if checkpoint:
+                checkpoint_id = checkpoint[0]
+                # Record points earned regardless of completion status
+                points_earned = result.get('points_earned', 0)
+                is_completed = result.get('completed', False)
+                update_attendee_progress(attendee_id, checkpoint_id, is_completed, points_earned)
         
         conn.commit()
         conn.close()
