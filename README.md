@@ -6,7 +6,13 @@ This repository contains a comprehensive CTF (Capture the Flag) infrastructure m
 
 ```
 ctf-ansible-workshop/
-├── ctf-app/                    # 🎯 CTF Tracker Web Application
+├── ctf-tracker-nodejs/         # 🚀 Node.js CTF Tracker (NEW)
+│   ├── server.js               # Express server
+│   ├── package.json            # Node.js dependencies  
+│   ├── public/index.html       # Dashboard frontend
+│   └── README.md               # Node.js app guide
+│
+├── ctf-app/                    # 🎯 CTF Tracker Web Application (Flask - Legacy)
 │   ├── app.py                  # Main Flask application
 │   ├── requirements.txt        # Python dependencies
 │   ├── Dockerfile              # Container definition
