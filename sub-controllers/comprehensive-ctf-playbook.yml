@@ -84,17 +84,22 @@
 
         - name: Update Apache challenge results
           set_fact:
-            challenge_results: "{{ challenge_results | combine({'apache_check': {
-              'completed': apache_points | int >= apache_max_points | int,
-              'points_earned': apache_points | int,
-              'max_points': apache_max_points | int,
-              'details': {
-                'package_installed': apache_installed,
-                'service_running': apache_running,
-                'config_exists': apache_config_exists,
-                'port_accessible': apache_port_open
-              }
-            }}) }}"
+            challenge_results: >-
+              {{
+                challenge_results | combine({
+                  'apache_check': {
+                    'completed': apache_points | int >= apache_max_points | int,
+                    'points_earned': apache_points | int,
+                    'max_points': apache_max_points | int,
+                    'details': {
+                      'package_installed': apache_installed,
+                      'service_running': apache_running,
+                      'config_exists': apache_config_exists,
+                      'port_accessible': apache_port_open
+                    }
+                  }
+                })
+              }}
 
       when: "'apache_check' in (challenge_config.challenge_types | default(['apache_check']))"
 
@@ -138,17 +143,22 @@
 
         - name: Update Nginx challenge results
           set_fact:
-            challenge_results: "{{ challenge_results | combine({'nginx_check': {
-              'completed': nginx_points | int >= nginx_max_points | int,
-              'points_earned': nginx_points | int,
-              'max_points': nginx_max_points | int,
-              'details': {
-                'package_installed': nginx_installed,
-                'service_running': nginx_running,
-                'config_exists': nginx_config_exists,
-                'port_accessible': nginx_port_open
-              }
-            }}) }}"
+            challenge_results: >-
+              {{
+                challenge_results | combine({
+                  'nginx_check': {
+                    'completed': nginx_points | int >= nginx_max_points | int,
+                    'points_earned': nginx_points | int,
+                    'max_points': nginx_max_points | int,
+                    'details': {
+                      'package_installed': nginx_installed,
+                      'service_running': nginx_running,
+                      'config_exists': nginx_config_exists,
+                      'port_accessible': nginx_port_open
+                    }
+                  }
+                })
+              }}
 
       when: "'nginx_check' in (challenge_config.challenge_types | default([]))"
 
@@ -186,16 +196,21 @@
 
         - name: Update MySQL challenge results
           set_fact:
-            challenge_results: "{{ challenge_results | combine({'mysql_check': {
-              'completed': mysql_points | int >= mysql_max_points | int,
-              'points_earned': mysql_points | int,
-              'max_points': mysql_max_points | int,
-              'details': {
-                'package_installed': mysql_installed,
-                'service_running': mysql_running,
-                'port_accessible': mysql_port_open
-              }
-            }}) }}"
+            challenge_results: >-
+              {{
+                challenge_results | combine({
+                  'mysql_check': {
+                    'completed': mysql_points | int >= mysql_max_points | int,
+                    'points_earned': mysql_points | int,
+                    'max_points': mysql_max_points | int,
+                    'details': {
+                      'package_installed': mysql_installed,
+                      'service_running': mysql_running,
+                      'port_accessible': mysql_port_open
+                    }
+                  }
+                })
+              }}
 
       when: "'mysql_check' in (challenge_config.challenge_types | default([]))"
 
@@ -233,16 +248,21 @@
 
         - name: Update Firewall challenge results
           set_fact:
-            challenge_results: "{{ challenge_results | combine({'firewall_check': {
-              'completed': firewall_points | int >= firewall_max_points | int,
-              'points_earned': firewall_points | int,
-              'max_points': firewall_max_points | int,
-              'details': {
-                'service_running': firewall_running,
-                'zones_configured': firewall_configured,
-                'http_allowed': http_service_allowed
-              }
-            }}) }}"
+            challenge_results: >-
+              {{
+                challenge_results | combine({
+                  'firewall_check': {
+                    'completed': firewall_points | int >= firewall_max_points | int,
+                    'points_earned': firewall_points | int,
+                    'max_points': firewall_max_points | int,
+                    'details': {
+                      'service_running': firewall_running,
+                      'zones_configured': firewall_configured,
+                      'http_allowed': http_service_allowed
+                    }
+                  }
+                })
+              }}
 
       when: "'firewall_check' in (challenge_config.challenge_types | default([]))"
 
@@ -274,15 +294,20 @@
 
         - name: Update User Management challenge results
           set_fact:
-            challenge_results: "{{ challenge_results | combine({'user_check': {
-              'completed': user_points | int >= user_max_points | int,
-              'points_earned': user_points | int,
-              'max_points': user_max_points | int,
-              'details': {
-                'users_created': required_users_exist,
-                'sudo_configured': sudo_configured
-              }
-            }}) }}"
+            challenge_results: >-
+              {{
+                challenge_results | combine({
+                  'user_check': {
+                    'completed': user_points | int >= user_max_points | int,
+                    'points_earned': user_points | int,
+                    'max_points': user_max_points | int,
+                    'details': {
+                      'users_created': required_users_exist,
+                      'sudo_configured': sudo_configured
+                    }
+                  }
+                })
+              }}
 
       when: "'user_check' in (challenge_config.challenge_types | default([]))"
 
@@ -308,12 +333,17 @@
 
         - name: Update Custom Commands challenge results
           set_fact:
-            challenge_results: "{{ challenge_results | combine({'custom_commands': {
-              'completed': true,
-              'points_earned': custom_total_points | int,
-              'max_points': (challenge_config.custom_commands | sum(attribute='points') | default(0)) | int,
-              'details': custom_results
-            }}) }}"
+            challenge_results: >-
+              {{
+                challenge_results | combine({
+                  'custom_commands': {
+                    'completed': true,
+                    'points_earned': custom_total_points | int,
+                    'max_points': (challenge_config.custom_commands | sum(attribute='points') | default(0)) | int,
+                    'details': custom_results
+                  }
+                })
+              }}
 
       when: "'custom_command' in (challenge_config.challenge_types | default([]))"
 
@@ -324,8 +354,8 @@
 
     - name: Calculate total results
       set_fact:
-        total_points: "{{ challenge_results | dict2items | map(attribute='value.points_earned') | sum | default(0) }}"
-        max_possible_points: "{{ challenge_results | dict2items | map(attribute='value.max_points') | sum | default(0) }}"
+        total_points: "{{ (challenge_results | dict2items | map(attribute='value.points_earned') | sum | default(0)) | int }}"
+        max_possible_points: "{{ (challenge_results | dict2items | map(attribute='value.max_points') | sum | default(0)) | int }}"
         challenges_completed: "{{ (challenge_results | dict2items | selectattr('value.completed', 'equalto', true) | list | length) | int }}"
         total_challenges: "{{ (challenge_results | dict2items | list | length) | int }}"
 
@@ -339,28 +369,79 @@
           - total_challenges: {{ total_challenges }} (type: {{ total_challenges | type_debug }})
 
     # REPORT RESULTS BACK TO CTF TRACKER
+    - name: Get or create attendee in CTF Tracker
+      uri:
+        url: "{{ ctf_tracker_url }}/api/attendees"
+        method: GET
+        validate_certs: no
+      register: attendees_response
+      ignore_errors: yes
+      when: ctf_tracker_url is defined and ctf_tracker_url != ''
+
+    - name: Find attendee ID by name
+      set_fact:
+        attendee_id: "{{ attendees_response.json | selectattr('name', 'equalto', attendee_name | default('unknown')) | map(attribute='id') | first | default(None) }}"
+      when: 
+        - attendees_response is succeeded
+        - attendees_response.json is defined
+
+    - name: Create attendee if not found
+      uri:
+        url: "{{ ctf_tracker_url }}/api/attendees"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          name: "{{ attendee_name | default('unknown') }}"
+          email: "{{ attendee_email | default('') }}"
+        validate_certs: no
+      register: create_attendee_response
+      ignore_errors: yes
+      when: 
+        - ctf_tracker_url is defined and ctf_tracker_url != ''
+        - attendee_id is not defined or attendee_id == None
+
+    - name: Set attendee ID from creation response
+      set_fact:
+        attendee_id: "{{ create_attendee_response.json.id }}"
+      when: 
+        - create_attendee_response is defined
+        - create_attendee_response is succeeded
+        - create_attendee_response.json is defined
+        - create_attendee_response.json.id is defined
+
+    - name: Debug attendee ID resolution
+      debug:
+        msg: |
+          Attendee ID Resolution:
+          - attendee_name: {{ attendee_name | default('unknown') }}
+          - resolved attendee_id: {{ attendee_id | default('NOT RESOLVED') }}
+
     - name: Report results to CTF Tracker
       uri:
-        url: "{{ ctf_tracker_url }}/api/webhook"
+        url: "{{ ctf_tracker_url }}/api/challenge_results"
         method: POST
         body_format: json
         headers:
           Content-Type: "application/json"
         body:
           hostname: "{{ inventory_hostname }}"
-          attendee_id: "{{ attendee_name | default('unknown') }}"
+          attendee_id: "{{ attendee_id | int }}"
           challenge_results: "{{ challenge_results }}"
           summary:
-            total_points: "{{ total_points }}"
-            max_possible_points: "{{ max_possible_points }}"
-            challenges_completed: "{{ challenges_completed }}"
-            total_challenges: "{{ total_challenges }}"
+            total_points: "{{ total_points | int }}"
+            max_possible_points: "{{ max_possible_points | int }}"
+            challenges_completed: "{{ challenges_completed | int }}"
+            total_challenges: "{{ total_challenges | int }}"
             completion_percentage: "{% if total_challenges | int > 0 %}{{ ((challenges_completed | int | float / total_challenges | int | float) * 100) | round(1) }}{% else %}0.0{% endif %}"
           timestamp: "{{ ansible_date_time.iso8601 }}"
         validate_certs: no
       register: tracker_response
       ignore_errors: yes
-      when: ctf_tracker_url is defined and ctf_tracker_url != ''
+      when: 
+        - ctf_tracker_url is defined and ctf_tracker_url != ''
+        - attendee_id is defined and attendee_id != None
 
     # DISPLAY FINAL RESULTS
     - name: Display Challenge Results Summary
