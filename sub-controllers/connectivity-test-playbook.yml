@@ -6,11 +6,6 @@
 - name: CTF RHEL Connectivity and System Check
   hosts: "{{ target_host | default('all') }}"
   gather_facts: yes
-  vars:
-    ctf_tracker_url: "{{ ctf_tracker_url | default('') }}"
-    ctf_tracker_token: "{{ ctf_tracker_token | default('') }}"
-    attendee_id: "{{ attendee_id | default('') }}"
-    test_type: "{{ test_type | default('connectivity') }}"
 
   tasks:
     - name: Display connectivity test information
@@ -20,9 +15,9 @@
           CTF RHEL CONNECTIVITY TEST
           ========================================
           Target Host: {{ inventory_hostname }}
-          Attendee ID: {{ attendee_id }}
-          Test Type: {{ test_type }}
-          CTF Tracker: {{ ctf_tracker_url }}
+          Attendee ID: {{ attendee_id | default('Not specified') }}
+          Test Type: {{ test_type | default('connectivity') }}
+          CTF Tracker: {{ ctf_tracker_url | default('Not configured') }}
           ========================================
 
     # BASIC CONNECTIVITY TESTS
@@ -156,8 +151,8 @@
         body:
           hostname: "{{ ansible_hostname }}"
           ip_address: "{{ ansible_default_ipv4.address | default('unknown') }}"
-          attendee_id: "{{ attendee_id }}"
-          test_type: "{{ test_type }}"
+          attendee_id: "{{ attendee_id | default('unknown') }}"
+          test_type: "{{ test_type | default('connectivity') }}"
           connectivity_results: "{{ connectivity_results }}"
           connectivity_score: "{{ connectivity_score }}"
           connectivity_status: "{{ connectivity_status }}"
@@ -166,7 +161,7 @@
         validate_certs: no
       register: tracker_response
       ignore_errors: yes
-      when: ctf_tracker_url != '' and ctf_tracker_token != ''
+      when: ctf_tracker_url is defined and ctf_tracker_url != '' and ctf_tracker_token is defined and ctf_tracker_token != ''
 
     # DISPLAY RESULTS
     - name: Display connectivity test results
@@ -177,7 +172,7 @@
           ==========================================
           Host: {{ ansible_hostname }}
           IP Address: {{ ansible_default_ipv4.address | default('unknown') }}
-          Attendee: {{ attendee_id }}
+          Attendee: {{ attendee_id | default('unknown') }}
           
           CONNECTIVITY SCORE: {{ connectivity_score }}/{{ max_connectivity_score }}
           STATUS: {{ connectivity_status | upper }}
@@ -241,7 +236,7 @@
           Generated: {{ ansible_date_time.iso8601 }}
           Host: {{ ansible_hostname }}
           IP: {{ ansible_default_ipv4.address | default('N/A') }}
-          Attendee: {{ attendee_id }}
+          Attendee: {{ attendee_id | default('unknown') }}
           
           Connectivity Score: {{ connectivity_score }}/{{ max_connectivity_score }}
           Status: {{ connectivity_status }}

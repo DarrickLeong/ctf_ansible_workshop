@@ -7,12 +7,6 @@
   hosts: "{{ target_host | default('all') }}"
   gather_facts: yes
   vars:
-    # Challenge configuration passed from CTF tracker
-    challenge_config: "{{ challenge_config | default({}) }}"
-    attendee_id: "{{ attendee_id | default('') }}"
-    ctf_tracker_url: "{{ ctf_tracker_url | default('') }}"
-    ctf_tracker_token: "{{ ctf_tracker_token | default('') }}"
-    
     # Available challenge types
     challenge_types:
       - apache_check
@@ -34,9 +28,9 @@
           CTF CHALLENGE VERIFICATION
           =================================
           Target Host: {{ inventory_hostname }}
-          Attendee ID: {{ attendee_id }}
-          Challenge Config: {{ challenge_config }}
-          Tracker URL: {{ ctf_tracker_url }}
+          Attendee ID: {{ attendee_id | default('Not specified') }}
+          Challenge Config: {{ challenge_config | default({}) }}
+          Tracker URL: {{ ctf_tracker_url | default('Not configured') }}
           =================================
 
     - name: Initialize results tracking
@@ -342,7 +336,7 @@
           Content-Type: "application/json"
         body:
           hostname: "{{ inventory_hostname }}"
-          attendee_id: "{{ attendee_id }}"
+          attendee_id: "{{ attendee_id | default('unknown') }}"
           challenge_results: "{{ challenge_results }}"
           summary:
             total_points: "{{ total_points }}"
@@ -354,7 +348,7 @@
         validate_certs: no
       register: tracker_response
       ignore_errors: yes
-      when: ctf_tracker_url != '' and ctf_tracker_token != ''
+      when: ctf_tracker_url is defined and ctf_tracker_url != '' and ctf_tracker_token is defined and ctf_tracker_token != ''
 
     # DISPLAY FINAL RESULTS
     - name: Display Challenge Results Summary
@@ -364,7 +358,7 @@
           CTF CHALLENGE VERIFICATION COMPLETE
           ==========================================
           Host: {{ inventory_hostname }}
-          Attendee: {{ attendee_id }}
+          Attendee: {{ attendee_id | default('unknown') }}
           
           RESULTS SUMMARY:
           ----------------
@@ -389,7 +383,7 @@
         content: |
           CTF Challenge Results - {{ ansible_date_time.iso8601 }}
           Host: {{ inventory_hostname }}
-          Attendee: {{ attendee_id }}
+          Attendee: {{ attendee_id | default('unknown') }}
           
           {{ challenge_results | to_nice_json }}
         dest: "/tmp/ctf_results_{{ attendee_id | default('unknown') }}_{{ ansible_date_time.epoch }}.json"
