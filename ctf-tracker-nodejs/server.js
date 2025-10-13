@@ -181,13 +181,15 @@ app.post('/api/challenge_results', (req, res) => {
         const processResults = (attendee_id) => {
             // Register the AAP sub controller (not the individual host)
             // The aap_cluster_id should contain the sub controller name
-            if (aap_cluster_id && aap_cluster_id.trim() !== '') {
-                db.run(`INSERT OR IGNORE INTO machines (hostname, ip_address, region, aap_cluster_id, status) 
+            if (aap_cluster_id && aap_cluster_id.trim() !== '' && !aap_cluster_id.includes('unknown')) {
+                db.run(`INSERT OR REPLACE INTO machines (hostname, ip_address, region, aap_cluster_id, status) 
                         VALUES (?, ?, ?, ?, ?)`,
                        [aap_cluster_id, '', 'sub-controller', aap_cluster_id, 'Active'], (err) => {
                     if (err) {
                         console.error('Error registering sub controller:', err);
                         // Continue anyway - don't fail the whole request
+                    } else {
+                        console.log(`✅ Registered sub controller: ${aap_cluster_id}`);
                     }
                 });
             }
@@ -480,6 +482,26 @@ app.delete('/api/clear_all', (req, res) => {
         res.json({ 
             message: 'All data cleared successfully',
             cleared: ['attendees', 'machines', 'challenge_results', 'connectivity_tests']
+        });
+    });
+});
+
+// API: Clean up invalid controllers
+app.delete('/api/cleanup_controllers', (req, res) => {
+    db.run(`DELETE FROM machines WHERE 
+            hostname LIKE '%unknown%' OR 
+            hostname LIKE 'Unknown-%' OR
+            hostname LIKE '%.sandbox%' OR
+            region NOT LIKE 'sub-controller'`, function(err) {
+        if (err) {
+            console.error('Error cleaning up controllers:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        
+        console.log(`🧹 Cleaned up ${this.changes} invalid controllers`);
+        res.json({ 
+            message: 'Invalid controllers cleaned up',
+            removed: this.changes
         });
     });
 });

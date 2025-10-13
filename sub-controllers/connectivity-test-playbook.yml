@@ -145,7 +145,7 @@
           test_type: "connectivity_check"
           status: "{{ 'PASS' if connectivity_ready else 'FAIL' }}"
           details: "Connectivity Score: {{ connectivity_score }}% - {{ 'System ready for CTF' if connectivity_ready else 'System needs attention' }}"
-          aap_cluster_id: "{{ sub_controller_name | default(ansible_tower_host | default(awx_host | default('Unknown-Controller'))) }}"
+          aap_cluster_id: "{{ sub_controller_name | default('sub-controller-' + (group_names[0] | default('unknown'))) }}"
         validate_certs: no
       register: tracker_response
       ignore_errors: yes
