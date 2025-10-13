@@ -139,22 +139,17 @@
         method: POST
         body_format: json
         headers:
-          Authorization: "Bearer {{ ctf_tracker_token }}"
           Content-Type: "application/json"
         body:
           hostname: "{{ ansible_hostname }}"
-          ip_address: "{{ ansible_default_ipv4.address | default('unknown') }}"
-          attendee_id: "{{ attendee_id | default('unknown') }}"
-          test_type: "{{ test_type | default('connectivity') }}"
-          connectivity_results: "{{ connectivity_results }}"
-          connectivity_score: "{{ connectivity_score }}"
-          connectivity_status: "{{ connectivity_status }}"
-          connectivity_ready: "{{ connectivity_ready }}"
-          timestamp: "{{ ansible_date_time.iso8601 }}"
+          test_type: "connectivity_check"
+          status: "{{ 'PASS' if connectivity_ready else 'FAIL' }}"
+          details: "Connectivity Score: {{ connectivity_score }}% - {{ 'System ready for CTF' if connectivity_ready else 'System needs attention' }}"
+          aap_cluster_id: "{{ aap_cluster_id | default('') }}"
         validate_certs: no
       register: tracker_response
       ignore_errors: yes
-      when: ctf_tracker_url is defined and ctf_tracker_url != '' and ctf_tracker_token is defined and ctf_tracker_token != ''
+      when: ctf_tracker_url is defined and ctf_tracker_url != ''
 
     # DISPLAY RESULTS
     - name: Display connectivity test results

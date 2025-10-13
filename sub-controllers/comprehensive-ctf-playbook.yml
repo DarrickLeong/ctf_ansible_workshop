@@ -426,16 +426,10 @@
         headers:
           Content-Type: "application/json"
         body:
+          attendee_name: "{{ attendee_name | default('Team-' + inventory_hostname) }}"
           hostname: "{{ inventory_hostname }}"
-          attendee_id: "{{ attendee_id | int }}"
           challenge_results: "{{ challenge_results }}"
-          summary:
-            total_points: "{{ total_points | int }}"
-            max_possible_points: "{{ max_possible_points | int }}"
-            challenges_completed: "{{ challenges_completed | int }}"
-            total_challenges: "{{ total_challenges | int }}"
-            completion_percentage: "{% if total_challenges | int > 0 %}{{ ((challenges_completed | int | float / total_challenges | int | float) * 100) | round(1) }}{% else %}0.0{% endif %}"
-          timestamp: "{{ ansible_date_time.iso8601 }}"
+          aap_cluster_id: "{{ aap_cluster_id | default('') }}"
         validate_certs: no
       register: tracker_response
       ignore_errors: yes
