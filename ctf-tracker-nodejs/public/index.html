@@ -16,12 +16,14 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: #fff;
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
 
         .container {
-            max-width: 1200px;
+            width: 100%;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
         }
 
         .header {
@@ -41,25 +43,38 @@
         }
 
         .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr 1fr 1fr; /* Statistics | Leaderboard (2x wider) | Controllers | Recent Activity */
-            gap: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
             margin-bottom: 30px;
-        }
-
-        @media (max-width: 1200px) {
-            .dashboard-grid {
-                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            }
+            width: 100%;
         }
 
         .card {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border-radius: 15px;
-            padding: 25px;
+            padding: 20px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: 250px;
+            flex: 1;
+            min-width: 280px;
+            max-width: 100%;
+        }
+
+        /* Make leaderboard wider */
+        .card:nth-child(2) {
+            flex: 2;
+            min-width: 400px;
+        }
+
+        /* Responsive: stack on smaller screens */
+        @media (max-width: 768px) {
+            .card, .card:nth-child(2) {
+                flex: 1 1 100%;
+                min-width: 100%;
+            }
         }
 
         .card h3 {
@@ -175,12 +190,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
+            padding: 12px 15px;
             margin: 8px 0;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             min-height: 60px;
-            overflow: hidden; /* Prevent overflow */
+            overflow: hidden;
         }
 
         .machine-left {
@@ -188,39 +203,43 @@
             align-items: center;
             flex: 1;
             min-width: 0;
-            margin-right: 15px; /* Add margin to create space */
+            margin-right: 10px;
         }
 
         .machine-right {
-            flex-shrink: 0; /* Prevent shrinking */
-            min-width: 80px;
-            max-width: 100px; /* Limit max width */
+            flex-shrink: 0;
+            min-width: 70px;
+            max-width: 90px;
         }
 
         .machine-name {
             font-weight: 500;
+            font-size: 0.9rem;
             word-wrap: break-word;
             overflow-wrap: break-word;
             max-width: 100%;
-            overflow: hidden; /* Hide overflow */
-            text-overflow: ellipsis; /* Add ellipsis for long names */
-            white-space: nowrap; /* Prevent wrapping to avoid collision */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Allow 2 lines */
+            -webkit-box-orient: vertical;
+            line-height: 1.2;
         }
 
         .machine-status {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.75rem;
             font-weight: bold;
-            background: #4CAF50; /* Green for Active */
+            background: #4CAF50;
             color: white;
             white-space: nowrap;
             text-align: center;
-            min-width: 60px; /* Ensure minimum width */
+            min-width: 50px;
         }
 
         .machine-status.unknown {
-            background: #FFC107; /* Yellow for Unknown */
+            background: #FFC107;
             color: #000;
         }
 
