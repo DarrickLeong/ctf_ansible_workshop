@@ -1,0 +1,4 @@
+
+# Deployment configuration files (contain sensitive data)
+ctf-app/config.env
+ctf-app/openshift-*.yaml
