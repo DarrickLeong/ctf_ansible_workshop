@@ -527,6 +527,28 @@ def progress():
         'completed_at': row[4]
     } for row in progress_data])
 
+@app.route('/api/leaderboard')
+def leaderboard():
+    """Get leaderboard data formatted for frontend"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT id, name, email, total_points FROM attendees 
+        ORDER BY total_points DESC, name
+    ''')
+    attendees_data = cursor.fetchall()
+    conn.close()
+    
+    return jsonify([{
+        'id': row[0],
+        'name': row[1],
+        'email': row[2],
+        'score': row[3],  # Frontend expects 'score' field
+        'total_points': row[3],  # Keep this for compatibility
+        'rank': idx + 1
+    } for idx, row in enumerate(attendees_data)])
+
 @app.route('/api/machines', methods=['GET', 'POST'])
 def machines():
     """Get all RHEL machines or add a new one"""

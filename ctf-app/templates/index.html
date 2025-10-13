@@ -288,7 +288,7 @@
         
         async function loadLeaderboard() {
             try {
-                const response = await fetch(`${API_BASE}/progress`);
+                const response = await fetch(`${API_BASE}/leaderboard`);
                 const data = await response.json();
                 
                 const leaderboardEl = document.getElementById('leaderboard');
@@ -298,10 +298,7 @@
                     return;
                 }
                 
-                // Sort by score (assuming progress data includes scores)
-                const sortedData = data.sort((a, b) => (b.score || 0) - (a.score || 0));
-                
-                leaderboardEl.innerHTML = sortedData.slice(0, 10).map((attendee, index) => `
+                leaderboardEl.innerHTML = data.slice(0, 10).map((attendee, index) => `
                     <div class="attendee-item">
                         <span class="attendee-name">
                             ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
