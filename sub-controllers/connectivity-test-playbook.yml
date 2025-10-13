@@ -73,11 +73,6 @@
       register: rhel_version
       ignore_errors: yes
 
-    - name: Check subscription status
-      command: subscription-manager status
-      register: subscription_status
-      ignore_errors: yes
-
     # SECURITY AND FIREWALL STATUS
     - name: Check SELinux status
       command: getenforce
@@ -115,7 +110,6 @@
             firewall_running: "{{ firewall_status.status.ActiveState == 'active' if firewall_status.status is defined else false }}"
           rhel_info:
             version: "{{ rhel_version.stdout | default('unknown') }}"
-            subscription_status: "{{ 'active' in subscription_status.stdout if subscription_status is succeeded else false }}"
           health_metrics:
             disk_usage: "{{ disk_space.stdout_lines | default([]) }}"
             memory_usage: "{{ memory_info.stdout | default('unknown') }}"
@@ -125,12 +119,11 @@
     - name: Calculate connectivity score
       set_fact:
         connectivity_score: "{{ 
-          (connectivity_results.basic_connectivity.ping_success | int * 20) +
-          (connectivity_results.network_tests.dns_resolution | int * 15) +
-          (connectivity_results.network_tests.internet_access | int * 10) +
-          (connectivity_results.security_status.firewall_running | int * 10) +
-          (connectivity_results.rhel_info.subscription_status | int * 15) +
-          30
+          (connectivity_results.basic_connectivity.ping_success | int * 25) +
+          (connectivity_results.network_tests.dns_resolution | int * 20) +
+          (connectivity_results.network_tests.internet_access | int * 15) +
+          (connectivity_results.security_status.firewall_running | int * 15) +
+          25
         }}"
         max_connectivity_score: 100
 
@@ -184,7 +177,6 @@
           ✓ DNS Resolution: {{ 'PASS' if connectivity_results.network_tests.dns_resolution else 'FAIL' }}
           ✓ Internet Access: {{ 'PASS' if connectivity_results.network_tests.internet_access else 'FAIL' }}
           ✓ Firewall Status: {{ 'ACTIVE' if connectivity_results.security_status.firewall_running else 'INACTIVE' }}
-          ✓ RHEL Subscription: {{ 'ACTIVE' if connectivity_results.rhel_info.subscription_status else 'INACTIVE' }}
           
           SYSTEM INFO:
           ------------
@@ -216,9 +208,6 @@
           {% endif %}
           {% if not connectivity_results.security_status.firewall_running %}
           ⚠️  Firewall Not Running - Consider starting firewalld service
-          {% endif %}
-          {% if not connectivity_results.rhel_info.subscription_status %}
-          ⚠️  RHEL Subscription Inactive - Register with subscription-manager
           {% endif %}
           {% if connectivity_ready %}
           ✅ System is ready for CTF challenges!
