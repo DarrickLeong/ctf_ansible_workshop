@@ -9,9 +9,6 @@
   gather_facts: no
   serial: 1  # Deploy to one controller at a time to avoid overwhelming central controller
   vars:
-    # Central CTF Tracker Configuration
-    ctf_tracker_base_url: "{{ ctf_tracker_url | default('https://ctf-tracker.apps.your-cluster.com') }}"
-
     # Project and SCM Configuration
     # Override these via job template survey or extra_vars:
     # - scm_source_type: 'git' (default), 'manual', or 'archive'  
@@ -34,7 +31,7 @@
         ask_inventory_on_launch: true
         ask_credential_on_launch: true
         variables:
-          ctf_tracker_url: "{{ ctf_tracker_base_url }}"
+          ctf_tracker_url: "{{ ctf_tracker_url | default('https://ctf-tracker.apps.your-cluster.com') }}"
           attendee_name: "{{ sub_controller_team_name | default(inventory_hostname + ' Team') }}"
       - name: "CTF Connectivity Test"
         playbook: "sub-controllers/connectivity-test-playbook.yml"
@@ -45,7 +42,7 @@
         ask_inventory_on_launch: true
         ask_credential_on_launch: true
         variables:
-          ctf_tracker_url: "{{ ctf_tracker_base_url }}"
+          ctf_tracker_url: "{{ ctf_tracker_url | default('https://ctf-tracker.apps.your-cluster.com') }}"
           attendee_name: "{{ sub_controller_team_name | default(inventory_hostname + ' Team') }}"
 
     # Default execution environment (optional)
@@ -78,14 +75,14 @@
               - sub_controller_host is defined
               - sub_controller_username is defined
               - sub_controller_password is defined or sub_controller_token is defined
-              - ctf_tracker_base_url is defined
+              - ctf_tracker_url is defined
               - scm_url != "" or scm_type == "manual"
             fail_msg: |
               Required variables missing for controller {{ inventory_hostname }}:
               - sub_controller_host: {{ sub_controller_host | default('NOT DEFINED') }}
               - sub_controller_username: {{ sub_controller_username | default('NOT DEFINED') }}
               - has_password: {{ 'YES' if sub_controller_password is defined else 'NO' }}
-              - ctf_tracker_base_url: {{ ctf_tracker_base_url | default('NOT DEFINED') }}
+              - ctf_tracker_url: {{ ctf_tracker_url | default('NOT DEFINED') }}
               - scm_url: {{ scm_url | default('NOT DEFINED') }} (required unless scm_type=manual)
               - scm_type: {{ scm_type | default('NOT DEFINED') }}
               
@@ -237,26 +234,25 @@
           debug:
             msg: |
               CTF Tracker Onboarding Debug:
-              - ctf_tracker_base_url: "{{ ctf_tracker_base_url }}"
               - ctf_tracker_url: "{{ ctf_tracker_url | default('NOT SET') }}"
-              - URL is empty check: {{ ctf_tracker_base_url == '' }}
-              - URL length: {{ ctf_tracker_base_url | length }}
-              - Contains your-cluster: {{ 'your-cluster.com' in ctf_tracker_base_url }}
+              - URL is empty check: {{ ctf_tracker_url == '' }}
+              - URL length: {{ ctf_tracker_url | length }}
+              - Contains your-cluster: {{ 'your-cluster.com' in ctf_tracker_url }}
 
         - name: Test CTF Tracker connectivity
           uri:
-            url: "{{ ctf_tracker_base_url }}/api/attendees"
+            url: "{{ ctf_tracker_url }}/api/attendees"
             method: GET
             validate_certs: no
             timeout: 10
           register: ctf_tracker_test
           failed_when: false
           delegate_to: localhost
-          when: ctf_tracker_base_url is defined and ctf_tracker_base_url | length > 0 and 'your-cluster.com' not in ctf_tracker_base_url
+          when: ctf_tracker_url is defined and ctf_tracker_url | length > 0 and 'your-cluster.com' not in ctf_tracker_url
 
         - name: Register attendee/team for this controller in CTF Tracker
           uri:
-            url: "{{ ctf_tracker_base_url }}/api/attendees"
+            url: "{{ ctf_tracker_url }}/api/attendees"
             method: POST
             headers:
               Content-Type: "application/json"
@@ -273,12 +269,12 @@
           failed_when: false
           delegate_to: localhost
           when: 
-            - ctf_tracker_base_url is defined and ctf_tracker_base_url | length > 0 and 'your-cluster.com' not in ctf_tracker_base_url
+            - ctf_tracker_url is defined and ctf_tracker_url | length > 0 and 'your-cluster.com' not in ctf_tracker_url
             - ctf_tracker_test is succeeded
 
         - name: Get attendee ID from CTF Tracker
           uri:
-            url: "{{ ctf_tracker_base_url }}/api/attendees"
+            url: "{{ ctf_tracker_url }}/api/attendees"
             method: GET
             validate_certs: no
             timeout: 30
@@ -286,20 +282,20 @@
           failed_when: false
           delegate_to: localhost
           when: 
-            - ctf_tracker_base_url is defined and ctf_tracker_base_url | length > 0 and 'your-cluster.com' not in ctf_tracker_base_url
+            - ctf_tracker_url is defined and ctf_tracker_url | length > 0 and 'your-cluster.com' not in ctf_tracker_url
             - ctf_tracker_test is succeeded
 
         - name: Find attendee ID for this controller
           set_fact:
             controller_attendee_id: "{{ (attendees_list.json | selectattr('name', 'equalto', sub_controller_team_name | default(inventory_hostname + ' Team')) | first).id | default('') }}"
           when: 
-            - ctf_tracker_base_url is defined and ctf_tracker_base_url | length > 0 and 'your-cluster.com' not in ctf_tracker_base_url
+            - ctf_tracker_url is defined and ctf_tracker_url | length > 0 and 'your-cluster.com' not in ctf_tracker_url
             - ctf_tracker_test is succeeded
             - attendees_list.json is defined
 
         - name: Register sub-controller as a tracking entity in CTF Tracker
           uri:
-            url: "{{ ctf_tracker_base_url }}/api/machines"
+            url: "{{ ctf_tracker_url }}/api/machines"
             method: POST
             headers:
               Content-Type: "application/json"
@@ -318,7 +314,7 @@
           failed_when: false
           delegate_to: localhost
           when: 
-            - ctf_tracker_base_url is defined and ctf_tracker_base_url | length > 0 and 'your-cluster.com' not in ctf_tracker_base_url
+            - ctf_tracker_url is defined and ctf_tracker_url | length > 0 and 'your-cluster.com' not in ctf_tracker_url
             - ctf_tracker_test is succeeded
             - controller_attendee_id != ''
 
@@ -330,9 +326,9 @@
               - Team Name: {{ sub_controller_team_name | default(inventory_hostname + ' Team') }}
               - Attendee ID: {{ controller_attendee_id | default('Not found') }}
               - Controller Registration: {{ 'SUCCESS' if controller_registration is succeeded else 'SKIPPED/FAILED' }}
-              - Dashboard: {{ ctf_tracker_base_url }}
+              - Dashboard: {{ ctf_tracker_url }}
           when: 
-            - ctf_tracker_base_url is defined and ctf_tracker_base_url | length > 0 and 'your-cluster.com' not in ctf_tracker_base_url
+            - ctf_tracker_url is defined and ctf_tracker_url | length > 0 and 'your-cluster.com' not in ctf_tracker_url
             - ctf_tracker_test is succeeded
 
       rescue:
@@ -412,7 +408,7 @@
           {% endif %}
           {% endfor %}
           
-          Dashboard URL: {{ ctf_tracker_base_url }}
+          Dashboard URL: {{ ctf_tracker_url }}
           ==========================================
 
     - name: Fail if any deployments failed
