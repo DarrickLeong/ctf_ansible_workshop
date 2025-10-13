@@ -180,7 +180,7 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             min-height: 60px;
-            gap: 15px; /* Add gap to prevent collision */
+            overflow: hidden; /* Prevent overflow */
         }
 
         .machine-left {
@@ -188,12 +188,13 @@
             align-items: center;
             flex: 1;
             min-width: 0;
+            margin-right: 15px; /* Add margin to create space */
         }
 
         .machine-right {
-            margin-left: 15px;
-            min-width: 80px;
             flex-shrink: 0; /* Prevent shrinking */
+            min-width: 80px;
+            max-width: 100px; /* Limit max width */
         }
 
         .machine-name {
@@ -201,6 +202,9 @@
             word-wrap: break-word;
             overflow-wrap: break-word;
             max-width: 100%;
+            overflow: hidden; /* Hide overflow */
+            text-overflow: ellipsis; /* Add ellipsis for long names */
+            white-space: nowrap; /* Prevent wrapping to avoid collision */
         }
 
         .machine-status {
@@ -211,6 +215,13 @@
             background: #4CAF50; /* Green for Active */
             color: white;
             white-space: nowrap;
+            text-align: center;
+            min-width: 60px; /* Ensure minimum width */
+        }
+
+        .machine-status.unknown {
+            background: #FFC107; /* Yellow for Unknown */
+            color: #000;
         }
 
         .refresh-btn {
@@ -508,16 +519,21 @@
                     return;
                 }
 
-                const machinesHTML = machines.map(machine => `
-                    <div class="machine-item">
-                        <div class="machine-left">
-                            <div class="machine-name">🎛️ ${machine.hostname}</div>
+                const machinesHTML = machines.map(machine => {
+                    const status = machine.status || 'Unknown';
+                    const statusClass = status.toLowerCase() === 'active' ? '' : 'unknown';
+                    
+                    return `
+                        <div class="machine-item">
+                            <div class="machine-left">
+                                <div class="machine-name" title="${machine.hostname}">🎛️ ${machine.hostname}</div>
+                            </div>
+                            <div class="machine-right">
+                                <span class="machine-status ${statusClass}">${status}</span>
+                            </div>
                         </div>
-                        <div class="machine-right">
-                            <span class="machine-status">${machine.status || 'Unknown'}</span>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
 
                 machinesEl.innerHTML = machinesHTML;
                 

@@ -139,8 +139,8 @@ app.post('/api/machines', (req, res) => {
         return res.status(400).json({ error: 'Hostname is required' });
     }
 
-    db.run('INSERT INTO machines (hostname, ip_address, region, aap_cluster_id) VALUES (?, ?, ?, ?)', 
-           [hostname, ip_address || '', region || '', aap_cluster_id || ''], function(err) {
+    db.run('INSERT INTO machines (hostname, ip_address, region, aap_cluster_id, status) VALUES (?, ?, ?, ?, ?)', 
+           [hostname, ip_address || '', region || '', aap_cluster_id || '', 'Active'], function(err) {
         if (err) {
             if (err.message.includes('UNIQUE constraint failed')) {
                 return res.status(409).json({ error: 'Machine already exists' });
