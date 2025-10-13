@@ -288,23 +288,36 @@
         
         async function loadLeaderboard() {
             try {
-                const response = await fetch(`${API_BASE}/leaderboard`);
-                const data = await response.json();
+                // Try the new leaderboard endpoint first, fallback to attendees
+                let response;
+                let data;
+                
+                try {
+                    response = await fetch(`${API_BASE}/leaderboard`);
+                    data = await response.json();
+                } catch (error) {
+                    console.log('Leaderboard endpoint not available, trying attendees...');
+                    response = await fetch(`${API_BASE}/attendees`);
+                    data = await response.json();
+                }
                 
                 const leaderboardEl = document.getElementById('leaderboard');
                 
-                if (data.length === 0) {
+                if (!data || data.length === 0) {
                     leaderboardEl.innerHTML = '<div class="loading">No attendees yet</div>';
                     return;
                 }
                 
-                leaderboardEl.innerHTML = data.slice(0, 10).map((attendee, index) => `
+                // Sort by score/total_points descending
+                const sortedData = data.sort((a, b) => ((b.score || b.total_points) || 0) - ((a.score || a.total_points) || 0));
+                
+                leaderboardEl.innerHTML = sortedData.slice(0, 10).map((attendee, index) => `
                     <div class="attendee-item">
                         <span class="attendee-name">
                             ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
                             ${attendee.name || `Attendee ${attendee.id}`}
                         </span>
-                        <span class="attendee-score">${attendee.score || 0} pts</span>
+                        <span class="attendee-score">${(attendee.score || attendee.total_points) || 0} pts</span>
                     </div>
                 `).join('');
                 
