@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTF Tracker - Node.js Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+            color: #fff;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #ffd700;
+        }
+
+        .leaderboard-item:first-child {
+            border-left-color: #ffd700;
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .leaderboard-item:nth-child(2) {
+            border-left-color: #c0c0c0;
+            background: rgba(192, 192, 192, 0.2);
+        }
+
+        .leaderboard-item:nth-child(3) {
+            border-left-color: #cd7f32;
+            background: rgba(205, 127, 50, 0.2);
+        }
+
+        .attendee-name {
+            font-weight: 500;
+        }
+
+        .attendee-score {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #ffd700;
+        }
+
+        .machine-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .machine-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            background: rgba(255, 193, 7, 0.3);
+            color: #ffc107;
+        }
+
+        .refresh-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.7;
+        }
+
+        .error {
+            text-align: center;
+            padding: 20px;
+            color: #ff6b6b;
+        }
+
+        .success {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .activity-item {
+            padding: 10px;
+            margin: 8px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #4caf50;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 CTF Tracker</h1>
+            <p class="subtitle">Node.js Edition - Red Hat Ansible Automation Platform CTF</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Statistics Card -->
+            <div class="card">
+                <h3>📊 Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-value" id="attendee-count">-</span>
+                        <div class="stat-label">Attendees</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="machine-count">-</span>
+                        <div class="stat-label">Machines</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="challenge-count">-</span>
+                        <div class="stat-label">Challenges</div>
+                    </div>
+                </div>
+                <button class="refresh-btn" onclick="loadDashboard()">
+                    🔄 Refresh Dashboard
+                </button>
+            </div>
+
+            <!-- Leaderboard Card -->
+            <div class="card">
+                <h3>🏆 Leaderboard</h3>
+                <div id="leaderboard">
+                    <div class="loading">Loading leaderboard...</div>
+                </div>
+            </div>
+
+            <!-- Machines Card -->
+            <div class="card">
+                <h3>🖥️ RHEL Machines</h3>
+                <div id="machines">
+                    <div class="loading">Loading machines...</div>
+                </div>
+            </div>
+
+            <!-- Recent Activity Card -->
+            <div class="card">
+                <h3>🔥 Recent Activity</h3>
+                <div id="recent-activity">
+                    <div class="loading">Loading activity...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Clean, simple CTF Dashboard
+        console.log('🎯 CTF Tracker Node.js Dashboard Loading...');
+
+        // Load all dashboard data
+        async function loadDashboard() {
+            console.log('🔄 Refreshing dashboard...');
+            
+            try {
+                // Load all data in parallel
+                await Promise.all([
+                    loadStatistics(),
+                    loadLeaderboard(),
+                    loadMachines(),
+                    loadRecentActivity()
+                ]);
+                
+                console.log('✅ Dashboard loaded successfully');
+                
+            } catch (error) {
+                console.error('❌ Error loading dashboard:', error);
+            }
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                
+                document.getElementById('attendee-count').textContent = stats.attendees || 0;
+                document.getElementById('machine-count').textContent = stats.machines || 0;
+                document.getElementById('challenge-count').textContent = stats.challenges || 0;
+                
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                document.getElementById('attendee-count').textContent = '?';
+                document.getElementById('machine-count').textContent = '?';
+                document.getElementById('challenge-count').textContent = '?';
+            }
+        }
+
+        // Load leaderboard - CLEAN IMPLEMENTATION
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch('/api/leaderboard');
+                const leaderboard = await response.json();
+                
+                const leaderboardEl = document.getElementById('leaderboard');
+                
+                if (!leaderboard || leaderboard.length === 0) {
+                    leaderboardEl.innerHTML = '<div class="loading">No attendees yet</div>';
+                    return;
+                }
+
+                // Generate leaderboard HTML
+                const leaderboardHTML = leaderboard.slice(0, 10).map((attendee, index) => {
+                    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                    return `
+                        <div class="leaderboard-item">
+                            <span class="attendee-name">
+                                ${medal} ${attendee.name || `Attendee ${attendee.id}`}
+                            </span>
+                            <span class="attendee-score">${attendee.total_points || 0} pts</span>
+                        </div>
+                    `;
+                }).join('');
+
+                leaderboardEl.innerHTML = leaderboardHTML;
+                
+                if (leaderboard.length > 0) {
+                    console.log(`🏆 Leaderboard: ${leaderboard[0].name} leads with ${leaderboard[0].total_points} points`);
+                }
+                
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+                document.getElementById('leaderboard').innerHTML = '<div class="error">Error loading leaderboard</div>';
+            }
+        }
+
+        // Load machines
+        async function loadMachines() {
+            try {
+                const response = await fetch('/api/machines');
+                const machines = await response.json();
+                
+                const machinesEl = document.getElementById('machines');
+                
+                if (!machines || machines.length === 0) {
+                    machinesEl.innerHTML = '<div class="loading">No machines registered</div>';
+                    return;
+                }
+
+                const machinesHTML = machines.map(machine => `
+                    <div class="machine-item">
+                        <span>🖥️ ${machine.hostname}</span>
+                        <span class="machine-status">${machine.status || 'Unknown'}</span>
+                    </div>
+                `).join('');
+
+                machinesEl.innerHTML = machinesHTML;
+                
+            } catch (error) {
+                console.error('Error loading machines:', error);
+                document.getElementById('machines').innerHTML = '<div class="error">Error loading machines</div>';
+            }
+        }
+
+        // Load recent activity
+        async function loadRecentActivity() {
+            try {
+                const response = await fetch('/api/recent_results');
+                const results = await response.json();
+                
+                const activityEl = document.getElementById('recent-activity');
+                
+                if (!results || results.length === 0) {
+                    activityEl.innerHTML = '<div class="loading">No recent activity</div>';
+                    return;
+                }
+
+                const activityHTML = results.slice(0, 5).map(result => `
+                    <div class="activity-item">
+                        <div class="activity-time">${new Date(result.timestamp).toLocaleString()}</div>
+                        <div><strong>${result.attendee_name}</strong> completed <em>${result.challenge_type}</em> on <strong>${result.hostname}</strong></div>
+                        <div class="success">+${result.points_earned} points</div>
+                    </div>
+                `).join('');
+
+                activityEl.innerHTML = activityHTML;
+                
+            } catch (error) {
+                console.error('Error loading recent activity:', error);
+                document.getElementById('recent-activity').innerHTML = '<div class="error">Error loading activity</div>';
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadDashboard, 30000);
+
+        console.log('🎯 CTF Tracker Node.js Dashboard Ready!');
+    </script>
+</body>
+</html>
