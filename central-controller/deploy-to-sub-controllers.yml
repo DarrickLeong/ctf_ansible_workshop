@@ -77,7 +77,17 @@
               - sub_controller_username is defined
               - sub_controller_password is defined or sub_controller_token is defined
               - ctf_tracker_base_url is defined
-            fail_msg: "Required variables missing for controller {{ inventory_hostname }}"
+              - scm_url != "" or scm_type == "manual"
+            fail_msg: |
+              Required variables missing for controller {{ inventory_hostname }}:
+              - sub_controller_host: {{ sub_controller_host | default('NOT DEFINED') }}
+              - sub_controller_username: {{ sub_controller_username | default('NOT DEFINED') }}
+              - has_password: {{ 'YES' if sub_controller_password is defined else 'NO' }}
+              - ctf_tracker_base_url: {{ ctf_tracker_base_url | default('NOT DEFINED') }}
+              - scm_url: {{ scm_url | default('NOT DEFINED') }} (required unless scm_type=manual)
+              - scm_type: {{ scm_type | default('NOT DEFINED') }}
+              
+              Please ensure all required variables are set via job template survey or extra_vars.
 
         - name: Set controller connection facts
           set_fact:
@@ -132,6 +142,7 @@
             description: "Organization for CTF challenges - managed by central controller"
             state: present
           when: target_organization != "Default"
+          delegate_to: localhost
 
         # CREATE PROJECT ON SUB CONTROLLER
         - name: Create CTF Project on sub controller
@@ -149,6 +160,7 @@
             scm_update_on_launch: "{{ scm_type == 'git' }}"
             state: present
           register: project_result
+          delegate_to: localhost
 
         # SYNC PROJECT FROM SCM (if using SCM)
         - name: Sync project from SCM on sub controller
@@ -162,6 +174,7 @@
             timeout: 180
           when: scm_type != "manual"
           register: sync_result
+          delegate_to: localhost
 
         # CREATE JOB TEMPLATES ON SUB CONTROLLER
         - name: Create CTF Job Templates on sub controller
@@ -184,6 +197,7 @@
             state: present
           loop: "{{ job_templates }}"
           register: job_template_results
+          delegate_to: localhost
 
         # VERIFY DEPLOYMENT
         - name: Verify job templates were created on sub controller
@@ -196,6 +210,7 @@
             state: present
           loop: "{{ job_templates }}"
           register: verification_results
+          delegate_to: localhost
 
         - name: Record successful deployment
           set_fact:
