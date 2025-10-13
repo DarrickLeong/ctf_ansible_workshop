@@ -318,12 +318,25 @@
       when: "'custom_command' in (challenge_config.challenge_types | default([]))"
 
     # CALCULATE FINAL RESULTS
+    - name: Debug challenge results before calculation
+      debug:
+        var: challenge_results
+
     - name: Calculate total results
       set_fact:
-        total_points: "{{ challenge_results | dict2items | map(attribute='value.points_earned') | sum }}"
-        max_possible_points: "{{ challenge_results | dict2items | map(attribute='value.max_points') | sum }}"
+        total_points: "{{ challenge_results | dict2items | map(attribute='value.points_earned') | sum | default(0) }}"
+        max_possible_points: "{{ challenge_results | dict2items | map(attribute='value.max_points') | sum | default(0) }}"
         challenges_completed: "{{ (challenge_results | dict2items | selectattr('value.completed', 'equalto', true) | list | length) | int }}"
         total_challenges: "{{ (challenge_results | dict2items | list | length) | int }}"
+
+    - name: Debug calculated totals
+      debug:
+        msg: |
+          Debug Totals:
+          - total_points: {{ total_points }} (type: {{ total_points | type_debug }})
+          - max_possible_points: {{ max_possible_points }} (type: {{ max_possible_points | type_debug }})
+          - challenges_completed: {{ challenges_completed }} (type: {{ challenges_completed | type_debug }})
+          - total_challenges: {{ total_challenges }} (type: {{ total_challenges | type_debug }})
 
     # REPORT RESULTS BACK TO CTF TRACKER
     - name: Report results to CTF Tracker
@@ -342,7 +355,7 @@
             max_possible_points: "{{ max_possible_points }}"
             challenges_completed: "{{ challenges_completed }}"
             total_challenges: "{{ total_challenges }}"
-            completion_percentage: "{{ ((challenges_completed | float / total_challenges | float) * 100) | round(1) if total_challenges > 0 else 0 }}"
+            completion_percentage: "{% if total_challenges | int > 0 %}{{ ((challenges_completed | int | float / total_challenges | int | float) * 100) | round(1) }}{% else %}0.0{% endif %}"
           timestamp: "{{ ansible_date_time.iso8601 }}"
         validate_certs: no
       register: tracker_response
@@ -363,7 +376,7 @@
           ----------------
           Total Points Earned: {{ total_points }}/{{ max_possible_points }}
           Challenges Completed: {{ challenges_completed }}/{{ total_challenges }}
-          Completion Rate: {{ ((challenges_completed | float / total_challenges | float) * 100) | round(1) if total_challenges > 0 else 0 }}%
+          Completion Rate: {% if total_challenges | int > 0 %}{{ ((challenges_completed | int | float / total_challenges | int | float) * 100) | round(1) }}%{% else %}0.0%{% endif %}
           
           DETAILED RESULTS:
           ----------------
