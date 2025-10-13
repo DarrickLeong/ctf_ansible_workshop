@@ -161,6 +161,33 @@ app.post('/api/machines', (req, res) => {
     });
 });
 
+// API: Register sub controller (called by central controller only)
+app.post('/api/register_controller', (req, res) => {
+    const { controller_name, controller_host, region, description } = req.body;
+    
+    if (!controller_name) {
+        return res.status(400).json({ error: 'Missing required field: controller_name' });
+    }
+
+    db.run(`INSERT OR REPLACE INTO machines (hostname, ip_address, region, aap_cluster_id, status) 
+            VALUES (?, ?, ?, ?, ?)`,
+           [controller_name, controller_host || '', region || 'sub-controller', controller_name, 'Active'], 
+           function(err) {
+        if (err) {
+            console.error('Error registering controller:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        
+        console.log(`✅ Registered sub controller: ${controller_name}`);
+        res.json({ 
+            message: 'Sub controller registered successfully',
+            id: this.lastID,
+            controller_name,
+            status: 'Active'
+        });
+    });
+});
+
 // API: Submit challenge results
 app.post('/api/challenge_results', (req, res) => {
     const { attendee_name, hostname, challenge_results, aap_cluster_id } = req.body;
@@ -179,21 +206,9 @@ app.post('/api/challenge_results', (req, res) => {
         let attendee_id;
         
         const processResults = (attendee_id) => {
-            // Register the AAP sub controller (not the individual host)
-            // The aap_cluster_id should contain the sub controller name
-            if (aap_cluster_id && aap_cluster_id.trim() !== '' && !aap_cluster_id.includes('unknown')) {
-                db.run(`INSERT OR REPLACE INTO machines (hostname, ip_address, region, aap_cluster_id, status) 
-                        VALUES (?, ?, ?, ?, ?)`,
-                       [aap_cluster_id, '', 'sub-controller', aap_cluster_id, 'Active'], (err) => {
-                    if (err) {
-                        console.error('Error registering sub controller:', err);
-                        // Continue anyway - don't fail the whole request
-                    } else {
-                        console.log(`✅ Registered sub controller: ${aap_cluster_id}`);
-                    }
-                });
-            }
-
+            // Do NOT auto-register controllers from challenge results
+            // Controllers should only be registered via the central controller deployment
+            
             // Clear previous results for this attendee and hostname to avoid duplicates
             db.run('DELETE FROM challenge_results WHERE attendee_id = ? AND hostname = ?', 
                    [attendee_id, hostname], (err) => {

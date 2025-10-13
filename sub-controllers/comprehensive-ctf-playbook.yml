@@ -429,7 +429,7 @@
           attendee_name: "{{ attendee_name | default('Team-' + inventory_hostname) }}"
           hostname: "{{ inventory_hostname }}"
           challenge_results: "{{ challenge_results }}"
-          aap_cluster_id: "{{ sub_controller_name | default('sub-controller-' + (group_names[0] | default('unknown'))) }}"
+          aap_cluster_id: "{{ sub_controller_name | default('') }}"
         validate_certs: no
       register: tracker_response
       ignore_errors: yes

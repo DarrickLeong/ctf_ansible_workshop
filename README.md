@@ -169,7 +169,7 @@ ansible-vault encrypt group_vars/all/vault.yml
 4. **Create Job Templates**: Point to uploaded inventory
 
         ### **Step 4: Execute (CRITICAL ORDER)** ⚡
-        ```bash
+```bash
         # FIRST: Test connectivity - MUST PASS before deployment
         Run: "Test Sub Controller Connectivity"
         # ✅ Verify all controllers show PASS
