@@ -179,15 +179,18 @@ app.post('/api/challenge_results', (req, res) => {
         let attendee_id;
         
         const processResults = (attendee_id) => {
-            // Ensure the hostname/controller is registered as a machine
-            db.run(`INSERT OR IGNORE INTO machines (hostname, ip_address, region, aap_cluster_id, status) 
-                    VALUES (?, ?, ?, ?, ?)`,
-                   [hostname, '', 'auto-detected', aap_cluster_id || '', 'Active'], (err) => {
-                if (err) {
-                    console.error('Error registering machine:', err);
-                    // Continue anyway - don't fail the whole request
-                }
-            });
+            // Register the AAP sub controller (not the individual host)
+            // The aap_cluster_id should contain the sub controller name
+            if (aap_cluster_id && aap_cluster_id.trim() !== '') {
+                db.run(`INSERT OR IGNORE INTO machines (hostname, ip_address, region, aap_cluster_id, status) 
+                        VALUES (?, ?, ?, ?, ?)`,
+                       [aap_cluster_id, '', 'sub-controller', aap_cluster_id, 'Active'], (err) => {
+                    if (err) {
+                        console.error('Error registering sub controller:', err);
+                        // Continue anyway - don't fail the whole request
+                    }
+                });
+            }
 
             // Clear previous results for this attendee and hostname to avoid duplicates
             db.run('DELETE FROM challenge_results WHERE attendee_id = ? AND hostname = ?', 
