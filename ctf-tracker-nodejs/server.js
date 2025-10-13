@@ -340,6 +340,22 @@ app.get('/api/stats', (req, res) => {
     });
 });
 
+// API: Clear all data (for testing)
+app.delete('/api/clear_all', (req, res) => {
+    db.serialize(() => {
+        db.run('DELETE FROM challenge_results');
+        db.run('DELETE FROM connectivity_tests');
+        db.run('DELETE FROM machines');
+        db.run('DELETE FROM attendees');
+        
+        console.log('🗑️ All data cleared for testing');
+        res.json({ 
+            message: 'All data cleared successfully',
+            cleared: ['attendees', 'machines', 'challenge_results', 'connectivity_tests']
+        });
+    });
+});
+
 // Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
