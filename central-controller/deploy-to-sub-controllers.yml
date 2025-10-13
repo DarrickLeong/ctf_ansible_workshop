@@ -211,26 +211,26 @@
           register: verification_results
           delegate_to: localhost
 
-                # REGISTER SUB CONTROLLER IN CTF TRACKER
-                - name: Register sub controller in CTF Tracker
-                  uri:
-                    url: "{{ ctf_tracker_base_url }}/api/register_controller"
-                    method: POST
-                    body_format: json
-                    headers:
-                      Content-Type: "application/json"
-                    body:
-                      controller_name: "{{ inventory_hostname }}"
-                      controller_host: "{{ awx_host }}"
-                      region: "{{ controller_region | default('sub-controller') }}"
-                      description: "{{ controller_description | default('AAP Sub Controller') }}"
-                    validate_certs: no
-                  register: controller_registration
-                  ignore_errors: yes
-                  delegate_to: localhost
+        # REGISTER SUB CONTROLLER IN CTF TRACKER
+        - name: Register sub controller in CTF Tracker
+          uri:
+            url: "{{ ctf_tracker_base_url }}/api/register_controller"
+            method: POST
+            body_format: json
+            headers:
+              Content-Type: "application/json"
+            body:
+              controller_name: "{{ inventory_hostname }}"
+              controller_host: "{{ awx_host }}"
+              region: "{{ controller_region | default('sub-controller') }}"
+              description: "{{ controller_description | default('AAP Sub Controller') }}"
+            validate_certs: no
+          register: controller_registration
+          ignore_errors: yes
+          delegate_to: localhost
 
-                - name: Record successful deployment
-                  set_fact:
+        - name: Record successful deployment
+          set_fact:
             deployment_success: true
             deployment_project_id: "{{ project_result.id }}"
             deployment_templates: "{{ job_template_results.results | map(attribute='id') | list }}"
