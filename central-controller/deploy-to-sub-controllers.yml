@@ -214,7 +214,7 @@
         # REGISTER SUB CONTROLLER IN CTF TRACKER
         - name: Register sub controller in CTF Tracker
           uri:
-            url: "{{ ctf_tracker_base_url }}/api/register_controller"
+            url: "{{ ctf_tracker_url }}/api/register_controller"
             method: POST
             body_format: json
             headers:
