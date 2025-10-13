@@ -223,7 +223,7 @@
                     </div>
                     <div class="stat-item">
                         <span class="stat-value" id="machine-count">-</span>
-                        <div class="stat-label">Machines</div>
+                        <div class="stat-label">Controllers</div>
                     </div>
                     <div class="stat-item">
                         <span class="stat-value" id="challenge-count">-</span>
@@ -243,11 +243,11 @@
                 </div>
             </div>
 
-            <!-- Machines Card -->
+            <!-- Controllers Card -->
             <div class="card">
-                <h3>🖥️ RHEL Machines</h3>
+                <h3>🎛️ Controllers</h3>
                 <div id="machines">
-                    <div class="loading">Loading machines...</div>
+                    <div class="loading">Loading controllers...</div>
                 </div>
             </div>
 
@@ -350,13 +350,13 @@
                 const machinesEl = document.getElementById('machines');
                 
                 if (!machines || machines.length === 0) {
-                    machinesEl.innerHTML = '<div class="loading">No machines registered</div>';
+                    machinesEl.innerHTML = '<div class="loading">No controllers registered</div>';
                     return;
                 }
 
                 const machinesHTML = machines.map(machine => `
                     <div class="machine-item">
-                        <span>🖥️ ${machine.hostname}</span>
+                        <span>🎛️ ${machine.hostname}</span>
                         <span class="machine-status">${machine.status || 'Unknown'}</span>
                     </div>
                 `).join('');
@@ -364,8 +364,8 @@
                 machinesEl.innerHTML = machinesHTML;
                 
             } catch (error) {
-                console.error('Error loading machines:', error);
-                document.getElementById('machines').innerHTML = '<div class="error">Error loading machines</div>';
+                console.error('Error loading controllers:', error);
+                document.getElementById('machines').innerHTML = '<div class="error">Error loading controllers</div>';
             }
         }
 
