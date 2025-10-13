@@ -322,8 +322,8 @@
       set_fact:
         total_points: "{{ challenge_results | dict2items | map(attribute='value.points_earned') | sum }}"
         max_possible_points: "{{ challenge_results | dict2items | map(attribute='value.max_points') | sum }}"
-        challenges_completed: "{{ challenge_results | dict2items | selectattr('value.completed', 'equalto', true) | list | length }}"
-        total_challenges: "{{ challenge_results | dict2items | list | length }}"
+        challenges_completed: "{{ (challenge_results | dict2items | selectattr('value.completed', 'equalto', true) | list | length) | int }}"
+        total_challenges: "{{ (challenge_results | dict2items | list | length) | int }}"
 
     # REPORT RESULTS BACK TO CTF TRACKER
     - name: Report results to CTF Tracker
