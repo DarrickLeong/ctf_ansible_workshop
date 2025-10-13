@@ -449,7 +449,7 @@ def update_attendee_progress(attendee_id, checkpoint_id, completed, points):
 @app.route('/')
 def index():
     """Main dashboard page"""
-    return render_template('index.html')
+    return render_template('dashboard.html')
 
 @app.route('/api/attendees', methods=['GET', 'POST'])
 def attendees():
