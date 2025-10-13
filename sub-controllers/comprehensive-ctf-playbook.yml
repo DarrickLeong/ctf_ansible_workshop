@@ -28,7 +28,7 @@
           CTF CHALLENGE VERIFICATION
           =================================
           Target Host: {{ inventory_hostname }}
-          Attendee ID: {{ attendee_id | default('Not specified') }}
+          Attendee: {{ attendee_name | default('Not specified') }}
           Challenge Config: {{ challenge_config | default({}) }}
           Tracker URL: {{ ctf_tracker_url | default('Not configured') }}
           =================================
@@ -328,15 +328,14 @@
     # REPORT RESULTS BACK TO CTF TRACKER
     - name: Report results to CTF Tracker
       uri:
-        url: "{{ ctf_tracker_url }}/api/challenge_results"
+        url: "{{ ctf_tracker_url }}/api/webhook"
         method: POST
         body_format: json
         headers:
-          Authorization: "Bearer {{ ctf_tracker_token }}"
           Content-Type: "application/json"
         body:
           hostname: "{{ inventory_hostname }}"
-          attendee_id: "{{ attendee_id | default('unknown') }}"
+          attendee_id: "{{ attendee_name | default('unknown') }}"
           challenge_results: "{{ challenge_results }}"
           summary:
             total_points: "{{ total_points }}"
@@ -348,7 +347,7 @@
         validate_certs: no
       register: tracker_response
       ignore_errors: yes
-      when: ctf_tracker_url is defined and ctf_tracker_url != '' and ctf_tracker_token is defined and ctf_tracker_token != ''
+      when: ctf_tracker_url is defined and ctf_tracker_url != ''
 
     # DISPLAY FINAL RESULTS
     - name: Display Challenge Results Summary
@@ -358,7 +357,7 @@
           CTF CHALLENGE VERIFICATION COMPLETE
           ==========================================
           Host: {{ inventory_hostname }}
-          Attendee: {{ attendee_id | default('unknown') }}
+          Attendee: {{ attendee_name | default('unknown') }}
           
           RESULTS SUMMARY:
           ----------------
@@ -375,7 +374,7 @@
             Details: {{ result.details }}
           {% endfor %}
           
-          Tracker Update: {{ 'SUCCESS' if tracker_response is succeeded else 'FAILED' }}
+          Tracker Update: {{ 'SUCCESS' if tracker_response is defined and tracker_response is succeeded else 'SKIPPED' }}
           ==========================================
 
     - name: Create results file for debugging
@@ -383,9 +382,9 @@
         content: |
           CTF Challenge Results - {{ ansible_date_time.iso8601 }}
           Host: {{ inventory_hostname }}
-          Attendee: {{ attendee_id | default('unknown') }}
+          Attendee: {{ attendee_name | default('unknown') }}
           
           {{ challenge_results | to_nice_json }}
-        dest: "/tmp/ctf_results_{{ attendee_id | default('unknown') }}_{{ ansible_date_time.epoch }}.json"
+        dest: "/tmp/ctf_results_{{ attendee_name | default('unknown') }}_{{ ansible_date_time.epoch }}.json"
       ignore_errors: yes
 
