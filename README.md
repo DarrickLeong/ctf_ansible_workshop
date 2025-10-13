@@ -10,7 +10,8 @@ ctf-ansible-workshop/
 │   ├── app.py                  # Main Flask application
 │   ├── requirements.txt        # Python dependencies
 │   ├── Dockerfile              # Container definition
-│   ├── deploy-interactive.sh   # OpenShift deployment
+│   ├── deploy-quick.sh         # Quick OpenShift deployment
+│   ├── deploy-secure.sh        # Secure interactive deployment
 │   ├── config.template         # Environment variables
 │   └── README.md               # App setup guide
 │
@@ -161,22 +162,23 @@ ansible-vault encrypt group_vars/all/vault.yml
 3. **Create Vault Credential**: For encrypted passwords
 4. **Create Job Templates**: Point to uploaded inventory
 
-### **Step 4: Execute (CRITICAL ORDER)** ⚡
-```bash
-# FIRST: Test connectivity - MUST PASS before deployment
-Run: "Test Sub Controller Connectivity"
-# ✅ Verify all controllers show PASS
+        ### **Step 4: Execute (CRITICAL ORDER)** ⚡
+        ```bash
+        # FIRST: Test connectivity - MUST PASS before deployment
+        Run: "Test Sub Controller Connectivity"
+        # ✅ Verify all controllers show PASS
 
-# SECOND: Deploy playbooks  
-Run: "Deploy CTF Playbooks to Sub Controllers"
-# ✅ Verify deployment success on all controllers
-```
+        # SECOND: Deploy playbooks AND onboard to CTF Tracker
+        Run: "Deploy CTF Playbooks to Sub Controllers"
+        # ✅ Verify deployment success on all controllers
+        # ✅ Verify CTF Tracker shows registered attendees/teams
+        ```
 
-### **Step 5: Start Your CTF** 🎮
-1. Open CTF Tracker web interface
-2. Onboard your sub controllers 
-3. Add RHEL machines
-4. Run challenges and monitor scores
+        ### **Step 5: Start Your CTF** 🎮
+        1. Open CTF Tracker web interface (automatically populated during deployment)
+        2. Your sub controllers are now registered as teams
+        3. Add RHEL machines via the job templates
+        4. Run challenges and monitor scores
 
 ## 🎯 Success Path Summary
 ```

@@ -74,7 +74,7 @@ Upload these playbooks to your AAP project:
 
 ### Step 1: Onboard AAP Clusters
 
-1. **Access CTF Tracker**: https://ctf-tracker-ctf-project.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com
+1. **Access CTF Tracker**: https://ctf-tracker-ctf-project.apps.your-cluster.com
 2. **Add Attendees**: Create attendee accounts
 3. **Onboard AAP Cluster**:
    - Click "Onboard AAP Cluster"

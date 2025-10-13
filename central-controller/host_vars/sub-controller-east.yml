@@ -3,7 +3,7 @@
 # Place these files in host_vars/ directory in your Central AAP Controller
 
 # Host variables for sub-controller-east
-sub_controller_host: "aap-east.company.com"
+sub_controller_host: "aap-east.your-company.com"
 sub_controller_username: "admin"
 sub_controller_password: "{{ vault_sub_controller_east_password }}"
 # Alternative: Use OAuth token instead of password

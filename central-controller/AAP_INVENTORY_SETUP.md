@@ -26,7 +26,7 @@ For each sub controller, add a host with these settings:
 ```yaml
 ---
 # Sub Controller Connection Details
-sub_controller_host: "aap-east.company.com"
+sub_controller_host: "aap-east.your-company.com"
 sub_controller_username: "admin"
 sub_controller_password: "{{ vault_east_password }}"
 # Alternative: sub_controller_token: "{{ vault_east_token }}"
@@ -50,7 +50,7 @@ project_name: "CTF Challenge Playbooks"
 **West Controller**:
 ```yaml
 ---
-sub_controller_host: "aap-west.company.com"
+sub_controller_host: "aap-west.your-company.com"
 sub_controller_username: "admin"
 sub_controller_password: "{{ vault_west_password }}"
 sub_controller_organization: "CTF Organization"
@@ -64,7 +64,7 @@ controller_description: "West Coast CTF Sub Controller"
 **Central Controller** (if managing itself):
 ```yaml
 ---
-sub_controller_host: "aap-central.company.com"
+sub_controller_host: "aap-central.your-company.com"
 sub_controller_username: "admin"
 sub_controller_password: "{{ vault_central_password }}"
 sub_controller_organization: "Default"

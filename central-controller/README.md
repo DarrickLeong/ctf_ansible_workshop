@@ -46,7 +46,7 @@ AAP Inventory → Dynamic Host Selection → Playbook Execution → Results
 
 **Example Host Variables in AAP**:
 ```yaml
-sub_controller_host: "aap-east.company.com"
+sub_controller_host: "aap-east.your-company.com"
 sub_controller_username: "admin"
 sub_controller_password: "{{ vault_east_password }}"
 sub_controller_organization: "CTF Organization"
@@ -67,12 +67,29 @@ sub_controller_organization: "CTF Organization"
 - **Inventory**: `CTF Sub Controllers` (your AAP inventory)
 - **Playbook**: `central-controller/deploy-to-sub-controllers.yml`
 - **Credentials**: Your sub controller passwords credential
-- **Survey**: Repository URL, Branch, CTF Tracker URL
-  - **scm_repository_url**: Git repository URL (Text, Required, Default: `https://github.com/your-org/ctf-ansible-workshop.git`)
-  - **scm_source_branch**: Git branch (Text, Required, Default: `main`)
-  - **scm_source_type**: SCM type (Choice, Required, Default: `git`, Options: `git`, `manual`, `archive`)
-  - **ctf_tracker_url**: CTF Tracker URL (Text, Required, Default: `https://ctf-tracker.apps.your-openshift-cluster.com`)
-  - **project_name**: Project name (Text, Required, Default: `CTF Challenge Playbooks`)
+        - **Survey**: Repository URL, Branch, CTF Tracker URL
+          - **scm_repository_url**: Git repository URL (Text, Required, Default: `https://github.com/your-org/ctf-ansible-workshop.git`)
+          - **scm_source_branch**: Git branch (Text, Required, Default: `main`)
+          - **scm_source_type**: SCM type (Choice, Required, Default: `git`, Options: `git`, `manual`, `archive`)
+          - **ctf_tracker_url**: CTF Tracker URL (Text, Required, Default: `http://ctf-tracker-ctf-project.apps.your-cluster.com`)
+          - **project_name**: Project name (Text, Required, Default: `CTF Challenge Playbooks`)
+          - **sub_controller_team_name**: Team name (Text, Optional, Default: `{inventory_hostname} Team`)
+          - **sub_controller_team_email**: Team email (Text, Optional, Default: `{inventory_hostname}@your-company.com`)
+          - **sub_controller_region**: Region name (Text, Optional, Default: `region-{inventory_hostname}`)
+
+## 🎯 Integrated CTF Tracker Onboarding
+
+### **New in v2.0** ✨
+The deployment playbook now **automatically onboards** your sub-controllers to the CTF tracker!
+
+**What happens during deployment:**
+1. ✅ **Deploy playbooks** to sub-controller
+2. ✅ **Create job templates** with proper variables
+3. ✅ **Register attendee/team** in CTF tracker
+4. ✅ **Register controller** as a tracking entity
+5. ✅ **Configure job templates** with correct attendee names
+
+**No separate onboarding script needed!** 🎉
 
 ## 🔥 Critical Execution Order
 
@@ -83,8 +100,8 @@ Run: "Test Sub Controller Connectivity"
 **Auto-discovers**: All hosts with sub controller variables  
 **Expected output**: 
 ```
-✅ sub-controller-east: aap-east.company.com
-✅ sub-controller-west: aap-west.company.com
+✅ sub-controller-east: aap-east.your-company.com
+✅ sub-controller-west: aap-west.your-company.com
 ```
 
 ### **2. SECOND: Deploy Infrastructure** 🚀

@@ -35,6 +35,7 @@
         ask_credential_on_launch: true
         variables:
           ctf_tracker_url: "{{ ctf_tracker_base_url }}"
+          attendee_name: "{{ sub_controller_team_name | default(inventory_hostname + ' Team') }}"
       - name: "CTF Connectivity Test"
         playbook: "sub-controllers/connectivity-test-playbook.yml"
         description: "Test RHEL host connectivity and system health"
@@ -45,6 +46,7 @@
         ask_credential_on_launch: true
         variables:
           ctf_tracker_url: "{{ ctf_tracker_base_url }}"
+          attendee_name: "{{ sub_controller_team_name | default(inventory_hostname + ' Team') }}"
 
     # Default execution environment (optional)
     execution_environment: "{{ default_execution_environment | default('Default execution environment') }}"
@@ -230,6 +232,109 @@
               - Job Template: {{ template.name }}
               {% endfor %}
 
+        # ONBOARD CONTROLLER TO CTF TRACKER
+        - name: Debug CTF Tracker URL before onboarding
+          debug:
+            msg: |
+              CTF Tracker Onboarding Debug:
+              - ctf_tracker_base_url: "{{ ctf_tracker_base_url }}"
+              - ctf_tracker_url: "{{ ctf_tracker_url | default('NOT SET') }}"
+              - URL is empty check: {{ ctf_tracker_base_url == '' }}
+              - URL length: {{ ctf_tracker_base_url | length }}
+              - Contains your-cluster: {{ 'your-cluster.com' in ctf_tracker_base_url }}
+
+        - name: Test CTF Tracker connectivity
+          uri:
+            url: "{{ ctf_tracker_base_url }}/api/attendees"
+            method: GET
+            validate_certs: no
+            timeout: 10
+          register: ctf_tracker_test
+          failed_when: false
+          delegate_to: localhost
+          when: ctf_tracker_base_url is defined and ctf_tracker_base_url | length > 0 and 'your-cluster.com' not in ctf_tracker_base_url
+
+        - name: Register attendee/team for this controller in CTF Tracker
+          uri:
+            url: "{{ ctf_tracker_base_url }}/api/attendees"
+            method: POST
+            headers:
+              Content-Type: "application/json"
+            body_format: json
+            body:
+              name: "{{ sub_controller_team_name | default(inventory_hostname + ' Team') }}"
+              email: "{{ sub_controller_team_email | default(inventory_hostname + '@your-company.com') }}"
+              team: "{{ sub_controller_region | default('Region-' + inventory_hostname) }}"
+              controller: "{{ inventory_hostname }}"
+            status_code: [200, 201, 409]  # 409 = already exists (OK)
+            validate_certs: no
+            timeout: 30
+          register: attendee_result
+          failed_when: false
+          delegate_to: localhost
+          when: 
+            - ctf_tracker_base_url is defined and ctf_tracker_base_url | length > 0 and 'your-cluster.com' not in ctf_tracker_base_url
+            - ctf_tracker_test is succeeded
+
+        - name: Get attendee ID from CTF Tracker
+          uri:
+            url: "{{ ctf_tracker_base_url }}/api/attendees"
+            method: GET
+            validate_certs: no
+            timeout: 30
+          register: attendees_list
+          failed_when: false
+          delegate_to: localhost
+          when: 
+            - ctf_tracker_base_url is defined and ctf_tracker_base_url | length > 0 and 'your-cluster.com' not in ctf_tracker_base_url
+            - ctf_tracker_test is succeeded
+
+        - name: Find attendee ID for this controller
+          set_fact:
+            controller_attendee_id: "{{ (attendees_list.json | selectattr('name', 'equalto', sub_controller_team_name | default(inventory_hostname + ' Team')) | first).id | default('') }}"
+          when: 
+            - ctf_tracker_base_url is defined and ctf_tracker_base_url | length > 0 and 'your-cluster.com' not in ctf_tracker_base_url
+            - ctf_tracker_test is succeeded
+            - attendees_list.json is defined
+
+        - name: Register sub-controller as a tracking entity in CTF Tracker
+          uri:
+            url: "{{ ctf_tracker_base_url }}/api/machines"
+            method: POST
+            headers:
+              Content-Type: "application/json"
+            body_format: json
+            body:
+              hostname: "{{ inventory_hostname }}"
+              ip: "{{ awx_host }}"
+              region: "{{ sub_controller_region | default('region-' + inventory_hostname) }}"
+              attendee_id: "{{ controller_attendee_id | int }}"
+              status: "controller"
+              controller_type: "sub-controller"
+            status_code: [200, 201, 409]  # 409 = already exists (OK)
+            validate_certs: no
+            timeout: 30
+          register: controller_registration
+          failed_when: false
+          delegate_to: localhost
+          when: 
+            - ctf_tracker_base_url is defined and ctf_tracker_base_url | length > 0 and 'your-cluster.com' not in ctf_tracker_base_url
+            - ctf_tracker_test is succeeded
+            - controller_attendee_id != ''
+
+        - name: Report CTF Tracker onboarding status
+          debug:
+            msg: |
+              🎯 CTF TRACKER ONBOARDING:
+              - Attendee Registration: {{ 'SUCCESS' if attendee_result is succeeded else 'SKIPPED/FAILED' }}
+              - Team Name: {{ sub_controller_team_name | default(inventory_hostname + ' Team') }}
+              - Attendee ID: {{ controller_attendee_id | default('Not found') }}
+              - Controller Registration: {{ 'SUCCESS' if controller_registration is succeeded else 'SKIPPED/FAILED' }}
+              - Dashboard: {{ ctf_tracker_base_url }}
+          when: 
+            - ctf_tracker_base_url is defined and ctf_tracker_base_url | length > 0 and 'your-cluster.com' not in ctf_tracker_base_url
+            - ctf_tracker_test is succeeded
+
       rescue:
         - name: Record deployment failure
           set_fact:
@@ -297,6 +402,17 @@
           Job Templates Deployed:
           - CTF Challenge Verification
           - CTF Connectivity Test
+          
+          CTF TRACKER ONBOARDING:
+          {% for controller in successful_deployments %}
+          {% if hostvars[controller]['controller_attendee_id'] is defined %}
+          ✅ {{ controller }}: Registered as {{ hostvars[controller]['sub_controller_team_name'] | default(controller + ' Team') }} (ID: {{ hostvars[controller]['controller_attendee_id'] }})
+          {% else %}
+          ⚠️ {{ controller }}: CTF tracker registration skipped or failed
+          {% endif %}
+          {% endfor %}
+          
+          Dashboard URL: {{ ctf_tracker_base_url }}
           ==========================================
 
     - name: Fail if any deployments failed
