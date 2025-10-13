@@ -88,29 +88,57 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            grid-template-columns: 1fr;
+            gap: 10px;
             margin-bottom: 20px;
         }
 
         .stat-item {
             text-align: center;
             background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 10px;
+            padding: 10px 8px;
+            border-radius: 8px;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .stat-value {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: bold;
             display: block;
             color: #fff;
+            line-height: 1;
+            margin-bottom: 4px;
         }
 
         .stat-label {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             opacity: 0.8;
-            margin-top: 5px;
+            line-height: 1;
+            word-wrap: break-word;
+        }
+
+        /* Responsive stats for larger screens */
+        @media (min-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+            
+            .stat-item {
+                padding: 8px 4px;
+                min-height: 70px;
+            }
+            
+            .stat-value {
+                font-size: 1.6rem;
+            }
+            
+            .stat-label {
+                font-size: 0.75rem;
+            }
         }
 
         .leaderboard-item {
