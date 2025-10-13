@@ -295,9 +295,8 @@
           {% endif %}
           
           Job Templates Deployed:
-          {% for template in job_templates %}
-          - {{ template.name }}
-          {% endfor %}
+          - CTF Challenge Verification
+          - CTF Connectivity Test
           ==========================================
 
     - name: Fail if any deployments failed
