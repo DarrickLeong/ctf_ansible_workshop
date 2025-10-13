@@ -13,11 +13,15 @@
     ctf_tracker_base_url: "{{ ctf_tracker_url | default('https://ctf-tracker.apps.your-cluster.com') }}"
 
     # Project and SCM Configuration
+    # Override these via job template survey or extra_vars:
+    # - scm_source_type: 'git' (default), 'manual', or 'archive'  
+    # - scm_repository_url: Git repo URL for your CTF playbooks
+    # - scm_source_branch: Git branch to use (default: 'main')
     ctf_project_name: "{{ project_name | default('CTF Challenge Playbooks') }}"
     ctf_project_description: "CTF Challenge Verification and Connectivity Test Playbooks"
-    scm_type: "{{ scm_type | default('git') }}"  # git, manual, or archive
+    scm_type: "{{ scm_source_type | default('git') }}"  # git, manual, or archive
     scm_url: "{{ scm_repository_url | default('') }}"  # Git repo URL if using git
-    scm_branch: "{{ scm_branch | default('main') }}"
+    scm_branch: "{{ scm_source_branch | default('main') }}"
 
     # Job Template Configuration
     job_templates:

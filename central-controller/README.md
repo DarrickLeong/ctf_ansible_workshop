@@ -68,6 +68,11 @@ sub_controller_organization: "CTF Organization"
 - **Playbook**: `central-controller/deploy-to-sub-controllers.yml`
 - **Credentials**: Your sub controller passwords credential
 - **Survey**: Repository URL, Branch, CTF Tracker URL
+  - **scm_repository_url**: Git repository URL (Text, Required, Default: `https://github.com/your-org/ctf-ansible-workshop.git`)
+  - **scm_source_branch**: Git branch (Text, Required, Default: `main`)
+  - **scm_source_type**: SCM type (Choice, Required, Default: `git`, Options: `git`, `manual`, `archive`)
+  - **ctf_tracker_url**: CTF Tracker URL (Text, Required, Default: `https://ctf-tracker.apps.your-openshift-cluster.com`)
+  - **project_name**: Project name (Text, Required, Default: `CTF Challenge Playbooks`)
 
 ## 🔥 Critical Execution Order
 
