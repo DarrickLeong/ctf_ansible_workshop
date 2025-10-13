@@ -86,8 +86,8 @@
           set_fact:
             challenge_results: "{{ challenge_results | combine({'apache_check': {
               'completed': apache_points | int >= apache_max_points | int,
-              'points_earned': apache_points,
-              'max_points': apache_max_points,
+              'points_earned': apache_points | int,
+              'max_points': apache_max_points | int,
               'details': {
                 'package_installed': apache_installed,
                 'service_running': apache_running,
@@ -140,8 +140,8 @@
           set_fact:
             challenge_results: "{{ challenge_results | combine({'nginx_check': {
               'completed': nginx_points | int >= nginx_max_points | int,
-              'points_earned': nginx_points,
-              'max_points': nginx_max_points,
+              'points_earned': nginx_points | int,
+              'max_points': nginx_max_points | int,
               'details': {
                 'package_installed': nginx_installed,
                 'service_running': nginx_running,
@@ -188,8 +188,8 @@
           set_fact:
             challenge_results: "{{ challenge_results | combine({'mysql_check': {
               'completed': mysql_points | int >= mysql_max_points | int,
-              'points_earned': mysql_points,
-              'max_points': mysql_max_points,
+              'points_earned': mysql_points | int,
+              'max_points': mysql_max_points | int,
               'details': {
                 'package_installed': mysql_installed,
                 'service_running': mysql_running,
@@ -235,8 +235,8 @@
           set_fact:
             challenge_results: "{{ challenge_results | combine({'firewall_check': {
               'completed': firewall_points | int >= firewall_max_points | int,
-              'points_earned': firewall_points,
-              'max_points': firewall_max_points,
+              'points_earned': firewall_points | int,
+              'max_points': firewall_max_points | int,
               'details': {
                 'service_running': firewall_running,
                 'zones_configured': firewall_configured,
@@ -276,8 +276,8 @@
           set_fact:
             challenge_results: "{{ challenge_results | combine({'user_check': {
               'completed': user_points | int >= user_max_points | int,
-              'points_earned': user_points,
-              'max_points': user_max_points,
+              'points_earned': user_points | int,
+              'max_points': user_max_points | int,
               'details': {
                 'users_created': required_users_exist,
                 'sudo_configured': sudo_configured
@@ -310,8 +310,8 @@
           set_fact:
             challenge_results: "{{ challenge_results | combine({'custom_commands': {
               'completed': true,
-              'points_earned': custom_total_points,
-              'max_points': challenge_config.custom_commands | sum(attribute='points') | default(0),
+              'points_earned': custom_total_points | int,
+              'max_points': (challenge_config.custom_commands | sum(attribute='points') | default(0)) | int,
               'details': custom_results
             }}) }}"
 
@@ -320,8 +320,8 @@
     # CALCULATE FINAL RESULTS
     - name: Calculate total results
       set_fact:
-        total_points: "{{ challenge_results | dict2items | map(attribute='value.points_earned') | sum | int }}"
-        max_possible_points: "{{ challenge_results | dict2items | map(attribute='value.max_points') | sum | int }}"
+        total_points: "{{ challenge_results | dict2items | map(attribute='value.points_earned') | sum }}"
+        max_possible_points: "{{ challenge_results | dict2items | map(attribute='value.max_points') | sum }}"
         challenges_completed: "{{ challenge_results | dict2items | selectattr('value.completed', 'equalto', true) | list | length }}"
         total_challenges: "{{ challenge_results | dict2items | list | length }}"
 
