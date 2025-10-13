@@ -5,8 +5,8 @@ Manage deployment to multiple sub Ansible controllers from a central AAP control
 ## 🚨 Prerequisites
 
 **Required Collections:**
-- `awx.awx` collection (v23.0.0+) for AAP API integration
-- Install with: `ansible-galaxy collection install awx.awx`
+- `ansible.controller` collection (v4.0.0+) for Red Hat AAP integration
+- Install with: `ansible-galaxy collection install ansible.controller`
 - **If collection install fails**: See `AWX_COLLECTION_INSTALL_GUIDE.md`
 
 ## 📁 Files Overview

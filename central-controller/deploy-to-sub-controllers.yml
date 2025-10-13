@@ -119,7 +119,7 @@
 
         # CREATE OR UPDATE ORGANIZATION (if specified)
         - name: Create/Update Organization on sub controller
-          awx.awx.organization:
+          ansible.controller.organization:
             controller_host: "{{ awx_host }}"
             controller_username: "{{ awx_username }}"
             controller_password: "{{ awx_password }}"
@@ -131,7 +131,7 @@
 
         # CREATE PROJECT ON SUB CONTROLLER
         - name: Create CTF Project on sub controller
-          awx.awx.project:
+          ansible.controller.project:
             controller_host: "{{ awx_host }}"
             controller_username: "{{ awx_username }}"
             controller_password: "{{ awx_password }}"
@@ -148,7 +148,7 @@
 
         # SYNC PROJECT FROM SCM (if using SCM)
         - name: Sync project from SCM on sub controller
-          awx.awx.project_update:
+          ansible.controller.project_update:
             controller_host: "{{ awx_host }}"
             controller_username: "{{ awx_username }}"
             controller_password: "{{ awx_password }}"
@@ -161,7 +161,7 @@
 
         # CREATE JOB TEMPLATES ON SUB CONTROLLER
         - name: Create CTF Job Templates on sub controller
-          awx.awx.job_template:
+          ansible.controller.job_template:
             controller_host: "{{ awx_host }}"
             controller_username: "{{ awx_username }}"
             controller_password: "{{ awx_password }}"
@@ -183,7 +183,7 @@
 
         # VERIFY DEPLOYMENT
         - name: Verify job templates were created on sub controller
-          awx.awx.job_template:
+          ansible.controller.job_template:
             controller_host: "{{ awx_host }}"
             controller_username: "{{ awx_username }}"
             controller_password: "{{ awx_password }}"
