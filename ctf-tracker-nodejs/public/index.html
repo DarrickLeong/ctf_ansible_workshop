@@ -42,9 +42,15 @@
 
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: 1fr 2fr 1fr 1fr; /* Statistics | Leaderboard (2x wider) | Controllers | Recent Activity */
             gap: 30px;
             margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            }
         }
 
         .card {
@@ -95,14 +101,14 @@
         .leaderboard-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 15px;
+            align-items: flex-start; /* Change to flex-start for better alignment */
+            padding: 20px; /* Increase padding */
             margin: 10px 0;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             border-left: 4px solid #ffd700;
-            flex-wrap: wrap;
-            min-height: 80px;
+            min-height: 120px; /* Increase height for more content */
+            gap: 15px;
         }
 
         .leaderboard-item:first-child {
@@ -169,12 +175,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
+            padding: 15px;
             margin: 8px 0;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
-            flex-wrap: wrap;
-            min-height: 50px;
+            min-height: 60px;
+            gap: 15px; /* Add gap to prevent collision */
         }
 
         .machine-left {
@@ -185,22 +191,26 @@
         }
 
         .machine-right {
-            margin-left: 10px;
+            margin-left: 15px;
             min-width: 80px;
+            flex-shrink: 0; /* Prevent shrinking */
         }
 
         .machine-name {
             font-weight: 500;
             word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
         }
 
         .machine-status {
-            padding: 4px 12px;
+            padding: 6px 12px;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: bold;
-            background: rgba(255, 193, 7, 0.3);
-            color: #ffc107;
+            background: #4CAF50; /* Green for Active */
+            color: white;
+            white-space: nowrap;
         }
 
         .refresh-btn {
@@ -402,11 +412,40 @@
                     const lastActivity = new Date(attendee.latest_activity);
                     const timeAgo = getTimeAgo(lastActivity);
                     
-                    // Format challenge progress
+                    // Build detailed challenge breakdown
                     const challengeTypes = Object.keys(attendee.challenge_progress);
-                    const progressText = challengeTypes.length > 0 
-                        ? `${attendee.unique_challenges} challenge types • ${attendee.completion_rate}% completion`
-                        : 'No challenges attempted';
+                    
+                    // Available challenges (you can customize this list)
+                    const availableChallenges = [
+                        'apache_check', 'nginx_check', 'mysql_check', 
+                        'firewall_check', 'user_check', 'custom_command'
+                    ];
+                    
+                    let challengeBreakdown = '';
+                    if (challengeTypes.length > 0) {
+                        // Show completed challenges
+                        const completedChallenges = challengeTypes.filter(type => 
+                            attendee.challenge_progress[type].completed
+                        );
+                        
+                        challengeBreakdown = `
+                            <div style="margin-top: 8px; font-size: 0.75rem;">
+                                <div>✅ Completed: ${completedChallenges.map(c => c.replace('_', ' ')).join(', ') || 'None'}</div>
+                                <div style="opacity: 0.7;">⏳ Available: ${availableChallenges.filter(c => !challengeTypes.includes(c)).map(c => c.replace('_', ' ')).join(', ') || 'All attempted'}</div>
+                            </div>
+                        `;
+                    } else {
+                        challengeBreakdown = `
+                            <div style="margin-top: 8px; font-size: 0.75rem; opacity: 0.7;">
+                                <div>📋 Available challenges: ${availableChallenges.map(c => c.replace('_', ' ')).join(', ')}</div>
+                            </div>
+                        `;
+                    }
+                    
+                    // Explain completion ratio (3/4 means 3 challenge results out of 4 total attempts)
+                    const completionExplanation = attendee.total_challenges > 0 
+                        ? `${attendee.challenges_completed}/${attendee.total_challenges} results (${attendee.completion_rate}% success rate)`
+                        : 'No attempts yet';
                     
                     return `
                         <div class="leaderboard-item">
@@ -415,15 +454,16 @@
                                     ${medal} ${attendee.name || `Team ${attendee.id}`}
                                 </div>
                                 <div class="attendee-progress">
-                                    📊 ${progressText}
+                                    📊 ${completionExplanation}
                                 </div>
                                 <div class="attendee-timestamp">
                                     🕒 Last activity: ${timeAgo}
                                 </div>
+                                ${challengeBreakdown}
                             </div>
                             <div class="leaderboard-right">
                                 <div class="attendee-score">${attendee.total_points} pts</div>
-                                <div class="attendee-challenges">${attendee.challenges_completed}/${attendee.total_challenges} completed</div>
+                                <div class="attendee-challenges">${attendee.unique_challenges} challenge types</div>
                             </div>
                         </div>
                     `;
