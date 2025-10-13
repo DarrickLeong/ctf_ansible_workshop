@@ -101,6 +101,8 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             border-left: 4px solid #ffd700;
+            flex-wrap: wrap;
+            min-height: 80px;
         }
 
         .leaderboard-item:first-child {
@@ -118,14 +120,49 @@
             background: rgba(205, 127, 50, 0.2);
         }
 
+        .leaderboard-left {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .leaderboard-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            margin-left: 15px;
+            min-width: 120px;
+        }
+
         .attendee-name {
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+            word-wrap: break-word;
+        }
+
+        .attendee-progress {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 2px;
+        }
+
+        .attendee-timestamp {
+            font-size: 0.75rem;
+            opacity: 0.6;
         }
 
         .attendee-score {
             font-weight: bold;
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             color: #ffd700;
+            margin-bottom: 2px;
+        }
+
+        .attendee-challenges {
+            font-size: 0.8rem;
+            opacity: 0.8;
         }
 
         .machine-item {
@@ -136,6 +173,25 @@
             margin: 8px 0;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
+            flex-wrap: wrap;
+            min-height: 50px;
+        }
+
+        .machine-left {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .machine-right {
+            margin-left: 10px;
+            min-width: 80px;
+        }
+
+        .machine-name {
+            font-weight: 500;
+            word-wrap: break-word;
         }
 
         .machine-status {
@@ -325,10 +381,10 @@
             }
         }
 
-        // Load leaderboard - CLEAN IMPLEMENTATION
+        // Load leaderboard - ENHANCED IMPLEMENTATION
         async function loadLeaderboard() {
             try {
-                const response = await fetch('/api/leaderboard');
+                const response = await fetch('/api/leaderboard_enhanced');
                 const leaderboard = await response.json();
                 
                 const leaderboardEl = document.getElementById('leaderboard');
@@ -338,15 +394,37 @@
                     return;
                 }
 
-                // Generate leaderboard HTML
+                // Generate enhanced leaderboard HTML
                 const leaderboardHTML = leaderboard.slice(0, 10).map((attendee, index) => {
                     const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                    
+                    // Format timestamp
+                    const lastActivity = new Date(attendee.latest_activity);
+                    const timeAgo = getTimeAgo(lastActivity);
+                    
+                    // Format challenge progress
+                    const challengeTypes = Object.keys(attendee.challenge_progress);
+                    const progressText = challengeTypes.length > 0 
+                        ? `${attendee.unique_challenges} challenge types • ${attendee.completion_rate}% completion`
+                        : 'No challenges attempted';
+                    
                     return `
                         <div class="leaderboard-item">
-                            <span class="attendee-name">
-                                ${medal} ${attendee.name || `Attendee ${attendee.id}`}
-                            </span>
-                            <span class="attendee-score">${attendee.total_points || 0} pts</span>
+                            <div class="leaderboard-left">
+                                <div class="attendee-name">
+                                    ${medal} ${attendee.name || `Team ${attendee.id}`}
+                                </div>
+                                <div class="attendee-progress">
+                                    📊 ${progressText}
+                                </div>
+                                <div class="attendee-timestamp">
+                                    🕒 Last activity: ${timeAgo}
+                                </div>
+                            </div>
+                            <div class="leaderboard-right">
+                                <div class="attendee-score">${attendee.total_points} pts</div>
+                                <div class="attendee-challenges">${attendee.challenges_completed}/${attendee.total_challenges} completed</div>
+                            </div>
                         </div>
                     `;
                 }).join('');
@@ -361,6 +439,20 @@
                 console.error('Error loading leaderboard:', error);
                 document.getElementById('leaderboard').innerHTML = '<div class="error">Error loading leaderboard</div>';
             }
+        }
+
+        // Helper function to format time ago
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            return `${diffDays}d ago`;
         }
 
         // Load machines
@@ -378,8 +470,12 @@
 
                 const machinesHTML = machines.map(machine => `
                     <div class="machine-item">
-                        <span>🎛️ ${machine.hostname}</span>
-                        <span class="machine-status">${machine.status || 'Unknown'}</span>
+                        <div class="machine-left">
+                            <div class="machine-name">🎛️ ${machine.hostname}</div>
+                        </div>
+                        <div class="machine-right">
+                            <span class="machine-status">${machine.status || 'Unknown'}</span>
+                        </div>
                     </div>
                 `).join('');
 

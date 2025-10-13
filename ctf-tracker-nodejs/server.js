@@ -270,6 +270,95 @@ app.post('/api/connectivity_test', (req, res) => {
     });
 });
 
+// API: Get enhanced leaderboard with challenge progress
+app.get('/api/leaderboard_enhanced', (req, res) => {
+    db.all(`SELECT id, name, email, total_points, created_at FROM attendees ORDER BY total_points DESC, created_at ASC`, (err, attendees) => {
+        if (err) {
+            console.error('Error fetching attendees:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        
+        const attendeePromises = attendees.map((attendee, index) => {
+            return new Promise((resolve, reject) => {
+                // Get challenge results for this attendee
+                db.all(`SELECT challenge_type, points_earned, max_points, completed, timestamp 
+                        FROM challenge_results 
+                        WHERE attendee_id = ? 
+                        ORDER BY timestamp DESC`, [attendee.id], (err, challenges) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    
+                    // Calculate challenge statistics
+                    const totalChallenges = challenges.length;
+                    const completedChallenges = challenges.filter(c => c.completed).length;
+                    const uniqueChallenges = [...new Set(challenges.map(c => c.challenge_type))].length;
+                    
+                    // Get latest activity timestamp
+                    const latestTimestamp = challenges.length > 0 ? challenges[0].timestamp : attendee.created_at;
+                    
+                    // Format challenge progress
+                    const challengeProgress = challenges.reduce((acc, challenge) => {
+                        if (!acc[challenge.challenge_type]) {
+                            acc[challenge.challenge_type] = {
+                                points_earned: 0,
+                                max_points: challenge.max_points,
+                                completed: false,
+                                attempts: 0
+                            };
+                        }
+                        acc[challenge.challenge_type].points_earned += challenge.points_earned;
+                        acc[challenge.challenge_type].attempts += 1;
+                        if (challenge.completed) {
+                            acc[challenge.challenge_type].completed = true;
+                        }
+                        return acc;
+                    }, {});
+                    
+                    resolve({
+                        id: attendee.id,
+                        name: attendee.name,
+                        email: attendee.email,
+                        score: attendee.total_points,
+                        total_points: attendee.total_points,
+                        rank: index + 1,
+                        challenges_completed: completedChallenges,
+                        total_challenges: totalChallenges,
+                        unique_challenges: uniqueChallenges,
+                        completion_rate: totalChallenges > 0 ? Math.round((completedChallenges / totalChallenges) * 100) : 0,
+                        latest_activity: latestTimestamp,
+                        challenge_progress: challengeProgress,
+                        created_at: attendee.created_at
+                    });
+                });
+            });
+        });
+        
+        Promise.all(attendeePromises)
+            .then(enhancedLeaderboard => {
+                // Sort by points (desc), then by latest activity (asc - fastest)
+                enhancedLeaderboard.sort((a, b) => {
+                    if (b.total_points !== a.total_points) {
+                        return b.total_points - a.total_points;
+                    }
+                    return new Date(a.latest_activity) - new Date(b.latest_activity);
+                });
+                
+                // Update ranks after sorting
+                enhancedLeaderboard.forEach((attendee, index) => {
+                    attendee.rank = index + 1;
+                });
+                
+                res.json(enhancedLeaderboard);
+            })
+            .catch(err => {
+                console.error('Error building enhanced leaderboard:', err);
+                res.status(500).json({ error: 'Error building leaderboard' });
+            });
+    });
+});
+
 // API: Get leaderboard
 app.get('/api/leaderboard', (req, res) => {
     db.all(`SELECT id, name, email, total_points, 
