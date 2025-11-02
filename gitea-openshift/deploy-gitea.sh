@@ -157,6 +157,8 @@ spec:
     metadata:
       labels:
         app: gitea
+      annotations:
+        deployment-config: "${ADMIN_USER}-${ADMIN_EMAIL}-$(date +%s)"
     spec:
       initContainers:
       - name: init-config
@@ -274,7 +276,7 @@ oc exec -n ${PROJECT_NAME} ${POD_NAME} -- /bin/sh -c "gitea admin user create \
   --email ${ADMIN_EMAIL} \
   --admin \
   --must-change-password=false \
-  -c /etc/gitea/app.ini" || echo -e "${YELLOW}⚠ Admin user may already exist${NC}"
+  -c /gitea-data/conf/app.ini" 2>&1 | grep -v "user already exists" || echo -e "${YELLOW}⚠ Admin user may already exist or was just created${NC}"
 
 echo -e "${GREEN}✓ Admin user configured${NC}"
 echo ""
