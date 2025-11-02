@@ -652,11 +652,14 @@ curl http://node3</code></pre>
             </div>
         `,
         solution: `
-            <h3>Complete Solution</h3>
-            <div class="alert alert-warning">
-                <strong>⚠️ Spoiler Alert!</strong> Try to solve it yourself first!
-            </div>
-            <pre><code class="language-yaml">---
+            <details>
+                <summary><strong>🔓 Click to Reveal Complete Solution</strong></summary>
+                <div class="solution-content">
+                    <h3>Complete Solution</h3>
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Spoiler Alert!</strong> Try to solve it yourself first!
+                    </div>
+                    <pre><code class="language-yaml">---
 - name: Challenge 5 - Fix Firewall Anomaly
   hosts: node3
   become: yes
@@ -669,17 +672,17 @@ curl http://node3</code></pre>
         state: enabled
         immediate: yes</code></pre>
 
-            <h4>Explanation:</h4>
-            <ul>
-                <li><code>hosts: node3</code> - Targets only the secondary web server</li>
-                <li><code>service: http</code> - Allows HTTP (port 80/tcp)</li>
-                <li><code>permanent: yes</code> - Rule survives reboots</li>
-                <li><code>state: enabled</code> - Allow the service through</li>
-                <li><code>immediate: yes</code> - Applies without manual reload</li>
-            </ul>
+                    <h4>Explanation:</h4>
+                    <ul>
+                        <li><code>hosts: node3</code> - Targets only the secondary web server</li>
+                        <li><code>service: http</code> - Allows HTTP (port 80/tcp)</li>
+                        <li><code>permanent: yes</code> - Rule survives reboots</li>
+                        <li><code>state: enabled</code> - Allow the service through</li>
+                        <li><code>immediate: yes</code> - Applies without manual reload</li>
+                    </ul>
 
-            <h4>Alternative: Without immediate flag</h4>
-            <pre><code class="language-yaml">tasks:
+                    <h4>Alternative: Without immediate flag</h4>
+                    <pre><code class="language-yaml">tasks:
   - name: Allow HTTP permanently
     ansible.posix.firewalld:
       service: http
@@ -691,8 +694,8 @@ curl http://node3</code></pre>
       name: firewalld
       state: reloaded</code></pre>
 
-            <h4>Verification Commands:</h4>
-            <pre><code class="language-bash"># Check if HTTP is allowed
+                    <h4>Verification Commands:</h4>
+                    <pre><code class="language-bash"># Check if HTTP is allowed
 ansible node3 -m shell -a "firewall-cmd --list-services" -i inventory
 # Output should include "http"
 
@@ -703,14 +706,14 @@ ansible node3 -m shell -a "firewall-cmd --list-services --permanent" -i inventor
 curl http://node3
 # Should connect successfully</code></pre>
 
-            <h4>Common Firewall Services:</h4>
-            <ul>
-                <li><code>http</code> - Port 80/tcp</li>
-                <li><code>https</code> - Port 443/tcp</li>
-                <li><code>ssh</code> - Port 22/tcp</li>
-                <li><code>mysql</code> - Port 3306/tcp</li>
-                <li><code>postgresql</code> - Port 5432/tcp</li>
-            </ul>
+                    <h4>Common Firewall Services:</h4>
+                    <ul>
+                        <li><code>http</code> - Port 80/tcp</li>
+                        <li><code>https</code> - Port 443/tcp</li>
+                        <li><code>ssh</code> - Port 22/tcp</li>
+                        <li><code>mysql</code> - Port 3306/tcp</li>
+                        <li><code>postgresql</code> - Port 5432/tcp</li>
+                    </ul>
                 </div>
             </details>
         `
