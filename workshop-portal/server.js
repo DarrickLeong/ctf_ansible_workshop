@@ -101,14 +101,18 @@ const challengeContent = {
                 <h4>🚨 The Problem</h4>
                 <p>System clocks are drifting because the time synchronization service (<code>chronyd</code>) has been stopped across the environment. This is causing logging and authentication issues.</p>
             </div>
+            <div class="alert alert-primary" style="margin-top: 10px;">
+                <h4>🎯 Target Nodes</h4>
+                <p><strong style="color: #e74c3c;">ALL nodes</strong> - node1, node2, and node3</p>
+            </div>
         `,
         requirements: `
             <h3>Your Mission</h3>
-            <p>Write a single playbook to ensure the <code>chronyd</code> service is running and enabled on all servers.</p>
+            <p>Write a single playbook to ensure the <code>chronyd</code> service is running and enabled on <strong>all three nodes</strong>.</p>
             <h4>Success Criteria:</h4>
             <ul>
-                <li>✅ Service is running on all hosts</li>
-                <li>✅ Service is enabled to start on boot</li>
+                <li>✅ Service is running on <strong>node1, node2, and node3</strong></li>
+                <li>✅ Service is enabled to start on boot on <strong>all nodes</strong></li>
                 <li>✅ Playbook is idempotent (can run multiple times safely)</li>
             </ul>
         `,
@@ -218,14 +222,18 @@ ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
                 <h4>🚨 The Problem</h4>
                 <p>A compliance scan has detected an unauthorized package, <code>bind-utils</code>, installed on the database server (node2). Per security policy, database servers must not run web services. It needs to be removed immediately.</p>
             </div>
+            <div class="alert alert-primary" style="margin-top: 10px;">
+                <h4>🎯 Target Nodes</h4>
+                <p><strong style="color: #e74c3c;">node2 ONLY</strong> - database server</p>
+            </div>
         `,
         requirements: `
             <h3>Your Mission</h3>
-            <p>Create a playbook that removes the <code>bind-utils</code> package from <code>node2</code>.</p>
+            <p>Create a playbook that removes the <code>bind-utils</code> package from <strong>node2 only</strong>.</p>
             <h4>Success Criteria:</h4>
             <ul>
-                <li>✅ bind-utils package is removed from node2</li>
-                <li>✅ Other servers are not affected</li>
+                <li>✅ bind-utils package is removed from <strong>node2</strong></li>
+                <li>✅ Other servers (node1, node3) are not affected</li>
                 <li>✅ Playbook targets only the correct host</li>
             </ul>
         `,
@@ -320,13 +328,18 @@ ansible node2 -m shell -a "rpm -qa | grep bind-utils" -i inventory
                 <h4>🚨 The Problem</h4>
                 <p>A rogue user account, <code>rogue_user</code>, was found on node1 and node3. This is a major security vulnerability that must be addressed immediately.</p>
             </div>
+            <div class="alert alert-primary" style="margin-top: 10px;">
+                <h4>🎯 Target Nodes</h4>
+                <p><strong style="color: #e74c3c;">node1 and node3</strong> - NOT node2</p>
+            </div>
         `,
         requirements: `
             <h3>Your Mission</h3>
-            <p>Write a playbook that ensures the <code>rogue_user</code> user is completely removed from any server where it exists.</p>
+            <p>Write a playbook that ensures the <code>rogue_user</code> user is completely removed from <strong>node1 and node3</strong>.</p>
             <h4>Success Criteria:</h4>
             <ul>
-                <li>✅ rogue_user is removed from all affected servers</li>
+                <li>✅ rogue_user is removed from <strong>node1</strong></li>
+                <li>✅ rogue_user is removed from <strong>node3</strong></li>
                 <li>✅ Playbook doesn't fail if user doesn't exist</li>
                 <li>✅ User's home directory is also removed</li>
             </ul>
@@ -430,15 +443,19 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
                 <h4>🚨 The Problem</h4>
                 <p>The "Message of the Day" (<code>/etc/motd</code>) is inconsistent across servers, causing confusion. Some were even defaced by "Disruptive Dezign".</p>
             </div>
+            <div class="alert alert-primary" style="margin-top: 10px;">
+                <h4>🎯 Target Nodes</h4>
+                <p><strong style="color: #e74c3c;">ALL nodes</strong> - node1, node2, and node3</p>
+            </div>
         `,
         requirements: `
             <h3>Your Mission</h3>
-            <p>Create a standardized MOTD using a Jinja2 template. The message should be "Welcome to {{ ansible_hostname }} - Managed by SRE Team". Deploy this template to all three servers.</p>
+            <p>Create a standardized MOTD using a Jinja2 template. The message should be "Welcome to {{ ansible_hostname }} - Managed by SRE Team". Deploy this template to <strong>all three servers</strong>.</p>
             <h4>Success Criteria:</h4>
             <ul>
                 <li>✅ Template file created with variables</li>
-                <li>✅ Each server shows its own hostname</li>
-                <li>✅ Consistent message across all servers</li>
+                <li>✅ Each server shows its own hostname (<strong>node1, node2, node3</strong>)</li>
+                <li>✅ Consistent message across <strong>all servers</strong></li>
             </ul>
         `,
         guide: `
@@ -579,13 +596,17 @@ ssh node1</code></pre>
                 <h4>🚨 The Problem</h4>
                 <p>A backup web service is running on <code>node3</code>, but it's inaccessible because the firewall is blocking HTTP traffic. Users are reporting connection timeouts.</p>
             </div>
+            <div class="alert alert-primary" style="margin-top: 10px;">
+                <h4>🎯 Target Nodes</h4>
+                <p><strong style="color: #e74c3c;">node3 ONLY</strong> - backup web server</p>
+            </div>
         `,
         requirements: `
             <h3>Your Mission</h3>
-            <p>Write a playbook that adds a permanent rule to the firewall on <code>node3</code> to allow traffic for the <code>http</code> service.</p>
+            <p>Write a playbook that adds a permanent rule to the firewall on <strong>node3</strong> to allow traffic for the <code>http</code> service.</p>
             <h4>Success Criteria:</h4>
             <ul>
-                <li>✅ HTTP service allowed in firewall on node3</li>
+                <li>✅ HTTP service allowed in firewall on <strong>node3</strong></li>
                 <li>✅ Rule is permanent (survives reboot)</li>
                 <li>✅ Firewall is reloaded to apply changes</li>
             </ul>
