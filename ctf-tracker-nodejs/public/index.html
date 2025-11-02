@@ -518,31 +518,50 @@
                     // Build detailed challenge breakdown
                     const challengeTypes = Object.keys(attendee.challenge_progress);
                     
-                    // Available challenges (you can customize this list)
-                    const availableChallenges = [
-                        'apache_check', 'nginx_check', 'mysql_check', 
-                        'firewall_check', 'user_check', 'custom_command'
+                    // CTF Workshop Challenges with proper names and points
+                    const workshopChallenges = [
+                        { key: 'challenge1_chronyd', name: 'Challenge 1: Out of Sync', points: 5 },
+                        { key: 'challenge2_nginx_removal', name: 'Challenge 2: Malicious Package', points: 10 },
+                        { key: 'challenge3_rogue_user', name: 'Challenge 3: Rogue User Account', points: 15 },
+                        { key: 'challenge4_motd', name: 'Challenge 4: Inconsistent Messaging', points: 20 },
+                        { key: 'challenge5_firewall', name: 'Challenge 5: Firewall Anomaly', points: 20 },
+                        { key: 'challenge6_phoenix', name: 'Challenge 6: Phoenix Protocol', points: 30 }
                     ];
                     
                     let challengeBreakdown = '';
                     if (challengeTypes.length > 0) {
-                        // Show completed challenges
-                        const completedChallenges = challengeTypes.filter(type => 
-                            attendee.challenge_progress[type].completed
-                        );
+                        // Build challenge list with completion status
+                        let challengeListHTML = '<div style="margin-top: 8px; font-size: 0.75rem; line-height: 1.6;">';
+                        challengeListHTML += '<div style="margin-bottom: 4px; font-weight: bold;">📋 Challenges:</div>';
                         
-                        challengeBreakdown = `
-                            <div style="margin-top: 8px; font-size: 0.75rem;">
-                                <div>✅ Completed: ${completedChallenges.map(c => c.replace('_', ' ')).join(', ') || 'None'}</div>
-                                <div style="opacity: 0.7;">⏳ Available: ${availableChallenges.filter(c => !challengeTypes.includes(c)).map(c => c.replace('_', ' ')).join(', ') || 'All attempted'}</div>
-                            </div>
-                        `;
+                        workshopChallenges.forEach(challenge => {
+                            const isCompleted = challengeTypes.includes(challenge.key) && 
+                                              attendee.challenge_progress[challenge.key].completed;
+                            const pointsEarned = challengeTypes.includes(challenge.key) ? 
+                                               attendee.challenge_progress[challenge.key].points_earned : 0;
+                            
+                            if (isCompleted) {
+                                challengeListHTML += `<div>✅ ${challenge.name} (${pointsEarned}/${challenge.points} pts)</div>`;
+                            } else if (challengeTypes.includes(challenge.key)) {
+                                challengeListHTML += `<div>⏳ ${challenge.name} (${pointsEarned}/${challenge.points} pts)</div>`;
+                            } else {
+                                challengeListHTML += `<div style="opacity: 0.5;">⬜ ${challenge.name} (0/${challenge.points} pts)</div>`;
+                            }
+                        });
+                        
+                        challengeListHTML += '</div>';
+                        challengeBreakdown = challengeListHTML;
                     } else {
-                        challengeBreakdown = `
-                            <div style="margin-top: 8px; font-size: 0.75rem; opacity: 0.7;">
-                                <div>📋 Available challenges: ${availableChallenges.map(c => c.replace('_', ' ')).join(', ')}</div>
-                            </div>
-                        `;
+                        // Show available challenges as a list
+                        let challengeListHTML = '<div style="margin-top: 8px; font-size: 0.75rem; line-height: 1.6; opacity: 0.7;">';
+                        challengeListHTML += '<div style="margin-bottom: 4px; font-weight: bold;">📋 Available Challenges:</div>';
+                        
+                        workshopChallenges.forEach(challenge => {
+                            challengeListHTML += `<div>⬜ ${challenge.name} (${challenge.points} pts)</div>`;
+                        });
+                        
+                        challengeListHTML += '</div>';
+                        challengeBreakdown = challengeListHTML;
                     }
                     
                     // Explain completion ratio (3/4 means 3 challenge results out of 4 total attempts)
