@@ -20,6 +20,15 @@
     scm_url: "{{ scm_repository_url | default('') }}"  # Git repo URL if using git
     scm_branch: "{{ scm_source_branch | default('main') }}"
 
+    # Environment Setup Control
+    # Set these to true via extra_vars to automatically run reset/setup after deployment
+    auto_run_reset: "{{ run_environment_reset | default(false) }}"
+    auto_run_setup: "{{ run_environment_setup | default(false) }}"
+    
+    # Target inventory/credential for environment setup (required if auto_run enabled)
+    target_inventory_name: "{{ environment_inventory | default('') }}"
+    target_credential_name: "{{ environment_credential | default('') }}"
+
     # Job Template Configuration
     job_templates:
       - name: "CTF Environment Reset"
@@ -367,6 +376,100 @@
             - ctf_tracker_url is defined and ctf_tracker_url | length > 0 and 'your-cluster.com' not in ctf_tracker_url
             - ctf_tracker_test is succeeded
 
+        # ==========================================
+        # OPTIONAL: AUTOMATIC ENVIRONMENT SETUP
+        # ==========================================
+        - name: Run Environment Reset (if enabled)
+          block:
+            - name: Check if auto-run is enabled
+              debug:
+                msg: "🔄 Auto-run Environment Reset enabled - launching job..."
+              
+            - name: Get inventory ID
+              ansible.controller.inventory:
+                controller_host: "{{ awx_host }}"
+                controller_username: "{{ awx_username }}"
+                controller_password: "{{ awx_password }}"
+                validate_certs: "{{ awx_validate_certs }}"
+                name: "{{ target_inventory_name }}"
+                state: present
+              register: inventory_info
+              delegate_to: localhost
+            
+            - name: Get credential ID
+              uri:
+                url: "https://{{ awx_host }}/api/v2/credentials/?name={{ target_credential_name | urlencode }}"
+                method: GET
+                user: "{{ awx_username }}"
+                password: "{{ awx_password }}"
+                force_basic_auth: yes
+                validate_certs: "{{ awx_validate_certs }}"
+              register: credential_info
+              delegate_to: localhost
+            
+            - name: Launch CTF Environment Reset job
+              ansible.controller.job_launch:
+                controller_host: "{{ awx_host }}"
+                controller_username: "{{ awx_username }}"
+                controller_password: "{{ awx_password }}"
+                validate_certs: "{{ awx_validate_certs }}"
+                job_template: "CTF Environment Reset"
+                inventory: "{{ target_inventory_name }}"
+                credentials:
+                  - "{{ target_credential_name }}"
+                wait: true
+                timeout: 600
+              register: reset_job_result
+              delegate_to: localhost
+            
+            - name: Report Reset job status
+              debug:
+                msg: |
+                  ✅ Environment Reset completed on {{ inventory_hostname }}
+                  Job ID: {{ reset_job_result.id }}
+                  Status: {{ reset_job_result.status }}
+          when:
+            - auto_run_reset | bool
+            - target_inventory_name != ''
+            - target_credential_name != ''
+
+        - name: Run Environment Setup (if enabled)
+          block:
+            - name: Check if auto-run is enabled
+              debug:
+                msg: "⚙️ Auto-run Environment Setup enabled - launching job..."
+              
+            - name: Wait for reset to complete (if it ran)
+              pause:
+                seconds: 5
+              when: reset_job_result is defined and reset_job_result.id is defined
+            
+            - name: Launch CTF Environment Setup job
+              ansible.controller.job_launch:
+                controller_host: "{{ awx_host }}"
+                controller_username: "{{ awx_username }}"
+                controller_password: "{{ awx_password }}"
+                validate_certs: "{{ awx_validate_certs }}"
+                job_template: "CTF Environment Setup"
+                inventory: "{{ target_inventory_name }}"
+                credentials:
+                  - "{{ target_credential_name }}"
+                wait: true
+                timeout: 600
+              register: setup_job_result
+              delegate_to: localhost
+            
+            - name: Report Setup job status
+              debug:
+                msg: |
+                  ✅ Environment Setup completed on {{ inventory_hostname }}
+                  Job ID: {{ setup_job_result.id }}
+                  Status: {{ setup_job_result.status }}
+          when:
+            - auto_run_setup | bool
+            - target_inventory_name != ''
+            - target_credential_name != ''
+
       rescue:
         - name: Record deployment failure
           set_fact:
@@ -436,6 +539,18 @@
           - CTF Environment Setup
           - CTF Challenge Validation
           - CTF Connectivity Test
+          
+          {% if auto_run_reset or auto_run_setup %}
+          AUTOMATIC EXECUTION:
+          {% for controller in successful_deployments %}
+          {% if hostvars[controller]['reset_job_result'] is defined %}
+          🔄 {{ controller }}: Environment Reset - {{ hostvars[controller]['reset_job_result']['status'] | default('Unknown') }} (Job ID: {{ hostvars[controller]['reset_job_result']['id'] | default('N/A') }})
+          {% endif %}
+          {% if hostvars[controller]['setup_job_result'] is defined %}
+          ⚙️ {{ controller }}: Environment Setup - {{ hostvars[controller]['setup_job_result']['status'] | default('Unknown') }} (Job ID: {{ hostvars[controller]['setup_job_result']['id'] | default('N/A') }})
+          {% endif %}
+          {% endfor %}
+          {% endif %}
           
           CTF TRACKER ONBOARDING:
           {% for controller in successful_deployments %}
