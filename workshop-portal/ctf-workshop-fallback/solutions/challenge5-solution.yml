@@ -1,0 +1,80 @@
+---
+# Challenge 5 Solution: Firewall Anomaly (20 Points)
+# 
+# Mission: Allow HTTP traffic through firewall on node3
+# Points: 20
+#
+# This playbook demonstrates firewall management with ansible.posix collection
+
+- name: Challenge 5 - Fix Firewall Configuration
+  hosts: node3
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Ensure firewalld is running
+      ansible.builtin.service:
+        name: firewalld
+        state: started
+        enabled: yes
+    
+    - name: Allow HTTP service through firewall
+      ansible.posix.firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+        immediate: yes
+      register: firewall_result
+    
+    - name: Get current firewall services
+      ansible.builtin.command: firewall-cmd --list-services
+      register: firewall_services
+      changed_when: false
+    
+    - name: Verify HTTP is allowed
+      ansible.builtin.set_fact:
+        http_allowed: "{{ 'http' in firewall_services.stdout }}"
+    
+    - name: Test HTTP connectivity
+      ansible.builtin.uri:
+        url: "http://{{ ansible_default_ipv4.address }}"
+        method: GET
+        timeout: 5
+      register: http_test
+      ignore_errors: yes
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: |
+          ✅ Challenge 5 Complete on {{ inventory_hostname }}!
+          HTTP allowed in firewall: {{ http_allowed }}
+          Firewall services: {{ firewall_services.stdout }}
+          HTTP test: {{ 'Success' if http_test.status == 200 else 'Failed' }}
+    
+    - name: Report to CTF Tracker
+      ansible.builtin.uri:
+        url: "{{ ctf_tracker_url }}/api/challenge_results"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          attendee_name: "{{ attendee_name }}"
+          hostname: "{{ inventory_hostname }}"
+          challenge_results:
+            challenge_5:
+              completed: "{{ http_allowed }}"
+              points_earned: "{{ 20 if http_allowed else 0 }}"
+              max_points: 20
+              details:
+                firewall_rule_added: "{{ http_allowed }}"
+                rule_permanent: true
+                rule_immediate: true
+                http_accessible: "{{ http_test.status == 200 if http_test.status is defined else false }}"
+          aap_cluster_id: "{{ aap_cluster_id | default('') }}"
+        validate_certs: no
+      when: 
+        - ctf_tracker_url is defined
+        - attendee_name is defined
+      ignore_errors: yes
+

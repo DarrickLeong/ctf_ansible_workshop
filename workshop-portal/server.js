@@ -5,7 +5,7 @@ const { marked } = require('marked');
 const hljs = require('highlight.js');
 
 const app = express();
-const PORT = process.env.PORT || 8090;
+const PORT = process.env.PORT || 8080;
 
 // Configure marked for syntax highlighting
 marked.setOptions({
@@ -25,7 +25,10 @@ marked.setOptions({
 app.use('/static', express.static(path.join(__dirname, 'public')));
 
 // Path to workshop materials
-const WORKSHOP_DIR = path.join(__dirname, '..', 'ctf-workshop');
+// Check if running in OpenShift or locally
+const WORKSHOP_DIR = fs.existsSync(path.join(__dirname, '..', 'ctf-workshop'))
+    ? path.join(__dirname, '..', 'ctf-workshop')
+    : path.join(__dirname, 'ctf-workshop-fallback');
 
 // Helper function to read and convert markdown
 function readMarkdown(filepath) {

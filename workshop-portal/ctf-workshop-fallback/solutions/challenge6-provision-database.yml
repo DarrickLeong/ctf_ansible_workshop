@@ -1,0 +1,48 @@
+---
+# Challenge 6 Solution - Part 1: Provision Database
+# Phoenix Protocol - Full Stack Disaster Recovery
+# 
+# This playbook provisions the database server (node2)
+
+- name: Challenge 6 - Provision Database Server
+  hosts: node2
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Install MariaDB packages
+      ansible.builtin.dnf:
+        name:
+          - mariadb-server
+          - mariadb
+          - python3-PyMySQL
+        state: present
+      register: db_install
+    
+    - name: Ensure MariaDB service is started and enabled
+      ansible.builtin.service:
+        name: mariadb
+        state: started
+        enabled: yes
+      register: db_service
+    
+    - name: Wait for MariaDB to be ready
+      ansible.builtin.wait_for:
+        port: 3306
+        host: "{{ ansible_default_ipv4.address }}"
+        timeout: 30
+    
+    - name: Create application database
+      community.mysql.mysql_db:
+        name: ctf_app
+        state: present
+        login_unix_socket: /var/lib/mysql/mysql.sock
+      ignore_errors: yes
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: |
+          ✅ Database provisioned on {{ inventory_hostname }}!
+          Packages installed: {{ db_install.changed }}
+          Service running: {{ db_service.state }}
+

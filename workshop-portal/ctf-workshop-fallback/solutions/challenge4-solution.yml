@@ -1,0 +1,71 @@
+---
+# Challenge 4 Solution: Inconsistent Messaging (20 Points)
+# 
+# Mission: Deploy standardized MOTD using template
+# Points: 20
+#
+# This playbook demonstrates template usage and Ansible facts
+
+- name: Challenge 4 - Standardize Message of the Day
+  hosts: all
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Deploy standardized MOTD template
+      ansible.builtin.template:
+        src: templates/motd.j2
+        dest: /etc/motd
+        owner: root
+        group: root
+        mode: '0644'
+      register: motd_result
+    
+    - name: Read deployed MOTD
+      ansible.builtin.slurp:
+        src: /etc/motd
+      register: motd_content
+    
+    - name: Decode MOTD content
+      ansible.builtin.set_fact:
+        motd_text: "{{ motd_content.content | b64decode }}"
+    
+    - name: Verify MOTD contains hostname
+      ansible.builtin.set_fact:
+        motd_valid: "{{ ansible_hostname in motd_text and 'SRE Team' in motd_text }}"
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: |
+          ✅ Challenge 4 Complete on {{ inventory_hostname }}!
+          MOTD deployed: {{ motd_result.changed }}
+          MOTD valid: {{ motd_valid }}
+          Content: {{ motd_text | trim }}
+    
+    - name: Report to CTF Tracker
+      ansible.builtin.uri:
+        url: "{{ ctf_tracker_url }}/api/challenge_results"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          attendee_name: "{{ attendee_name }}"
+          hostname: "{{ inventory_hostname }}"
+          challenge_results:
+            challenge_4:
+              completed: "{{ motd_valid }}"
+              points_earned: "{{ 20 if motd_valid else 0 }}"
+              max_points: 20
+              details:
+                template_deployed: "{{ motd_result.changed }}"
+                contains_hostname: "{{ ansible_hostname in motd_text }}"
+                contains_sre_team: "{{ 'SRE Team' in motd_text }}"
+                permissions_correct: "{{ motd_result.mode == '0644' }}"
+          aap_cluster_id: "{{ aap_cluster_id | default('') }}"
+        validate_certs: no
+      when: 
+        - ctf_tracker_url is defined
+        - attendee_name is defined
+      ignore_errors: yes
+

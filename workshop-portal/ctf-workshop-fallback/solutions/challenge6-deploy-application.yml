@@ -1,0 +1,82 @@
+---
+# Challenge 6 Solution - Part 3: Deploy Application
+# Phoenix Protocol - Full Stack Disaster Recovery
+# 
+# This playbook deploys the application to web server
+
+- name: Challenge 6 - Deploy Application
+  hosts: node1
+  become: yes
+  gather_facts: yes
+  
+  vars:
+    db_host: "{{ hostvars['node2']['ansible_default_ipv4']['address'] | default('node2') }}"
+  
+  tasks:
+    - name: Deploy application index page
+      ansible.builtin.copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Phoenix Protocol - Application Restored!</title>
+              <style>
+                  body {
+                      font-family: Arial, sans-serif;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      color: white;
+                      text-align: center;
+                      padding: 50px;
+                  }
+                  .container {
+                      background: rgba(255, 255, 255, 0.1);
+                      border-radius: 10px;
+                      padding: 30px;
+                      max-width: 600px;
+                      margin: 0 auto;
+                  }
+                  h1 { font-size: 3em; margin-bottom: 20px; }
+                  .status { font-size: 1.5em; color: #4ade80; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>🔥 Phoenix Protocol 🔥</h1>
+                  <p class="status">✅ Application Stack Restored!</p>
+                  <p>Web Server: {{ ansible_hostname }}</p>
+                  <p>Database Server: {{ db_host }}</p>
+                  <p>Status: OPERATIONAL</p>
+              </div>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        owner: apache
+        group: apache
+        mode: '0644'
+      register: app_deploy
+    
+    - name: Create application configuration
+      ansible.builtin.copy:
+        content: |
+          # Application Configuration
+          DB_HOST={{ db_host }}
+          DB_PORT=3306
+          DB_NAME=ctf_app
+          APP_STATUS=OPERATIONAL
+        dest: /var/www/html/config.txt
+        owner: apache
+        group: apache
+        mode: '0644'
+    
+    - name: Restart httpd to apply changes
+      ansible.builtin.service:
+        name: httpd
+        state: restarted
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: |
+          ✅ Application deployed on {{ inventory_hostname }}!
+          Files deployed: {{ app_deploy.changed }}
+          Database host: {{ db_host }}
+

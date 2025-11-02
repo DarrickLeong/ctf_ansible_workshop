@@ -1,0 +1,40 @@
+---
+# Challenge 6 Solution - Part 2: Provision Web Server
+# Phoenix Protocol - Full Stack Disaster Recovery
+# 
+# This playbook provisions the web server (node1)
+
+- name: Challenge 6 - Provision Web Server
+  hosts: node1
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Install Apache (httpd) package
+      ansible.builtin.dnf:
+        name: httpd
+        state: present
+      register: web_install
+    
+    - name: Ensure httpd service is started and enabled
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: yes
+      register: web_service
+    
+    - name: Create web root directory
+      ansible.builtin.file:
+        path: /var/www/html
+        state: directory
+        owner: apache
+        group: apache
+        mode: '0755'
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: |
+          ✅ Web server provisioned on {{ inventory_hostname }}!
+          Packages installed: {{ web_install.changed }}
+          Service running: {{ web_service.state }}
+
