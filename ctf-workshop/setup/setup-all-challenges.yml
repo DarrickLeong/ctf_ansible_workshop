@@ -47,7 +47,7 @@
 # ============================================
 # Challenge 2 Setup: Malicious Package (10 Points)
 # ============================================
-- name: Challenge 2 Setup - Install nginx on database server
+- name: Challenge 2 Setup - Install unauthorized package on database server
   hosts: node2
   become: yes
   tags:
@@ -55,14 +55,14 @@
     - setup
   
   tasks:
-    - name: Install nginx package on database server
+    - name: Install unauthorized package on database server
       dnf:
-        name: nginx
+        name: bind-utils
         state: present
       
     - name: Display Challenge 2 setup status
       debug:
-        msg: "✅ Challenge 2: nginx package installed on {{ inventory_hostname }}"
+        msg: "✅ Challenge 2: bind-utils package installed on {{ inventory_hostname }}"
 
 # ============================================
 # Challenge 3 Setup: Rogue User Account (15 Points)

@@ -73,9 +73,9 @@
 
     # ==========================================
     # CHALLENGE 2: Malicious Package (10 Points)
-    # Check if nginx package is ABSENT from node2
+    # Check if bind-utils package is ABSENT from node2
     # ==========================================
-    - name: Challenge 2 - Check nginx package removal
+    - name: Challenge 2 - Check unauthorized package removal
       block:
         - name: Get package facts
           package_facts:
@@ -83,26 +83,26 @@
 
         - name: Evaluate Challenge 2
           set_fact:
-            challenge2_nginx_absent: "{{ 'nginx' not in ansible_facts.packages }}"
+            challenge2_package_absent: "{{ 'bind-utils' not in ansible_facts.packages }}"
             challenge2_applies: "{{ inventory_hostname == 'node2' or 'node2' in inventory_hostname }}"
 
         - name: Calculate Challenge 2 points
           set_fact:
-            challenge2_points: "{{ 10 if (challenge2_applies and challenge2_nginx_absent) else 0 }}"
-            challenge2_completed: "{{ challenge2_applies and challenge2_nginx_absent }}"
+            challenge2_points: "{{ 10 if (challenge2_applies and challenge2_package_absent) else 0 }}"
+            challenge2_completed: "{{ challenge2_applies and challenge2_package_absent }}"
 
         - name: Update Challenge 2 results
           set_fact:
             challenge_results: >-
               {{
                 challenge_results | combine({
-                  'challenge2_nginx_removal': {
+                  'challenge2_package_removal': {
                     'completed': challenge2_completed,
                     'points_earned': challenge2_points | int,
                     'max_points': 10,
                     'details': {
                       'applies_to_node2': challenge2_applies,
-                      'nginx_absent': challenge2_nginx_absent,
+                      'package_absent': challenge2_package_absent,
                       'hostname': inventory_hostname
                     }
                   }
@@ -369,7 +369,7 @@
           
           📝 CHALLENGE BREAKDOWN:
           Challenge 1 (chronyd): {{ challenge_results.challenge1_chronyd.points_earned | default(0) }}/5 points
-          Challenge 2 (nginx): {{ challenge_results.challenge2_nginx_removal.points_earned | default(0) }}/10 points
+          Challenge 2 (unauthorized package): {{ challenge_results.challenge2_package_removal.points_earned | default(0) }}/10 points
           Challenge 3 (rogue_user): {{ challenge_results.challenge3_rogue_user.points_earned | default(0) }}/15 points
           Challenge 4 (MOTD): {{ challenge_results.challenge4_motd.points_earned | default(0) }}/20 points
           Challenge 5 (firewall): {{ challenge_results.challenge5_firewall.points_earned | default(0) }}/20 points

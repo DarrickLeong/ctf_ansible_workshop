@@ -37,9 +37,9 @@
         enabled: yes
 
 # ============================================
-# Challenge 2 Reset: Remove nginx
+# Challenge 2 Reset: Remove unauthorized package
 # ============================================
-- name: Challenge 2 Reset - Remove nginx from node2
+- name: Challenge 2 Reset - Remove unauthorized package from node2
   hosts: node2
   become: yes
   tags:
@@ -47,9 +47,9 @@
     - reset
   
   tasks:
-    - name: Remove nginx package
+    - name: Remove bind-utils package
       dnf:
-        name: nginx
+        name: bind-utils
         state: absent
 
 # ============================================
