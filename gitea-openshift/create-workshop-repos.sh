@@ -557,18 +557,18 @@ echo "=========================================="
 echo ""
 
 while IFS=',' read -r username email password is_admin; do
-    # Skip header
-    if [ "$username" = "username" ]; then
+    # Skip empty lines
+    if [ -z "$username" ]; then
         continue
     fi
     
     # Skip commented lines (starting with #)
-    if [[ "$username" =~ ^#.*$ ]]; then
+    if [[ "$username" =~ ^#.*$ ]] || [[ "$username" =~ ^[[:space:]]*#.*$ ]]; then
         continue
     fi
     
-    # Skip empty lines
-    if [ -z "$username" ]; then
+    # Skip header
+    if [ "$username" = "username" ]; then
         continue
     fi
     
