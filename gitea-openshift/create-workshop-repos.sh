@@ -491,27 +491,6 @@ EOF
 Welcome to {{ ansible_hostname }} - Managed by SRE Team
 EOF
 
-    # Create inventory example
-    cat > inventory.example <<'EOF'
-# Sample Inventory File
-# Copy this to 'inventory' and update with your server IPs
-
-[all]
-node1 ansible_host=192.168.1.10
-node2 ansible_host=192.168.1.11
-node3 ansible_host=192.168.1.12
-
-[webservers]
-node1
-node3
-
-[databases]
-node2
-
-[all:vars]
-ansible_user=ec2-user
-ansible_become=yes
-EOF
 
     # Create .gitignore
     cat > .gitignore <<'EOF'
@@ -520,7 +499,6 @@ EOF
 *.log
 
 # Sensitive files
-inventory
 vault.yml
 *_vault.yml
 
@@ -1090,27 +1068,6 @@ EOF
 Welcome to {{ ansible_hostname }} - Managed by SRE Team
 EOF
 
-    # Create inventory example
-    cat > inventory.example <<'EOF'
-# Sample Inventory File
-# Copy this to 'inventory' and update with your server IPs
-
-[all]
-node1 ansible_host=192.168.1.10
-node2 ansible_host=192.168.1.11
-node3 ansible_host=192.168.1.12
-
-[webservers]
-node1
-node3
-
-[databases]
-node2
-
-[all:vars]
-ansible_user=ec2-user
-ansible_become=yes
-EOF
 
     # Create .gitignore
     cat > .gitignore <<'EOF'
@@ -1119,7 +1076,6 @@ EOF
 *.log
 
 # Sensitive files
-inventory
 vault.yml
 *_vault.yml
 
