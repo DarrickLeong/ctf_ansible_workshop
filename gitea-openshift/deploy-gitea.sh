@@ -168,7 +168,7 @@ spec:
         - name: gitea-data
           mountPath: /gitea-repositories
         - name: gitea-config
-          mountPath: /home/gitea/conf
+          mountPath: /home/gitea/conf/app.ini
           subPath: app.ini
         env:
         - name: GITEA_HOME
