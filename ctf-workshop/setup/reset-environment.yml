@@ -135,6 +135,14 @@
             name: httpd
             state: present
         
+        - name: Ensure /var/www/html directory exists
+          file:
+            path: /var/www/html
+            state: directory
+            owner: apache
+            group: apache
+            mode: '0755'
+        
         - name: Remove custom httpd configurations
           file:
             path: "{{ item }}"
@@ -162,11 +170,24 @@
             mode: '0644'
           ignore_errors: yes
         
+        - name: Stop httpd if running
+          service:
+            name: httpd
+            state: stopped
+          ignore_errors: yes
+        
         - name: Start httpd service
           service:
             name: httpd
             state: started
             enabled: yes
+          ignore_errors: yes
+          register: httpd_start_result
+        
+        - name: Display httpd status
+          debug:
+            msg: |
+              httpd service status: {{ 'Started successfully' if httpd_start_result is succeeded else 'Failed to start - may need manual intervention' }}
       when: inventory_hostname == 'node1'
     
     - name: Install and start postgresql on node2
