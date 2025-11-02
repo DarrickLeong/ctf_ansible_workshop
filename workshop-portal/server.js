@@ -272,11 +272,13 @@ ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
             </div>
         `,
         solution: `
-            <h3>Complete Solution</h3>
-            <div class="alert alert-warning">
-                <strong>⚠️ Spoiler Alert!</strong> Try to solve it yourself first!
-            </div>
-            <pre><code class="language-yaml">---
+            <details style="margin-top: 40px;">
+                <summary><strong>🔓 Click to Reveal Complete Solution</strong></summary>
+                <div style="margin-top: 20px;">
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Spoiler Alert!</strong> Make sure you've tried solving it yourself first!
+                    </div>
+                    <pre><code class="language-yaml">---
 - name: Challenge 2 - Remove Malicious Package
   hosts: node2
   become: yes
@@ -300,8 +302,8 @@ ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
     name: nginx
     state: absent</code></pre>
 
-            <h4>Verification:</h4>
-            <pre><code class="language-bash"># Check if nginx is removed
+                    <h4>Verification:</h4>
+                    <pre><code class="language-bash"># Check if nginx is removed
 ansible node2 -m shell -a "rpm -qa | grep nginx" -i inventory
 # Should return empty (no output)</code></pre>
                 </div>
@@ -375,11 +377,13 @@ ansible node2 -m shell -a "rpm -qa | grep nginx" -i inventory
             </div>
         `,
         solution: `
-            <h3>Complete Solution</h3>
-            <div class="alert alert-warning">
-                <strong>⚠️ Spoiler Alert!</strong> Try to solve it yourself first!
-            </div>
-            <pre><code class="language-yaml">---
+            <details style="margin-top: 40px;">
+                <summary><strong>🔓 Click to Reveal Complete Solution</strong></summary>
+                <div style="margin-top: 20px;">
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Spoiler Alert!</strong> Make sure you've tried solving it yourself first!
+                    </div>
+                    <pre><code class="language-yaml">---
 - name: Challenge 3 - Remove Rogue User Account
   hosts: all
   become: yes
@@ -391,15 +395,15 @@ ansible node2 -m shell -a "rpm -qa | grep nginx" -i inventory
         state: absent
         remove: yes</code></pre>
 
-            <h4>Explanation:</h4>
-            <ul>
-                <li><code>hosts: all</code> - Runs on all servers (safe because it's idempotent)</li>
-                <li><code>state: absent</code> - Removes the user if exists</li>
-                <li><code>remove: yes</code> - Also deletes the home directory</li>
-                <li>Won't fail if user doesn't exist - just shows "ok"</li>
-            </ul>
+                    <h4>Explanation:</h4>
+                    <ul>
+                        <li><code>hosts: all</code> - Runs on all servers (safe because it's idempotent)</li>
+                        <li><code>state: absent</code> - Removes the user if exists</li>
+                        <li><code>remove: yes</code> - Also deletes the home directory</li>
+                        <li>Won't fail if user doesn't exist - just shows "ok"</li>
+                    </ul>
 
-            <h4>Verification Commands:</h4>
+                    <h4>Verification Commands:</h4>
             <pre><code class="language-bash"># Check user status on all hosts
 ansible all -m shell -a "id rogue_user 2>&1" -i inventory
 
@@ -505,12 +509,14 @@ Unauthorized access is prohibited.
             </div>
         `,
         solution: `
-            <h3>Complete Solution</h3>
-            <div class="alert alert-warning">
-                <strong>⚠️ Spoiler Alert!</strong> Try to solve it yourself first!
-            </div>
+            <details style="margin-top: 40px;">
+                <summary><strong>🔓 Click to Reveal Complete Solution</strong></summary>
+                <div style="margin-top: 20px;">
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Spoiler Alert!</strong> Make sure you've tried solving it yourself first!
+                    </div>
             
-            <h4>Template File: <code>templates/motd.j2</code></h4>
+                    <h4>Template File: <code>templates/motd.j2</code></h4>
             <pre><code>Welcome to {{ ansible_hostname }} - Managed by SRE Team
 
 ===============================================
@@ -539,21 +545,21 @@ Unauthorized access is prohibited.
         group: root
         mode: '0644'</code></pre>
 
-            <h4>Explanation:</h4>
-            <ul>
-                <li><code>src: templates/motd.j2</code> - Relative path from playbook</li>
-                <li><code>{{ ansible_hostname }}</code> - Automatically replaced with each server's hostname</li>
-                <li><code>mode: '0644'</code> - Readable by everyone, writable by root only</li>
-            </ul>
+                    <h4>Explanation:</h4>
+                    <ul>
+                        <li><code>src: templates/motd.j2</code> - Relative path from playbook</li>
+                        <li><code>{{ ansible_hostname }}</code> - Automatically replaced with each server's hostname</li>
+                        <li><code>mode: '0644'</code> - Readable by everyone, writable by root only</li>
+                    </ul>
 
-            <h4>Verification:</h4>
+                    <h4>Verification:</h4>
             <pre><code class="language-bash"># View MOTD on all servers
 ansible all -m shell -a "cat /etc/motd" -i inventory
 
 # Or SSH to see it when you login
 ssh node1</code></pre>
 
-            <h4>Expected Results:</h4>
+                    <h4>Expected Results:</h4>
             <ul>
                 <li><strong>node1:</strong> "Welcome to node1 - Managed by SRE Team"</li>
                 <li><strong>node2:</strong> "Welcome to node2 - Managed by SRE Team"</li>
@@ -561,7 +567,7 @@ ssh node1</code></pre>
             </ul>
                 </div>
             </details>
-        `
+                `
     },
     challenge5: {
         objective: "Practice managing firewall rules with the ansible.posix.firewalld module, a critical skill for securing servers.",
