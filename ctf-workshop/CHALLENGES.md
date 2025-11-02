@@ -61,23 +61,25 @@ Learn to use the `ansible.builtin.service` module to manage system services.
 
 **Difficulty**: ⭐⭐ Beginner+
 
+**Target Nodes**: 🎯 **node2 ONLY** (database server)
+
 **The Problem**: 
 A compliance scan has detected an unauthorized package, `bind-utils`, installed on the database server (`node2`). Per security policy, database servers must not have DNS utility tools installed. These tools need to be removed immediately.
 
 **The Mission**: 
-Create a playbook that removes the `bind-utils` package from `node2`.
+Create a playbook that removes the `bind-utils` package from **node2 only**.
 
 **Learning Goal**: 
-Understand how to manage software packages using the `ansible.builtin.dnf` module.
+Understand how to manage software packages using the `ansible.builtin.dnf` module and target specific hosts.
 
 **Required Skills**:
 - Package management
 - State management (absent)
-- Host targeting (specific host)
+- Host targeting (specific host with `hosts: node2`)
 
 **Success Criteria**:
-- ✅ `bind-utils` package is removed from `node2`
-- ✅ `bind-utils` is not removed from other nodes (selective targeting)
+- ✅ `bind-utils` package is removed from **node2**
+- ✅ `bind-utils` is NOT removed from other nodes (selective targeting)
 - ✅ Playbook handles cases where package doesn't exist
 
 ---
