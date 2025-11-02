@@ -385,28 +385,6 @@
               debug:
                 msg: "🔄 Auto-run Environment Reset enabled - launching job..."
               
-            - name: Get inventory ID
-              ansible.controller.inventory:
-                controller_host: "{{ awx_host }}"
-                controller_username: "{{ awx_username }}"
-                controller_password: "{{ awx_password }}"
-                validate_certs: "{{ awx_validate_certs }}"
-                name: "{{ target_inventory_name }}"
-                state: present
-              register: inventory_info
-              delegate_to: localhost
-            
-            - name: Get credential ID
-              uri:
-                url: "https://{{ awx_host }}/api/v2/credentials/?name={{ target_credential_name | urlencode }}"
-                method: GET
-                user: "{{ awx_username }}"
-                password: "{{ awx_password }}"
-                force_basic_auth: yes
-                validate_certs: "{{ awx_validate_certs }}"
-              register: credential_info
-              delegate_to: localhost
-            
             - name: Launch CTF Environment Reset job
               ansible.controller.job_launch:
                 controller_host: "{{ awx_host }}"
