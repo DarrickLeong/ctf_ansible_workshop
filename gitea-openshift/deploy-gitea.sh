@@ -170,6 +170,15 @@ spec:
         - -c
         - |
           mkdir -p /gitea-data/conf /home/gitea/conf
+          
+          # Check if this is a fresh deployment (no database exists)
+          if [ ! -f /gitea-data/gitea.db ]; then
+            echo "Fresh deployment - copying initial config..."
+          else
+            echo "Redeployment detected - resetting database for clean state..."
+            rm -f /gitea-data/gitea.db /gitea-data/gitea.db-shm /gitea-data/gitea.db-wal
+          fi
+          
           echo "Copying latest config from ConfigMap..."
           cp /tmp/gitea-config/app.ini /gitea-data/conf/app.ini
           cp /tmp/gitea-config/app.ini /home/gitea/conf/app.ini
@@ -271,28 +280,40 @@ echo ""
 # Get route URL
 GITEA_URL=$(oc get route gitea -n ${PROJECT_NAME} -o jsonpath='{.spec.host}')
 
-# Wait a bit more for Gitea to initialize
-echo "➜ Waiting for Gitea to initialize..."
-sleep 30
-
-# Create admin user
-echo "➜ Creating admin user..."
-POD_NAME=$(oc get pods -n ${PROJECT_NAME} -l app=gitea -o jsonpath='{.items[0].metadata.name}')
-
-oc exec -n ${PROJECT_NAME} ${POD_NAME} -- /home/gitea/gitea admin user create \
-  --username ${ADMIN_USER} \
-  --password ${ADMIN_PASS} \
-  --email ${ADMIN_EMAIL} \
-  --admin \
-  --must-change-password=false \
-  -c /home/gitea/conf/app.ini 2>&1 | grep -v "user already exists" || echo -e "${YELLOW}⚠ Admin user may already exist or was just created${NC}"
-
-echo -e "${GREEN}✓ Admin user configured${NC}"
+# Give Gitea time to fully initialize
+echo "➜ Gitea is starting up..."
+sleep 10
 echo ""
 
-# Generate user creation script
-echo "➜ Generating user creation script..."
-cat > create-gitea-users.sh <<'SCRIPT_EOF'
+echo ""
+echo "=========================================="
+echo "🎉 Deployment Complete!"
+echo "=========================================="
+echo ""
+echo -e "${GREEN}✓ Gitea is now running!${NC}"
+echo ""
+echo "Gitea URL: http://${GITEA_URL}"
+echo ""
+echo "Next Steps:"
+echo "1. Visit the URL above"
+echo "2. Click 'Register' to create the first user"
+echo "3. First registered user becomes admin automatically"
+echo ""
+echo "Admin Credentials (for your reference):"
+echo "  Username: ${ADMIN_USER}"
+echo "  Password: ********"
+echo "  Email: ${ADMIN_EMAIL}"
+echo ""
+echo "📝 To create multiple workshop users:"
+echo "   ./create-users-api.sh workshop-users.csv"
+echo ""
+echo "🔧 Management commands:"
+echo "   ./manage-gitea.sh status   # Check status"
+echo "   ./manage-gitea.sh logs     # View logs"
+echo "   ./manage-gitea.sh url      # Get URL"
+echo ""
+echo "=========================================="
+echo ""
 #!/bin/bash
 #
 # Gitea User Creation Script
