@@ -555,7 +555,587 @@ ssh node1</code></pre>
             </ul>
         `
     }
-    // Continue with challenge5 and challenge6...
+    },
+    challenge5: {
+        objective: "Practice managing firewall rules with the ansible.posix.firewalld module, a critical skill for securing servers.",
+        scenario: `
+            <div class="alert alert-danger">
+                <h4>🚨 The Problem</h4>
+                <p>A backup web service is running on <code>node3</code>, but it's inaccessible because the firewall is blocking HTTP traffic. Users are reporting connection timeouts.</p>
+            </div>
+        `,
+        requirements: `
+            <h3>Your Mission</h3>
+            <p>Write a playbook that adds a permanent rule to the firewall on <code>node3</code> to allow traffic for the <code>http</code> service.</p>
+            <h4>Success Criteria:</h4>
+            <ul>
+                <li>✅ HTTP service allowed in firewall on node3</li>
+                <li>✅ Rule is permanent (survives reboot)</li>
+                <li>✅ Firewall is reloaded to apply changes</li>
+            </ul>
+        `,
+        guide: `
+            <h3>Step-by-Step Guide</h3>
+            
+            <div class="step">
+                <h4>Step 1: Understand firewalld</h4>
+                <p>RHEL uses <code>firewalld</code> to manage firewall rules with zones and services.</p>
+                <div class="hint-box">
+                    <strong>💡 Key Concepts:</strong>
+                    <ul>
+                        <li><strong>Zones:</strong> Define trust levels (public, internal, etc.)</li>
+                        <li><strong>Services:</strong> Predefined port/protocol combinations (http = port 80/tcp)</li>
+                        <li><strong>Permanent:</strong> Rules that persist after reboot</li>
+                        <li><strong>Immediate:</strong> Rules active now but lost on reboot</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <h4>Step 2: Use the firewalld Module</h4>
+                <p>The <code>ansible.posix.firewalld</code> module manages firewall rules.</p>
+                <div class="hint-box">
+                    <strong>💡 Module Parameters:</strong>
+                    <ul>
+                        <li><code>service</code>: Service name (http, https, ssh, etc.)</li>
+                        <li><code>permanent</code>: Make rule permanent (yes/no)</li>
+                        <li><code>state</code>: enabled or disabled</li>
+                        <li><code>immediate</code>: Apply now without reload (yes/no)</li>
+                    </ul>
+                </div>
+                <details>
+                    <summary><strong>🔍 Show me the module syntax</strong></summary>
+                    <pre><code class="language-yaml">- name: Allow service through firewall
+  ansible.posix.firewalld:
+    service: service_name
+    permanent: yes
+    state: enabled
+    immediate: yes</code></pre>
+                </details>
+            </div>
+
+            <div class="step">
+                <h4>Step 3: Target node3</h4>
+                <p>This firewall change should only apply to <code>node3</code> (the secondary web server).</p>
+                <div class="alert alert-info">
+                    <strong>📚 Learning Point:</strong> Always be specific with firewall changes. Opening unnecessary ports is a security risk!
+                </div>
+            </div>
+
+            <div class="step">
+                <h4>Step 4: Verify the Rule</h4>
+                <p>After running the playbook, verify the firewall allows HTTP:</p>
+                <pre><code class="language-bash"># Check current firewall rules
+ansible node3 -m shell -a "firewall-cmd --list-services" -i inventory
+
+# Check permanent rules
+ansible node3 -m shell -a "firewall-cmd --list-services --permanent" -i inventory
+
+# Test HTTP access
+curl http://node3</code></pre>
+            </div>
+        `,
+        solution: `
+            <h3>Complete Solution</h3>
+            <div class="alert alert-warning">
+                <strong>⚠️ Spoiler Alert!</strong> Try to solve it yourself first!
+            </div>
+            <pre><code class="language-yaml">---
+- name: Challenge 5 - Fix Firewall Anomaly
+  hosts: node3
+  become: yes
+  
+  tasks:
+    - name: Allow HTTP traffic through firewall
+      ansible.posix.firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+        immediate: yes</code></pre>
+
+            <h4>Explanation:</h4>
+            <ul>
+                <li><code>hosts: node3</code> - Targets only the secondary web server</li>
+                <li><code>service: http</code> - Allows HTTP (port 80/tcp)</li>
+                <li><code>permanent: yes</code> - Rule survives reboots</li>
+                <li><code>state: enabled</code> - Allow the service through</li>
+                <li><code>immediate: yes</code> - Applies without manual reload</li>
+            </ul>
+
+            <h4>Alternative: Without immediate flag</h4>
+            <pre><code class="language-yaml">tasks:
+  - name: Allow HTTP permanently
+    ansible.posix.firewalld:
+      service: http
+      permanent: yes
+      state: enabled
+  
+  - name: Reload firewall to apply changes
+    ansible.builtin.service:
+      name: firewalld
+      state: reloaded</code></pre>
+
+            <h4>Verification Commands:</h4>
+            <pre><code class="language-bash"># Check if HTTP is allowed
+ansible node3 -m shell -a "firewall-cmd --list-services" -i inventory
+# Output should include "http"
+
+# Verify permanent rules
+ansible node3 -m shell -a "firewall-cmd --list-services --permanent" -i inventory
+
+# Test HTTP access
+curl http://node3
+# Should connect successfully</code></pre>
+
+            <h4>Common Firewall Services:</h4>
+            <ul>
+                <li><code>http</code> - Port 80/tcp</li>
+                <li><code>https</code> - Port 443/tcp</li>
+                <li><code>ssh</code> - Port 22/tcp</li>
+                <li><code>mysql</code> - Port 3306/tcp</li>
+                <li><code>postgresql</code> - Port 5432/tcp</li>
+            </ul>
+        `
+    },
+    challenge6: {
+        objective: "Master the creation of multi-tier AAP workflows with dependent steps. Understand how to build ordered recovery and rollback procedures for a complete application stack.",
+        scenario: `
+            <div class="alert alert-danger">
+                <h4>🚨 The Disaster</h4>
+                <p>The application stack is not working. The web server (node1) and the database server (node2) are both offline. Packages are missing, services are stopped, and configurations are lost.</p>
+                <p><strong>This is a full-scale disaster recovery scenario!</strong></p>
+            </div>
+        `,
+        requirements: `
+            <h3>Your Mission</h3>
+            <p>You must orchestrate a full, multi-tier server recovery using an Ansible Automation Platform Workflow, ensuring services are brought up and rolled back in the correct order.</p>
+            
+            <h4>Tasks:</h4>
+            <ol>
+                <li>Create six separate playbooks for each recovery step</li>
+                <li>Create six Job Templates in AAP (one for each playbook)</li>
+                <li>Create a Workflow Template with proper dependency ordering</li>
+                <li>Implement success and failure paths</li>
+                <li><strong>Extra Credit:</strong> Add an approval gate before execution</li>
+            </ol>
+
+            <h4>Success Criteria:</h4>
+            <ul>
+                <li>✅ Database provisions before web server</li>
+                <li>✅ Web server provisions before app deployment</li>
+                <li>✅ App deploys before validation</li>
+                <li>✅ Validation failures trigger rollbacks</li>
+                <li>✅ Rollbacks execute in reverse order</li>
+                <li>✅ <strong>Extra Credit:</strong> Approval gate implemented</li>
+            </ul>
+        `,
+        guide: `
+            <h3>Step-by-Step Guide</h3>
+            
+            <div class="step">
+                <h4>Step 1: Create Six Playbooks</h4>
+                <p>You need to create separate playbooks for each phase of the recovery:</p>
+                
+                <h5>1. Provision Database (<code>challenge6-provision-database.yml</code>)</h5>
+                <details>
+                    <summary><strong>🔍 Show me a hint</strong></summary>
+                    <ul>
+                        <li>Target: node2</li>
+                        <li>Install MySQL/MariaDB packages</li>
+                        <li>Start and enable the database service</li>
+                        <li>Create database and user</li>
+                    </ul>
+                </details>
+
+                <h5>2. Provision Web Server (<code>challenge6-provision-webserver.yml</code>)</h5>
+                <details>
+                    <summary><strong>🔍 Show me a hint</strong></summary>
+                    <ul>
+                        <li>Target: node1</li>
+                        <li>Install Apache/httpd packages</li>
+                        <li>Configure web server</li>
+                        <li>Start and enable httpd service</li>
+                    </ul>
+                </details>
+
+                <h5>3. Deploy Application (<code>challenge6-deploy-application.yml</code>)</h5>
+                <details>
+                    <summary><strong>🔍 Show me a hint</strong></summary>
+                    <ul>
+                        <li>Target: node1</li>
+                        <li>Deploy application code</li>
+                        <li>Configure database connection</li>
+                        <li>Set permissions</li>
+                    </ul>
+                </details>
+
+                <h5>4. Validate Service (<code>challenge6-validate-service.yml</code>)</h5>
+                <details>
+                    <summary><strong>🔍 Show me a hint</strong></summary>
+                    <ul>
+                        <li>Check HTTP endpoint responds</li>
+                        <li>Verify database connectivity</li>
+                        <li>Fail if checks don't pass</li>
+                    </ul>
+                </details>
+
+                <h5>5. Rollback Web Server (<code>challenge6-rollback-webserver.yml</code>)</h5>
+                <details>
+                    <summary><strong>🔍 Show me a hint</strong></summary>
+                    <ul>
+                        <li>Stop httpd service</li>
+                        <li>Remove application code</li>
+                        <li>Clean up configurations</li>
+                    </ul>
+                </details>
+
+                <h5>6. Rollback Database (<code>challenge6-rollback-database.yml</code>)</h5>
+                <details>
+                    <summary><strong>🔍 Show me a hint</strong></summary>
+                    <ul>
+                        <li>Drop database and user</li>
+                        <li>Stop database service</li>
+                        <li>Clean up data files</li>
+                    </ul>
+                </details>
+            </div>
+
+            <div class="step">
+                <h4>Step 2: Create Job Templates in AAP</h4>
+                <p>For each playbook, create a Job Template in AAP:</p>
+                <ol>
+                    <li>Navigate to <strong>Templates</strong> in AAP</li>
+                    <li>Click <strong>Add</strong> → <strong>Job Template</strong></li>
+                    <li>Fill in:</li>
+                    <ul>
+                        <li><strong>Name:</strong> "Challenge 6 - Provision Database"</li>
+                        <li><strong>Inventory:</strong> Your workshop inventory</li>
+                        <li><strong>Project:</strong> Your workshop project</li>
+                        <li><strong>Playbook:</strong> challenge6-provision-database.yml</li>
+                        <li><strong>Credentials:</strong> Your SSH credentials</li>
+                    </ul>
+                    <li>Click <strong>Save</strong></li>
+                    <li>Repeat for all six playbooks</li>
+                </ol>
+                
+                <div class="alert alert-info">
+                    <strong>📚 Learning Point:</strong> Job Templates are reusable definitions for running playbooks. Think of them as saved configurations.
+                </div>
+            </div>
+
+            <div class="step">
+                <h4>Step 3: Create the Workflow Template</h4>
+                <p>Now comes the orchestration magic!</p>
+                
+                <ol>
+                    <li>Navigate to <strong>Templates</strong> → Click <strong>Add</strong> → <strong>Workflow Template</strong></li>
+                    <li>Name it "Challenge 6 - Phoenix Protocol"</li>
+                    <li>Click <strong>Save</strong></li>
+                    <li>Click <strong>Workflow Visualizer</strong></li>
+                </ol>
+
+                <h5>Build the Success Path:</h5>
+                <ol>
+                    <li>Click <strong>START</strong> → Add "Provision Database"</li>
+                    <li>Click "Provision Database" → Select <strong>On Success</strong> → Add "Provision Web Server"</li>
+                    <li>Click "Provision Web Server" → Select <strong>On Success</strong> → Add "Deploy Application"</li>
+                    <li>Click "Deploy Application" → Select <strong>On Success</strong> → Add "Validate Service"</li>
+                </ol>
+
+                <h5>Build the Failure Path:</h5>
+                <ol>
+                    <li>Click "Validate Service" → Select <strong>On Failure</strong> → Add "Rollback Web Server"</li>
+                    <li>Click "Rollback Web Server" → Select <strong>On Success</strong> → Add "Rollback Database"</li>
+                </ol>
+
+                <div class="hint-box">
+                    <strong>💡 Workflow Logic:</strong>
+                    <ul>
+                        <li><strong>On Success:</strong> Next step runs if current step succeeds</li>
+                        <li><strong>On Failure:</strong> Next step runs if current step fails</li>
+                        <li><strong>Always:</strong> Next step runs regardless of result</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <h4>Step 4: Test the Workflow</h4>
+                <p>Launch the workflow and watch it execute:</p>
+                <ol>
+                    <li>Click <strong>Launch</strong> on your workflow template</li>
+                    <li>Watch the workflow visualizer animate</li>
+                    <li>Green nodes = success, Red nodes = failure</li>
+                    <li>Follow the execution path</li>
+                </ol>
+
+                <p><strong>To test the rollback path:</strong></p>
+                <ul>
+                    <li>Intentionally break the validation step</li>
+                    <li>Watch the workflow automatically trigger rollbacks</li>
+                    <li>Verify rollbacks execute in reverse order</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <h4>Step 5: Extra Credit - Add Approval Gate (10 points)</h4>
+                <p>Add a manual approval step before the workflow starts modifying servers.</p>
+                
+                <h5>Implementation:</h5>
+                <ol>
+                    <li>In Workflow Visualizer, click <strong>START</strong></li>
+                    <li>Add a new node → Select <strong>Approval</strong></li>
+                    <li>Name it "Go/No-Go Decision"</li>
+                    <li>Description: "Approve disaster recovery execution"</li>
+                    <li>Timeout: 1 hour</li>
+                    <li>Click <strong>Save</strong></li>
+                    <li>Link <strong>START</strong> → <strong>Approval</strong> → <strong>Provision Database</strong></li>
+                </ol>
+
+                <p>When you launch the workflow:</p>
+                <ol>
+                    <li>It will pause at the approval gate</li>
+                    <li>Go to <strong>Jobs</strong> → Find your workflow</li>
+                    <li>You'll see "Pending Approval" status</li>
+                    <li>Click <strong>Approve</strong> or <strong>Deny</strong></li>
+                    <li>Workflow continues or stops based on your decision</li>
+                </ol>
+
+                <div class="alert alert-success">
+                    <strong>🎉 Extra Credit Goal:</strong> Learn how to use Workflow Approvals to create manual gates and human decision points in your automation—a key part of safely managing critical infrastructure.
+                </div>
+            </div>
+        `,
+        solution: `
+            <h3>Complete Solution</h3>
+            <div class="alert alert-warning">
+                <strong>⚠️ Spoiler Alert!</strong> This is a complex solution with multiple files!
+            </div>
+
+            <h4>Playbook 1: <code>challenge6-provision-database.yml</code></h4>
+            <pre><code class="language-yaml">---
+- name: Provision Database Server
+  hosts: node2
+  become: yes
+  
+  tasks:
+    - name: Install MariaDB server
+      ansible.builtin.dnf:
+        name:
+          - mariadb-server
+          - python3-PyMySQL
+        state: present
+    
+    - name: Start and enable MariaDB
+      ansible.builtin.service:
+        name: mariadb
+        state: started
+        enabled: yes
+    
+    - name: Create application database
+      community.mysql.mysql_db:
+        name: appdb
+        state: present
+        login_unix_socket: /var/lib/mysql/mysql.sock
+    
+    - name: Create database user
+      community.mysql.mysql_user:
+        name: appuser
+        password: "SecurePass123!"
+        priv: "appdb.*:ALL"
+        host: "%"
+        state: present
+        login_unix_socket: /var/lib/mysql/mysql.sock</code></pre>
+
+            <h4>Playbook 2: <code>challenge6-provision-webserver.yml</code></h4>
+            <pre><code class="language-yaml">---
+- name: Provision Web Server
+  hosts: node1
+  become: yes
+  
+  tasks:
+    - name: Install Apache web server
+      ansible.builtin.dnf:
+        name:
+          - httpd
+          - php
+          - php-mysqlnd
+        state: present
+    
+    - name: Configure httpd to listen on port 8080
+      ansible.builtin.lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^Listen '
+        line: 'Listen 8080'
+    
+    - name: Start and enable httpd
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: yes
+    
+    - name: Allow HTTP through firewall
+      ansible.posix.firewalld:
+        port: 8080/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes</code></pre>
+
+            <h4>Playbook 3: <code>challenge6-deploy-application.yml</code></h4>
+            <pre><code class="language-yaml">---
+- name: Deploy Application
+  hosts: node1
+  become: yes
+  
+  tasks:
+    - name: Create application directory
+      ansible.builtin.file:
+        path: /var/www/html
+        state: directory
+        owner: apache
+        group: apache
+        mode: '0755'
+    
+    - name: Deploy application code
+      ansible.builtin.copy:
+        content: |
+          <?php
+          \$servername = "node2";
+          \$username = "appuser";
+          \$password = "SecurePass123!";
+          \$dbname = "appdb";
+          
+          \$conn = new mysqli(\$servername, \$username, \$password, \$dbname);
+          
+          if (\$conn->connect_error) {
+              die("Connection failed: " . \$conn->connect_error);
+          }
+          echo "Application is healthy! Database connected successfully.";
+          \$conn->close();
+          ?>
+        dest: /var/www/html/index.php
+        owner: apache
+        group: apache
+        mode: '0644'
+    
+    - name: Restart httpd to load PHP
+      ansible.builtin.service:
+        name: httpd
+        state: restarted</code></pre>
+
+            <h4>Playbook 4: <code>challenge6-validate-service.yml</code></h4>
+            <pre><code class="language-yaml">---
+- name: Validate Application Stack
+  hosts: localhost
+  gather_facts: no
+  
+  tasks:
+    - name: Check if web service responds
+      ansible.builtin.uri:
+        url: "http://node1:8080/index.php"
+        method: GET
+        status_code: 200
+        return_content: yes
+      register: http_response
+      failed_when: "'healthy' not in http_response.content"
+    
+    - name: Display validation result
+      ansible.builtin.debug:
+        msg: "✅ Application stack validated successfully!"</code></pre>
+
+            <h4>Playbook 5: <code>challenge6-rollback-webserver.yml</code></h4>
+            <pre><code class="language-yaml">---
+- name: Rollback Web Server
+  hosts: node1
+  become: yes
+  
+  tasks:
+    - name: Stop httpd service
+      ansible.builtin.service:
+        name: httpd
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+    
+    - name: Remove application code
+      ansible.builtin.file:
+        path: /var/www/html/index.php
+        state: absent
+    
+    - name: Remove packages
+      ansible.builtin.dnf:
+        name:
+          - httpd
+          - php
+          - php-mysqlnd
+        state: absent</code></pre>
+
+            <h4>Playbook 6: <code>challenge6-rollback-database.yml</code></h4>
+            <pre><code class="language-yaml">---
+- name: Rollback Database Server
+  hosts: node2
+  become: yes
+  
+  tasks:
+    - name: Drop database
+      community.mysql.mysql_db:
+        name: appdb
+        state: absent
+        login_unix_socket: /var/lib/mysql/mysql.sock
+      ignore_errors: yes
+    
+    - name: Drop database user
+      community.mysql.mysql_user:
+        name: appuser
+        state: absent
+        login_unix_socket: /var/lib/mysql/mysql.sock
+      ignore_errors: yes
+    
+    - name: Stop MariaDB
+      ansible.builtin.service:
+        name: mariadb
+        state: stopped
+        enabled: no
+      ignore_errors: yes</code></pre>
+
+            <h4>Workflow Structure (AAP):</h4>
+            <pre>
+START
+  │
+  ▼
+[Provision Database] ──Success──▶ [Provision Web Server] ──Success──▶ [Deploy Application] ──Success──▶ [Validate Service]
+                                                                                                              │
+                                                                                                              Failure
+                                                                                                              │
+                                                                                                              ▼
+                                                                                             [Rollback Web Server] ──Success──▶ [Rollback Database]
+            </pre>
+
+            <h4>Extra Credit - With Approval Gate:</h4>
+            <pre>
+START
+  │
+  ▼
+[Go/No-Go Approval] ──Approved──▶ [Provision Database] ──Success──▶ ...
+  │
+  Denied
+  │
+  ▼
+END
+            </pre>
+
+            <h4>Testing the Solution:</h4>
+            <ol>
+                <li><strong>Test Success Path:</strong> Launch workflow with clean servers → Should provision everything</li>
+                <li><strong>Test Failure Path:</strong> Break validation (stop node2) → Should trigger rollbacks</li>
+                <li><strong>Test Approval:</strong> Launch with approval gate → Approve/Deny to control execution</li>
+            </ol>
+
+            <div class="alert alert-success">
+                <h4>🎉 Congratulations!</h4>
+                <p>You've mastered complex workflow orchestration! This pattern is used in real-world disaster recovery, blue/green deployments, and complex multi-tier application management.</p>
+            </div>
+        `
+    }
 };
 
 // Helper function to generate HTML template
@@ -598,15 +1178,15 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
-            color: #24292e;
-            background: #f6f8fa;
+            color: #e4e4e7;
+            background: #0a0a0b;
         }
 
         .workshop-header {
-            background: linear-gradient(135deg, #0066cc 0%, #004080 100%);
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             color: white;
             padding: 20px 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
         .workshop-header .container {
@@ -638,28 +1218,30 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .breadcrumb a {
-            color: #0066cc;
+            color: #818cf8;
             text-decoration: none;
         }
 
         .breadcrumb a:hover {
+            color: #a5b4fc;
             text-decoration: underline;
         }
 
         .main-content {
-            background: white;
-            border-radius: 6px;
+            background: #18181b;
+            border-radius: 12px;
             padding: 40px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
             margin-bottom: 20px;
+            border: 1px solid #27272a;
         }
 
         .content h1 {
-            color: #0066cc;
+            color: #a5b4fc;
             font-size: 32px;
             margin-bottom: 10px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #e1e4e8;
+            border-bottom: 2px solid #6366f1;
         }
 
         .exercise-meta-bar {
@@ -667,9 +1249,10 @@ function generateHTML(title, content, currentPath = '/', section = null) {
             gap: 20px;
             margin: 20px 0;
             padding: 15px;
-            background: #f6f8fa;
-            border-radius: 6px;
+            background: #27272a;
+            border-radius: 8px;
             font-size: 14px;
+            border: 1px solid #3f3f46;
         }
 
         .exercise-meta-bar .meta-item {
@@ -679,23 +1262,23 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .content h2 {
-            color: #24292e;
+            color: #c4b5fd;
             font-size: 24px;
             margin-top: 30px;
             margin-bottom: 15px;
             padding-bottom: 8px;
-            border-bottom: 1px solid #e1e4e8;
+            border-bottom: 1px solid #3f3f46;
         }
 
         .content h3 {
-            color: #24292e;
+            color: #d8b4fe;
             font-size: 20px;
             margin-top: 25px;
             margin-bottom: 12px;
         }
 
         .content h4 {
-            color: #24292e;
+            color: #e4e4e7;
             font-size: 16px;
             margin-top: 20px;
             margin-bottom: 10px;
@@ -716,80 +1299,84 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .content pre {
-            background: #1e1e1e;
+            background: #0f172a;
             padding: 16px;
-            border-radius: 6px;
+            border-radius: 8px;
             overflow-x: auto;
             margin-bottom: 20px;
+            border: 1px solid #1e293b;
         }
 
         .content code {
-            background: #f6f8fa;
-            padding: 3px 6px;
-            border-radius: 3px;
+            background: #27272a;
+            padding: 3px 8px;
+            border-radius: 4px;
             font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
             font-size: 14px;
-            color: #e83e8c;
+            color: #f0abfc;
+            border: 1px solid #3f3f46;
         }
 
         .content pre code {
             background: transparent;
             padding: 0;
-            color: #e6e6e6;
+            color: #e4e4e7;
+            border: none;
         }
 
         .alert {
             padding: 16px;
             margin-bottom: 20px;
-            border-radius: 6px;
+            border-radius: 8px;
             border-left: 4px solid;
         }
 
         .alert-danger {
-            background: #fff5f5;
-            border-color: #dc3545;
-            color: #721c24;
+            background: #2d1315;
+            border-color: #f87171;
+            color: #fecaca;
         }
 
         .alert-warning {
-            background: #fff3cd;
-            border-color: #ffc107;
-            color: #856404;
+            background: #2d2512;
+            border-color: #fbbf24;
+            color: #fef3c7;
         }
 
         .alert-info {
-            background: #e7f3ff;
-            border-color: #0066cc;
-            color: #004085;
+            background: #171e2d;
+            border-color: #818cf8;
+            color: #c7d2fe;
         }
 
         .alert-success {
-            background: #d4edda;
-            border-color: #28a745;
-            color: #155724;
+            background: #14261f;
+            border-color: #34d399;
+            color: #d1fae5;
         }
 
         .hint-box {
-            background: #fffbdd;
-            border: 1px solid #ffd700;
-            border-left: 4px solid #ffd700;
+            background: #2d2512;
+            border: 1px solid #facc15;
+            border-left: 4px solid #facc15;
             padding: 15px;
             margin: 15px 0;
-            border-radius: 4px;
+            border-radius: 6px;
         }
 
         .step {
             margin: 30px 0;
             padding: 20px;
-            background: #f6f8fa;
-            border-radius: 6px;
-            border-left: 4px solid #0066cc;
+            background: #1f1f23;
+            border-radius: 8px;
+            border-left: 4px solid #6366f1;
+            border: 1px solid #3f3f46;
         }
 
         .badge {
             display: inline-block;
             padding: 4px 10px;
-            background: #0066cc;
+            background: #6366f1;
             color: white;
             border-radius: 12px;
             font-size: 12px;
@@ -799,20 +1386,20 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         details {
             margin: 15px 0;
             padding: 15px;
-            background: #f6f8fa;
+            background: #27272a;
             border-radius: 6px;
-            border: 1px solid #e1e4e8;
+            border: 1px solid #3f3f46;
         }
 
         details summary {
             cursor: pointer;
             font-weight: 600;
-            color: #0066cc;
+            color: #a5b4fc;
             padding: 5px;
         }
 
         details summary:hover {
-            color: #004080;
+            color: #c7d2fe;
         }
 
         details[open] summary {
@@ -824,41 +1411,42 @@ function generateHTML(title, content, currentPath = '/', section = null) {
             justify-content: space-between;
             margin-top: 40px;
             padding-top: 20px;
-            border-top: 1px solid #e1e4e8;
+            border-top: 1px solid #3f3f46;
         }
 
         .nav-buttons a {
             display: inline-block;
             padding: 10px 20px;
-            background: #0066cc;
+            background: #6366f1;
             color: white;
             text-decoration: none;
-            border-radius: 6px;
+            border-radius: 8px;
             transition: background 0.3s;
         }
 
         .nav-buttons a:hover {
-            background: #004080;
+            background: #4f46e5;
         }
 
         .nav-buttons a.secondary {
-            background: #6c757d;
+            background: #3f3f46;
         }
 
         .nav-buttons a.secondary:hover {
-            background: #545b62;
+            background: #52525b;
         }
 
         .section-nav {
-            background: white;
-            border-radius: 6px;
+            background: #18181b;
+            border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
             margin-bottom: 20px;
+            border: 1px solid #27272a;
         }
 
         .section-nav h3 {
-            color: #0066cc;
+            color: #a5b4fc;
             margin-bottom: 15px;
         }
 
@@ -868,7 +1456,7 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .exercise-item {
-            border-bottom: 1px solid #e1e4e8;
+            border-bottom: 1px solid #3f3f46;
         }
 
         .exercise-item:last-child {
@@ -878,25 +1466,25 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         .exercise-item a {
             display: block;
             padding: 12px 10px;
-            color: #24292e;
+            color: #e4e4e7;
             text-decoration: none;
             transition: background 0.2s;
         }
 
         .exercise-item a:hover {
-            background: #f6f8fa;
+            background: #27272a;
         }
 
         .exercise-item.active a {
-            background: #e7f3ff;
-            color: #0066cc;
+            background: #1e1b4b;
+            color: #c7d2fe;
             font-weight: 600;
         }
 
         .exercise-number {
             display: inline-block;
             width: 40px;
-            color: #6c757d;
+            color: #9ca3af;
         }
 
         .exercise-title {
