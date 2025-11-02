@@ -120,7 +120,7 @@ data:
 
     [database]
     DB_TYPE = sqlite3
-    PATH = /gitea-repositories/gitea.db
+    PATH = /gitea-data/gitea.db
 
     [repository]
     ROOT = /gitea-repositories
@@ -165,16 +165,16 @@ spec:
         - sh
         - -c
         - |
-          mkdir -p /home/gitea/conf
-          if [ ! -f /home/gitea/conf/app.ini ]; then
+          mkdir -p /gitea-data/conf
+          if [ ! -f /gitea-data/conf/app.ini ]; then
             echo "Copying initial config..."
-            cp /tmp/gitea-config/app.ini /home/gitea/conf/app.ini
-            chmod 644 /home/gitea/conf/app.ini
+            cp /tmp/gitea-config/app.ini /gitea-data/conf/app.ini
+            chmod 666 /gitea-data/conf/app.ini
           fi
           echo "Config ready"
         volumeMounts:
         - name: gitea-data
-          mountPath: /home/gitea
+          mountPath: /gitea-data
         - name: gitea-config-template
           mountPath: /tmp/gitea-config
       containers:
@@ -185,12 +185,12 @@ spec:
           name: http
         volumeMounts:
         - name: gitea-data
-          mountPath: /home/gitea
+          mountPath: /gitea-data
         - name: gitea-repositories
           mountPath: /gitea-repositories
         env:
-        - name: GITEA_HOME
-          value: "/home/gitea"
+        - name: GITEA_CUSTOM
+          value: "/gitea-data"
         livenessProbe:
           httpGet:
             path: /
