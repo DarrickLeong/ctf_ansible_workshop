@@ -165,9 +165,14 @@ spec:
       labels:
         app: gitea
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
       - name: gitea
         image: gitea/gitea:1.25.0
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
         ports:
         - containerPort: 3000
           name: http
@@ -178,6 +183,9 @@ spec:
           mountPath: /data
         - name: gitea-config
           mountPath: /etc/gitea
+          readOnly: true
+        - name: gitea-config-writable
+          mountPath: /data/gitea/conf
         env:
         - name: USER_UID
           value: "1000"
@@ -187,6 +195,10 @@ spec:
           value: "sqlite3"
         - name: GITEA__database__PATH
           value: "/data/gitea/gitea.db"
+        - name: GITEA_WORK_DIR
+          value: "/data/gitea"
+        - name: GITEA_TEMP
+          value: "/tmp/gitea"
         livenessProbe:
           httpGet:
             path: /api/healthz
@@ -210,6 +222,8 @@ spec:
       - name: gitea-config
         configMap:
           name: gitea-config
+      - name: gitea-config-writable
+        emptyDir: {}
 EOF
 echo -e "${GREEN}✓ Deployment created${NC}"
 echo ""
