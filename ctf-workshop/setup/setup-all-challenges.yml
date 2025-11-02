@@ -218,20 +218,20 @@
             state: absent
       when: inventory_hostname == 'node1'
     
-    - name: Stop and remove mariadb on node2
+    - name: Stop and remove postgresql on node2
       block:
-        - name: Stop mariadb service
+        - name: Stop postgresql service
           service:
-            name: mariadb
+            name: postgresql
             state: stopped
             enabled: no
           ignore_errors: yes
         
-        - name: Remove mariadb packages
+        - name: Remove postgresql packages
           dnf:
             name:
-              - mariadb-server
-              - mariadb
+              - postgresql-server
+              - postgresql
             state: absent
           ignore_errors: yes
       when: inventory_hostname == 'node2'

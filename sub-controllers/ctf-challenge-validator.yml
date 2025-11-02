@@ -270,7 +270,7 @@
       block:
         - name: Check for database service (node2)
           systemd:
-            name: mariadb
+            name: postgresql
           register: db_service_check
           ignore_errors: yes
           when: inventory_hostname == 'node2' or 'node2' in inventory_hostname

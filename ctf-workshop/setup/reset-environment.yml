@@ -142,18 +142,24 @@
             enabled: yes
       when: inventory_hostname == 'node1'
     
-    - name: Install and start mariadb on node2
+    - name: Install and start postgresql on node2
       block:
-        - name: Install mariadb
+        - name: Install postgresql
           dnf:
             name:
-              - mariadb-server
-              - mariadb
+              - postgresql-server
+              - postgresql
             state: present
         
-        - name: Start mariadb service
+        - name: Initialize PostgreSQL database
+          command: postgresql-setup --initdb
+          args:
+            creates: /var/lib/pgsql/data/postgresql.conf
+          ignore_errors: yes
+        
+        - name: Start postgresql service
           service:
-            name: mariadb
+            name: postgresql
             state: started
             enabled: yes
       when: inventory_hostname == 'node2'
