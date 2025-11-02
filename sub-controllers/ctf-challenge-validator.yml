@@ -4,7 +4,7 @@
 # Designed to work with the CTF Workshop structure
 
 - name: CTF Workshop Challenge Validation
-  hosts: "{{ target_host | default('all') }}"
+  hosts: "{{ target_host | default('web') }}"
   gather_facts: yes
   vars:
     # CTF Tracker URL (required)

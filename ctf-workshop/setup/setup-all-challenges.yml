@@ -4,7 +4,7 @@
 # Run this BEFORE starting the workshop to prepare the environment
 
 - name: CTF Workshop - Setup All Challenge Scenarios
-  hosts: all
+  hosts: web
   become: yes
   gather_facts: yes
   
@@ -23,7 +23,7 @@
 # Challenge 1 Setup: Out of Sync (5 Points)
 # ============================================
 - name: Challenge 1 Setup - Stop chronyd service
-  hosts: all
+  hosts: web
   become: yes
   tags: 
     - challenge1
@@ -90,7 +90,7 @@
 # Challenge 4 Setup: Inconsistent Messaging (20 Points)
 # ============================================
 - name: Challenge 4 Setup - Create inconsistent MOTD files
-  hosts: all
+  hosts: web
   become: yes
   tags:
     - challenge4
