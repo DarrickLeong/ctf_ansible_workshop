@@ -488,6 +488,10 @@
   hosts: localhost
   connection: local
   gather_facts: no
+  vars:
+    # Import variables from the deployment play
+    auto_run_reset: "{{ hostvars[groups['all'][0]]['auto_run_reset'] | default(false) if groups['all'] | length > 0 else false }}"
+    auto_run_setup: "{{ hostvars[groups['all'][0]]['auto_run_setup'] | default(false) if groups['all'] | length > 0 else false }}"
   tasks:
     - name: Collect deployment results
       block:
