@@ -200,26 +200,24 @@ EOF
     cat > challenge1/README.md <<'EOF'
 # Challenge 1: Out of Sync (5 Points)
 
+## 🎯 Target Nodes
+**ALL nodes** - node1, node2, and node3
+
 ## The Problem
 System clocks are drifting because the time synchronization service (`chronyd`) has been stopped across the environment. This is causing logging and authentication issues.
 
 ## Your Mission
-Write a playbook that ensures the `chronyd` service is running and enabled on all servers.
+Write a playbook that ensures the `chronyd` service is running and enabled on **all three nodes**.
 
 ## Requirements
-- Service must be started
-- Service must be enabled (starts on boot)
-- Must work on all hosts
+- Service must be started on **node1, node2, and node3**
+- Service must be enabled (starts on boot) on **all nodes**
+- Must work on all hosts in inventory
 
 ## Helpful Hints
 - Module to use: `ansible.builtin.service`
+- Target hosts: Use `hosts: all` or `hosts: web` (the group containing all nodes)
 - Check the [service module documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/service_module.html)
-
-## Testing Your Solution
-```bash
-# Check service status on all hosts
-ansible all -m shell -a "systemctl status chronyd"
-```
 
 ## Playbook Template
 Create your playbook as `challenge1/solution.yml`
@@ -227,7 +225,7 @@ Create your playbook as `challenge1/solution.yml`
 ```yaml
 ---
 - name: Challenge 1 - Fix Time Sync
-  hosts: all
+  hosts: all  # Targets all nodes
   become: yes
   
   tasks:
@@ -239,27 +237,26 @@ EOF
     cat > challenge2/README.md <<'EOF'
 # Challenge 2: Malicious Package (10 Points)
 
+## 🎯 Target Nodes
+**node2 ONLY** - database server
+
 ## The Problem
-A compliance scan has detected an unauthorized package, `bind-utils`, installed on the database server (node2). Per security policy, database servers must not run web services.
+A compliance scan has detected an unauthorized package, `bind-utils`, installed on the database server (node2). Per security policy, database servers must not have DNS utility tools installed.
 
 ## Your Mission
-Create a playbook that removes the `bind-utils` package from node2.
+Create a playbook that removes the `bind-utils` package from **node2 only**.
 
 ## Requirements
-- Target only node2
+- Target only **node2** (NOT node1 or node3)
 - Remove bind-utils package
 - Ensure package is completely removed
+- Other servers must not be affected
 
 ## Helpful Hints
 - Module to use: `ansible.builtin.dnf` (or `ansible.builtin.yum`)
 - State should be: `absent`
+- Target hosts: Use `hosts: node2` to target only the database server
 - Check the [dnf module documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/dnf_module.html)
-
-## Testing Your Solution
-```bash
-# Check if bind-utils is installed on node2
-ansible node2 -m shell -a "rpm -q bind-utils"
-```
 
 ## Playbook Template
 Create your playbook as `challenge2/solution.yml`
@@ -267,7 +264,7 @@ Create your playbook as `challenge2/solution.yml`
 ```yaml
 ---
 - name: Challenge 2 - Remove Malicious Package
-  hosts: node2
+  hosts: node2  # Targets only node2
   become: yes
   
   tasks:
@@ -279,28 +276,27 @@ EOF
     cat > challenge3/README.md <<'EOF'
 # Challenge 3: Rogue User Account (15 Points)
 
+## 🎯 Target Nodes
+**node1 and node3** - NOT node2
+
 ## The Problem
-A rogue user account, `rogue_user`, was found on node1 and node3. This is a major security vulnerability.
+A rogue user account, `rogue_user`, was found on **node1 and node3**. This is a major security vulnerability that must be addressed immediately.
 
 ## Your Mission
-Write a playbook that ensures the `rogue_user` user is completely removed from any server where it exists.
+Write a playbook that ensures the `rogue_user` user is completely removed from **node1 and node3**.
 
 ## Requirements
-- Remove the user from all systems
+- Remove the user from **node1**
+- Remove the user from **node3**
 - User's home directory should be removed
 - Handle cases where user may not exist (no failures)
 
 ## Helpful Hints
 - Module to use: `ansible.builtin.user`
 - State should be: `absent`
-- Use `remove: yes` to delete home directory
+- Target hosts: Use `hosts: node1,node3` to target only these two nodes
+- Use `remove: yes` to also delete home directory
 - Check the [user module documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/user_module.html)
-
-## Testing Your Solution
-```bash
-# Check if user exists
-ansible all -m shell -a "id rogue_user"
-```
 
 ## Playbook Template
 Create your playbook as `challenge3/solution.yml`
@@ -308,7 +304,7 @@ Create your playbook as `challenge3/solution.yml`
 ```yaml
 ---
 - name: Challenge 3 - Remove Rogue User
-  hosts: all
+  hosts: node1,node3  # Targets only node1 and node3
   become: yes
   
   tasks:
@@ -320,28 +316,30 @@ EOF
     cat > challenge4/README.md <<'EOF'
 # Challenge 4: Inconsistent Messaging (20 Points)
 
+## 🎯 Target Nodes
+**ALL nodes** - node1, node2, and node3
+
 ## The Problem
-The "Message of the Day" (`/etc/motd`) is inconsistent across servers, causing confusion. Some were even defaced!
+The "Message of the Day" (`/etc/motd`) is inconsistent across servers, causing confusion:
+- **node1**: Defaced by "Disruptive Dezign"
+- **node2**: Outdated message
+- **node3**: File is missing entirely
 
 ## Your Mission
-Create a standardized MOTD using a template. The message should be "Welcome to {{ ansible_hostname }} - Managed by SRE Team".
+Create a standardized MOTD using a template. The message should be "Welcome to {{ ansible_hostname }} - Managed by SRE Team". Deploy this template to **all three servers**.
 
 ## Requirements
 - Create a Jinja2 template file
-- Deploy to all servers
+- Deploy to **all servers (node1, node2, node3)**
 - Use the `ansible_hostname` fact to personalize each server's message
+- Each server should display its own hostname
 
 ## Helpful Hints
 - Module to use: `ansible.builtin.template`
+- Target hosts: Use `hosts: all` or `hosts: web` to target all nodes
 - Create a template file: `templates/motd.j2`
 - Destination: `/etc/motd`
 - Check the [template module documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html)
-
-## Testing Your Solution
-```bash
-# Check MOTD on all hosts
-ansible all -m shell -a "cat /etc/motd"
-```
 
 ## Playbook Template
 Create your playbook as `challenge4/solution.yml` and template as `challenge4/templates/motd.j2`
@@ -349,7 +347,7 @@ Create your playbook as `challenge4/solution.yml` and template as `challenge4/te
 ```yaml
 ---
 - name: Challenge 4 - Fix MOTD
-  hosts: all
+  hosts: all  # Targets all nodes
   become: yes
   
   tasks:
@@ -361,31 +359,30 @@ EOF
     cat > challenge5/README.md <<'EOF'
 # Challenge 5: Firewall Anomaly (20 Points)
 
+## 🎯 Target Nodes
+**node3 ONLY** - backup web server
+
 ## The Problem
-A backup web service is running on node3, but it's inaccessible because the firewall is blocking HTTP traffic.
+A backup web service is running on **node3**, but it's inaccessible because the firewall is blocking HTTP traffic. The `httpd` service is running, but external connections fail.
 
 ## Your Mission
-Write a playbook that adds a permanent rule to the firewall on node3 to allow traffic for the `http` service.
+Write a playbook that adds a **permanent** rule to the firewall on **node3** to allow traffic for the `http` service.
 
 ## Requirements
-- Target only node3
+- Target only **node3** (NOT node1 or node2)
 - Add firewall rule for http service
 - Rule must be permanent (survives reboot)
 - Firewall must be reloaded
+- `firewalld` service must be running
 
 ## Helpful Hints
 - Module to use: `ansible.posix.firewalld`
+- Target hosts: Use `hosts: node3` to target only the backup web server
 - Service: `http`
 - State should be: `enabled`
 - Make it permanent: `permanent: yes`
 - Reload after: `immediate: yes`
 - Check the [firewalld module documentation](https://docs.ansible.com/ansible/latest/collections/ansible/posix/firewalld_module.html)
-
-## Testing Your Solution
-```bash
-# Check firewall rules on node3
-ansible node3 -m shell -a "firewall-cmd --list-services"
-```
 
 ## Playbook Template
 Create your playbook as `challenge5/solution.yml`
@@ -393,7 +390,7 @@ Create your playbook as `challenge5/solution.yml`
 ```yaml
 ---
 - name: Challenge 5 - Fix Firewall
-  hosts: node3
+  hosts: node3  # Targets only node3
   become: yes
   
   tasks:
@@ -405,8 +402,15 @@ EOF
     cat > challenge6/README.md <<'EOF'
 # Challenge 6: The Phoenix Protocol (30 Points + 10 Extra Credit)
 
+## 🎯 Target Nodes
+**node1 (web server) and node2 (database server)**
+
 ## The Disaster
-The application stack is not working. The web server (node1) and the database server (node2) are both offline. Packages are missing, services are stopped, and configurations are lost.
+The application stack is completely offline:
+- **node1**: Web server (httpd) is stopped, package removed, files missing
+- **node2**: Database server (PostgreSQL) is stopped, packages removed
+
+Both services must be restored in the correct order with proper validation and rollback capabilities.
 
 ## Your Mission
 Orchestrate a full, multi-tier server recovery using an Ansible Automation Platform Workflow.
