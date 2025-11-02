@@ -551,11 +551,9 @@ Each challenge includes:
 - Mission statement
 - Requirements
 - Helpful hints with module links
-- Testing commands
 - Playbook template
 
 Additional files:
-- inventory.example (sample inventory)
 - .gitignore (Ansible best practices)
 - templates/motd.j2 (Jinja2 example)" &>/dev/null
     
