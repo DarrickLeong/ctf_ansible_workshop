@@ -58,7 +58,7 @@ Now go to **each Sub-AAP Controller's Web UI** and run these job templates in or
 - **Targets**: All managed nodes (node1, node2, node3)
 - **Actions**:
   - Starts chronyd service
-  - Removes nginx from node2
+  - Removes bind-utils from node2
   - Removes rogue_user
   - Cleans up MOTD files
   - Allows HTTP through firewall
@@ -83,11 +83,11 @@ Now go to **each Sub-AAP Controller's Web UI** and run these job templates in or
 - **Targets**: All managed nodes (node1, node2, node3)
 - **Actions**:
   - Challenge 1: Stops chronyd on all nodes
-  - Challenge 2: Installs nginx on node2
+  - Challenge 2: Installs bind-utils on node2
   - Challenge 3: Creates rogue_user on node1 & node3
   - Challenge 4: Defacts/corrupts MOTD files
   - Challenge 5: Blocks HTTP on node3 firewall
-  - Challenge 6: Breaks application stack (httpd, mariadb)
+  - Challenge 6: Breaks application stack (httpd, postgresql)
 
 **When to run**:
 - **ALWAYS** run this before starting the workshop
@@ -131,7 +131,7 @@ Participants now work on fixing the issues using Ansible playbooks.
 
 **What it checks**:
 - ✅ Challenge 1: Is chronyd running and enabled?
-- ✅ Challenge 2: Is nginx removed from node2?
+- ✅ Challenge 2: Is bind-utils removed from node2?
 - ✅ Challenge 3: Is rogue_user removed?
 - ✅ Challenge 4: Is MOTD correct with hostname and SRE Team?
 - ✅ Challenge 5: Is HTTP allowed through firewall on node3?

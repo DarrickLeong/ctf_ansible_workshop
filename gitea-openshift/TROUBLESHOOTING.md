@@ -5,7 +5,7 @@
 ### Issue 1: "Installation wizard still shows after setting INSTALL_LOCK=true"
 
 **Symptoms:**
-- Seeing "Database settings are invalid: dial tcp 127.0.0.1:3306" error
+- Seeing "Database settings are invalid: dial tcp 127.0.0.1:5432" error
 - Installation wizard appears even though config has `INSTALL_LOCK = true`
 
 **Root Cause:**

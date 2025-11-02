@@ -216,15 +216,15 @@ ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
         scenario: `
             <div class="alert alert-danger">
                 <h4>🚨 The Problem</h4>
-                <p>A compliance scan has detected an unauthorized package, <code>nginx</code>, installed on the database server (node2). Per security policy, database servers must not run web services. It needs to be removed immediately.</p>
+                <p>A compliance scan has detected an unauthorized package, <code>bind-utils</code>, installed on the database server (node2). Per security policy, database servers must not run web services. It needs to be removed immediately.</p>
             </div>
         `,
         requirements: `
             <h3>Your Mission</h3>
-            <p>Create a playbook that removes the <code>nginx</code> package from <code>node2</code>.</p>
+            <p>Create a playbook that removes the <code>bind-utils</code> package from <code>node2</code>.</p>
             <h4>Success Criteria:</h4>
             <ul>
-                <li>✅ nginx package is removed from node2</li>
+                <li>✅ bind-utils package is removed from node2</li>
                 <li>✅ Other servers are not affected</li>
                 <li>✅ Playbook targets only the correct host</li>
             </ul>
@@ -246,7 +246,7 @@ ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
                 <div class="hint-box">
                     <strong>💡 Module Parameters:</strong>
                     <ul>
-                        <li><code>name</code>: Package name (nginx)</li>
+                        <li><code>name</code>: Package name (bind-utils)</li>
                         <li><code>state</code>: absent (to remove), present (to install)</li>
                     </ul>
                 </div>
@@ -261,8 +261,8 @@ ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
 
             <div class="step">
                 <h4>Step 3: Test Your Playbook</h4>
-                <p>Before running, verify nginx is installed:</p>
-                <pre><code class="language-bash">ansible node2 -m shell -a "rpm -qa | grep nginx" -i inventory</code></pre>
+                <p>Before running, verify bind-utils is installed:</p>
+                <pre><code class="language-bash">ansible node2 -m shell -a "rpm -qa | grep bind-utils" -i inventory</code></pre>
                 <p>Run your playbook, then verify it's removed.</p>
             </div>
 
@@ -287,9 +287,9 @@ ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
   become: yes
   
   tasks:
-    - name: Remove nginx package from database server
+    - name: Remove bind-utils package from database server
       ansible.builtin.dnf:
-        name: nginx
+        name: bind-utils
         state: absent</code></pre>
 
             <h4>Explanation:</h4>
@@ -300,14 +300,14 @@ ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
             </ul>
 
             <h4>Alternative Solution (Cross-platform):</h4>
-            <pre><code class="language-yaml">- name: Remove nginx using generic package module
+            <pre><code class="language-yaml">- name: Remove bind-utils using generic package module
   ansible.builtin.package:
-    name: nginx
+    name: bind-utils
     state: absent</code></pre>
 
                     <h4>Verification:</h4>
-                    <pre><code class="language-bash"># Check if nginx is removed
-ansible node2 -m shell -a "rpm -qa | grep nginx" -i inventory
+                    <pre><code class="language-bash"># Check if bind-utils is removed
+ansible node2 -m shell -a "rpm -qa | grep bind-utils" -i inventory
 # Should return empty (no output)</code></pre>
                 </div>
             </details>
@@ -711,7 +711,7 @@ curl http://node3
                         <li><code>http</code> - Port 80/tcp</li>
                         <li><code>https</code> - Port 443/tcp</li>
                         <li><code>ssh</code> - Port 22/tcp</li>
-                        <li><code>mysql</code> - Port 3306/tcp</li>
+                        <li><code>mysql</code> - Port 5432/tcp</li>
                         <li><code>postgresql</code> - Port 5432/tcp</li>
                     </ul>
                 </div>
@@ -762,7 +762,7 @@ curl http://node3
                     <summary><strong>🔍 Show me a hint</strong></summary>
                     <ul>
                         <li>Target: node2</li>
-                        <li>Install MySQL/MariaDB packages</li>
+                        <li>Install MySQL/PostgreSQL packages</li>
                         <li>Start and enable the database service</li>
                         <li>Create database and user</li>
                     </ul>
@@ -941,16 +941,16 @@ curl http://node3
   become: yes
   
   tasks:
-    - name: Install MariaDB server
+    - name: Install PostgreSQL server
       ansible.builtin.dnf:
         name:
-          - mariadb-server
+          - postgresql-server
           - python3-PyMySQL
         state: present
     
-    - name: Start and enable MariaDB
+    - name: Start and enable PostgreSQL
       ansible.builtin.service:
-        name: mariadb
+        name: postgresql
         state: started
         enabled: yes
     
@@ -1113,9 +1113,9 @@ curl http://node3
         login_unix_socket: /var/lib/mysql/mysql.sock
       ignore_errors: yes
     
-    - name: Stop MariaDB
+    - name: Stop PostgreSQL
       ansible.builtin.service:
-        name: mariadb
+        name: postgresql
         state: stopped
         enabled: no
       ignore_errors: yes</code></pre>

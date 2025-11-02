@@ -60,7 +60,7 @@
         content: |
           # Application Configuration
           DB_HOST={{ db_host }}
-          DB_PORT=3306
+          DB_PORT=5432
           DB_NAME=ctf_app
           APP_STATUS=OPERATIONAL
         dest: /var/www/html/config.txt

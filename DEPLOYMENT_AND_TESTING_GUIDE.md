@@ -201,7 +201,7 @@ ansible-playbook setup-all-challenges.yml -i inventory
 
 # This will:
 # - Stop chronyd (Challenge 1)
-# - Install nginx on node2 (Challenge 2)
+# - Install bind-utils on node2 (Challenge 2)
 # - Create rogue_user on node1 and node3 (Challenge 3)
 # - Clear /etc/motd (Challenge 4)
 # - Block HTTP on node3 firewall (Challenge 5)
@@ -313,18 +313,18 @@ ansible-playbook ../../sub-controllers/ctf-challenge-validator.yml \
   -e "ctf_tracker_url=YOUR_TRACKER_URL"
 ```
 
-### Challenge 2: nginx removal (10 points)
+### Challenge 2: bind-utils removal (10 points)
 ```bash
 # Verify it's present
-ansible node2 -i test-inventory -m shell -a "rpm -q nginx"
-# Should show: nginx-x.x.x
+ansible node2 -i test-inventory -m shell -a "rpm -q bind-utils"
+# Should show: bind-utils-x.x.x
 
 # Apply solution
 ansible-playbook challenge2-solution.yml -i ../setup/inventory
 
 # Verify it's removed
-ansible node2 -i test-inventory -m shell -a "rpm -q nginx"
-# Should show: package nginx is not installed
+ansible node2 -i test-inventory -m shell -a "rpm -q bind-utils"
+# Should show: package bind-utils is not installed
 
 # Run validator
 ansible-playbook ../../sub-controllers/ctf-challenge-validator.yml \

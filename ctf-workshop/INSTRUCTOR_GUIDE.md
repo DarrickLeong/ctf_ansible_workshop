@@ -126,12 +126,12 @@ ansible all -i inventory -m command -a "systemctl status chronyd"
 
 **Setup Command:**
 ```bash
-ansible node2 -i inventory -b -m dnf -a "name=nginx state=present"
+ansible node2 -i inventory -b -m dnf -a "name=bind-utils state=present"
 ```
 
 **Verification:**
 ```bash
-ansible node2 -i inventory -m shell -a "rpm -qa | grep nginx"
+ansible node2 -i inventory -m shell -a "rpm -qa | grep bind-utils"
 ```
 
 **Solution Highlight:**
@@ -203,7 +203,7 @@ curl http://node3-ip  # Should fail before fix
 ```bash
 # Run the setup playbook which:
 # - Removes httpd from node1
-# - Removes mariadb from node2
+# - Removes postgresql from node2
 ```
 
 **Solution Steps:**
@@ -297,7 +297,7 @@ curl http://ctf-tracker-url/api/stats
 ```bash
 # Install on execution environment or controller
 ansible-galaxy collection install ansible.posix
-ansible-galaxy collection install community.mysql
+ansible-galaxy collection install community.postgresql
 ```
 
 **Workflow not working:**

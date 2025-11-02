@@ -129,7 +129,7 @@ Upload these playbooks to your AAP project:
 - Configuration validation
 - Port accessibility test
 
-### 3. MySQL/MariaDB Database (10 points)
+### 3. PostgreSQL/PostgreSQL Database (10 points)
 - Database server installation
 - Service status check
 - Port accessibility verification

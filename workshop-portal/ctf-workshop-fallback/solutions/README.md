@@ -137,9 +137,9 @@ Validate [ON FAILURE] → Rollback Web → Rollback DB → END
 ### Challenge 2 (10 Points)
 **Key Module**: `ansible.builtin.dnf`
 ```yaml
-- name: Remove nginx
+- name: Remove bind-utils
   ansible.builtin.dnf:
-    name: nginx
+    name: bind-utils
     state: absent
 ```
 **Important**: Use `hosts: node2` to target specific host
@@ -230,7 +230,7 @@ After running solutions, verify with:
 ansible all -i inventory -m service_facts | grep chronyd
 
 # Challenge 2
-ansible node2 -i inventory -m shell -a "rpm -qa | grep nginx"
+ansible node2 -i inventory -m shell -a "rpm -qa | grep bind-utils"
 
 # Challenge 3
 ansible node1,node3 -i inventory -m command -a "id rogue_user" || echo "User removed"
@@ -243,7 +243,7 @@ ansible node3 -i inventory -m command -a "firewall-cmd --list-services" -b
 
 # Challenge 6
 curl http://node1-ip/  # Should show Phoenix Protocol page
-mysql -h node2-ip -e "SHOW DATABASES;" # Should show ctf_app
+postgresql -h node2-ip -e "SHOW DATABASES;" # Should show ctf_app
 ```
 
 ## 📝 Notes for Instructors
@@ -262,7 +262,7 @@ mysql -h node2-ip -e "SHOW DATABASES;" # Should show ctf_app
 ```bash
 # On AAP or execution environment
 ansible-galaxy collection install ansible.posix
-ansible-galaxy collection install community.mysql
+ansible-galaxy collection install community.postgresql
 ```
 
 ### Template Not Found

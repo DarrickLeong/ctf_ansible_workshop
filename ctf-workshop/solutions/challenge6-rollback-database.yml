@@ -10,26 +10,26 @@
   gather_facts: yes
   
   tasks:
-    - name: Stop mariadb service
+    - name: Stop postgresql service
       ansible.builtin.service:
-        name: mariadb
+        name: postgresql
         state: stopped
         enabled: no
       ignore_errors: yes
     
-    - name: Remove database files
+    - name: Remove PostgreSQL data directory
       ansible.builtin.file:
         path: "{{ item }}"
         state: absent
       loop:
-        - /var/lib/mysql/ctf_app
+        - /var/lib/pgsql/data
       ignore_errors: yes
     
     - name: Display rollback result
       ansible.builtin.debug:
         msg: |
           ⚠️ Database rolled back on {{ inventory_hostname }}
-          Services stopped
+          PostgreSQL service stopped
           Database files cleaned up
           
           ==========================================
@@ -38,4 +38,5 @@
           The Phoenix Protocol encountered errors
           and has been rolled back to safe state.
           ==========================================
+
 

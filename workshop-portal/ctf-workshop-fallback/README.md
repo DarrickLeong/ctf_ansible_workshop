@@ -141,7 +141,7 @@ Participants will learn:
 - Ansible 2.9+
 - Python 3.6+
 - `ansible.posix` collection
-- `community.mysql` collection (for Challenge 6)
+- `community.postgresql` collection (for Challenge 6)
 
 ### Access
 - SSH access to RHEL servers

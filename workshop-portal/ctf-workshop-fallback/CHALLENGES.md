@@ -62,10 +62,10 @@ Learn to use the `ansible.builtin.service` module to manage system services.
 **Difficulty**: ⭐⭐ Beginner+
 
 **The Problem**: 
-A compliance scan has detected an unauthorized package, `nginx`, installed on the database server (`node2`). Per security policy, database servers must not run web services. It needs to be removed immediately.
+A compliance scan has detected an unauthorized package, `bind-utils`, installed on the database server (`node2`). Per security policy, database servers must not run web services. It needs to be removed immediately.
 
 **The Mission**: 
-Create a playbook that removes the `nginx` package from `node2`.
+Create a playbook that removes the `bind-utils` package from `node2`.
 
 **Learning Goal**: 
 Understand how to manage software packages using the `ansible.builtin.dnf` module.
@@ -76,8 +76,8 @@ Understand how to manage software packages using the `ansible.builtin.dnf` modul
 - Host targeting (specific host)
 
 **Success Criteria**:
-- ✅ `nginx` package is removed from `node2`
-- ✅ `nginx` is not removed from other nodes (selective targeting)
+- ✅ `bind-utils` package is removed from `node2`
+- ✅ `bind-utils` is not removed from other nodes (selective targeting)
 - ✅ Playbook handles cases where package doesn't exist
 
 ---
@@ -190,8 +190,8 @@ You must orchestrate a full, multi-tier server recovery using an Ansible Automat
 Create **six separate playbooks**:
 
 1. **`provision-database.yml`** - Provision Database Server
-   - Install required database packages (mariadb-server)
-   - Start and enable mariadb service
+   - Install required database packages (postgresql-server)
+   - Start and enable postgresql service
    - Configure basic database settings
 
 2. **`provision-webserver.yml`** - Provision Web Server
@@ -216,7 +216,7 @@ Create **six separate playbooks**:
    - Clean up configurations
 
 6. **`rollback-database.yml`** - Rollback Database
-   - Stop mariadb service
+   - Stop postgresql service
    - Clean up database configurations
 
 #### Part 2: Create AAP Job Templates
@@ -434,7 +434,7 @@ If needed, you can verify challenge completion manually:
 ansible all -m service -a "name=chronyd state=started"
 
 # Check package status
-ansible node2 -m dnf -a "name=nginx state=present" --check
+ansible node2 -m dnf -a "name=bind-utils state=present" --check
 
 # Check user status
 ansible all -m command -a "id rogue_user"

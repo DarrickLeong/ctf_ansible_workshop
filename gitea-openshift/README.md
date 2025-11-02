@@ -46,7 +46,7 @@ The script will prompt for:
 - Admin and regular user support
 
 ✅ **Production Ready**
-- SQLite database (upgradeable to PostgreSQL/MySQL)
+- SQLite database (upgradeable to PostgreSQL/PostgreSQL)
 - Persistent volume claims
 - Service and route exposure
 - Liveness and readiness probes

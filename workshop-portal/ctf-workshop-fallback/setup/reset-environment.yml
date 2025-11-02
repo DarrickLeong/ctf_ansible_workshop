@@ -37,9 +37,9 @@
         enabled: yes
 
 # ============================================
-# Challenge 2 Reset: Remove nginx
+# Challenge 2 Reset: Remove bind-utils
 # ============================================
-- name: Challenge 2 Reset - Remove nginx from node2
+- name: Challenge 2 Reset - Remove bind-utils from node2
   hosts: node2
   become: yes
   tags:
@@ -47,9 +47,9 @@
     - reset
   
   tasks:
-    - name: Remove nginx package
+    - name: Remove bind-utils package
       dnf:
-        name: nginx
+        name: bind-utils
         state: absent
 
 # ============================================
@@ -137,18 +137,18 @@
             enabled: yes
       when: inventory_hostname == 'node1'
     
-    - name: Install and start mariadb on node2
+    - name: Install and start postgresql on node2
       block:
-        - name: Install mariadb
+        - name: Install postgresql
           dnf:
             name:
-              - mariadb-server
-              - mariadb
+              - postgresql-server
+              - postgresql
             state: present
         
-        - name: Start mariadb service
+        - name: Start postgresql service
           service:
-            name: mariadb
+            name: postgresql
             state: started
             enabled: yes
       when: inventory_hostname == 'node2'

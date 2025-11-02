@@ -240,14 +240,14 @@ EOF
 # Challenge 2: Malicious Package (10 Points)
 
 ## The Problem
-A compliance scan has detected an unauthorized package, `nginx`, installed on the database server (node2). Per security policy, database servers must not run web services.
+A compliance scan has detected an unauthorized package, `bind-utils`, installed on the database server (node2). Per security policy, database servers must not run web services.
 
 ## Your Mission
-Create a playbook that removes the `nginx` package from node2.
+Create a playbook that removes the `bind-utils` package from node2.
 
 ## Requirements
 - Target only node2
-- Remove nginx package
+- Remove bind-utils package
 - Ensure package is completely removed
 
 ## Helpful Hints
@@ -257,8 +257,8 @@ Create a playbook that removes the `nginx` package from node2.
 
 ## Testing Your Solution
 ```bash
-# Check if nginx is installed on node2
-ansible node2 -m shell -a "rpm -q nginx"
+# Check if bind-utils is installed on node2
+ansible node2 -m shell -a "rpm -q bind-utils"
 ```
 
 ## Playbook Template
@@ -444,13 +444,13 @@ Add a Workflow Approval node before starting the recovery:
     - name: Install database packages
       ansible.builtin.dnf:
         name:
-          - mariadb-server
+          - postgresql-server
           - python3-PyMySQL
         state: present
     
-    - name: Start and enable mariadb
+    - name: Start and enable postgresql
       ansible.builtin.service:
-        name: mariadb
+        name: postgresql
         state: started
         enabled: yes
 ```
@@ -518,7 +518,7 @@ EOF
     git commit -m "Initialize workshop repository with challenge structure
 
 - Challenge 1: Time synchronization (chronyd)
-- Challenge 2: Package management (nginx removal)
+- Challenge 2: Package management (bind-utils removal)
 - Challenge 3: User management (rogue user)
 - Challenge 4: Template deployment (MOTD)
 - Challenge 5: Firewall configuration (http service)

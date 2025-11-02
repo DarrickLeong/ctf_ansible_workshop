@@ -17,10 +17,10 @@
       register: httpd_status
       when: inventory_hostname == 'node1'
     
-    - name: Check if mariadb is running on node2
+    - name: Check if postgresql is running on node2
       ansible.builtin.service:
-        name: mariadb
-      register: mariadb_status
+        name: postgresql
+      register: postgresql_status
       when: inventory_hostname == 'node2'
     
     - name: Test HTTP response from web server
@@ -36,7 +36,7 @@
     - name: Test database connectivity
       ansible.builtin.wait_for:
         host: "{{ ansible_default_ipv4.address }}"
-        port: 3306
+        port: 5432
         timeout: 5
       register: db_test
       when: inventory_hostname == 'node2'
@@ -53,7 +53,7 @@
     - name: Verify database validation
       ansible.builtin.assert:
         that:
-          - mariadb_status.state is defined
+          - postgresql_status.state is defined
           - db_test is succeeded
         fail_msg: "Database validation failed!"
         success_msg: "✅ Database validation passed"
@@ -70,7 +70,7 @@
           - Service: Running
           
           Database Server (node2): OPERATIONAL
-          - Port 3306: Accessible
+          - Port 5432: Accessible
           - Service: Running
           
           🔥 Phoenix Protocol Complete! 🔥

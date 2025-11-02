@@ -133,7 +133,7 @@ ctf-ansible-workshop/
 - **Purpose**: Execute CTF challenges on RHEL hosts
 - **Technology**: Ansible playbooks
 - **Features**:
-  - Challenge verification (Apache, Nginx, MySQL, etc.)
+  - Challenge verification (Apache, Nginx, PostgreSQL, etc.)
   - System connectivity and health checks
   - Results reporting back to central tracker
   - Multi-challenge support with point calculation

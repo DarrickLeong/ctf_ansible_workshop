@@ -40,7 +40,7 @@ ansible-playbook reset-environment.yml -i inventory --tags challenge1
 - Disables chronyd from starting at boot
 
 ### Challenge 2: Malicious Package
-- Installs `nginx` package on node2 (database server)
+- Installs `bind-utils` package on node2 (database server)
 
 ### Challenge 3: Rogue User Account
 - Creates `rogue_user` account on node1 and node3
@@ -59,7 +59,7 @@ ansible-playbook reset-environment.yml -i inventory --tags challenge1
 
 ### Challenge 6: Phoenix Protocol
 - Stops and removes httpd on node1
-- Stops and removes mariadb on node2
+- Stops and removes postgresql on node2
 - Removes web content and configurations
 
 ## 📋 Requirements
@@ -102,8 +102,8 @@ After running setup, verify the scenarios:
 # Verify Challenge 1 - chronyd stopped
 ansible all -i inventory -m service_facts -a "" | grep chronyd
 
-# Verify Challenge 2 - nginx installed on node2
-ansible node2 -i inventory -m shell -a "rpm -qa | grep nginx"
+# Verify Challenge 2 - bind-utils installed on node2
+ansible node2 -i inventory -m shell -a "rpm -qa | grep bind-utils"
 
 # Verify Challenge 3 - rogue_user exists
 ansible node1,node3 -i inventory -m command -a "id rogue_user"
@@ -116,7 +116,7 @@ ansible node3 -i inventory -m command -a "firewall-cmd --list-services"
 
 # Verify Challenge 6 - Services stopped
 ansible node1 -i inventory -m command -a "systemctl status httpd" -b
-ansible node2 -i inventory -m command -a "systemctl status mariadb" -b
+ansible node2 -i inventory -m command -a "systemctl status postgresql" -b
 ```
 
 ## 🎓 Tips

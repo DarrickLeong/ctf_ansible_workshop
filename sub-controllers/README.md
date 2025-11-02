@@ -5,7 +5,7 @@ Ansible playbooks that execute CTF challenges on RHEL hosts via sub controllers.
 ## 📁 Playbooks Overview
 
 ### **Challenge Execution**
-- **`comprehensive-ctf-playbook.yml`** ⭐ - Main challenge verification (Apache, Nginx, MySQL, firewall, users)
+- **`comprehensive-ctf-playbook.yml`** ⭐ - Main challenge verification (Apache, Nginx, PostgreSQL, firewall, users)
 - **`connectivity-test-playbook.yml`** 🔍 - System health and connectivity testing
 
 ## 🎯 How It Works
@@ -26,7 +26,7 @@ CTF Tracker → Sub Controller AAP → RHEL Host → Results → CTF Tracker
 ### **Built-in Challenges** (10 points each)
 1. **Apache HTTP Server** - Package, service, config, port 80
 2. **Nginx Web Server** - Package, service, config, port 80  
-3. **MySQL/MariaDB** - Package, service, port 3306
+3. **PostgreSQL/PostgreSQL** - Package, service, port 5432
 4. **Firewall Configuration** - firewalld service, zones, HTTP rule
 5. **User Management** - Required users, sudo configuration
 6. **Custom Commands** - Flexible command execution (variable points)
@@ -44,8 +44,8 @@ CTF Tracker → Sub Controller AAP → RHEL Host → Results → CTF Tracker
 challenge_config:
   challenge_types:
     - apache_check
-    - nginx_check
-    - mysql_check
+    - bind-utils_check
+    - postgresql_check
     - firewall_check
     - user_check
   required_users:

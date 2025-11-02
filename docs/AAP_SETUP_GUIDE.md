@@ -87,14 +87,14 @@ The included `aap-playbook-apache-check.yml` can be customized for additional ch
 ### Adding More Services
 
 ```yaml
-- name: Check nginx installation
+- name: Check bind-utils installation
   package_facts:
     manager: auto
-  register: nginx_check
+  register: bind-utils_check
 
-- name: Set nginx status
+- name: Set bind-utils status
   set_fact:
-    nginx_installed: "{{ 'nginx' in ansible_facts.packages }}"
+    bind-utils_installed: "{{ 'bind-utils' in ansible_facts.packages }}"
 ```
 
 ### Custom Point Values
@@ -102,7 +102,7 @@ The included `aap-playbook-apache-check.yml` can be customized for additional ch
 ```yaml
 vars:
   apache_points: "{{ apache_points | default(10) }}"
-  nginx_points: "{{ nginx_points | default(15) }}"
+  bind-utils_points: "{{ bind-utils_points | default(15) }}"
 ```
 
 ### Multiple Check Types
@@ -112,8 +112,8 @@ vars:
   set_fact:
     check_results:
       apache: "{{ apache_installed }}"
-      nginx: "{{ nginx_installed }}"
-      total_points: "{{ (apache_points if apache_installed else 0) + (nginx_points if nginx_installed else 0) }}"
+      bind-utils: "{{ bind-utils_installed }}"
+      total_points: "{{ (apache_points if apache_installed else 0) + (bind-utils_points if bind-utils_installed else 0) }}"
 ```
 
 ## Testing the Integration

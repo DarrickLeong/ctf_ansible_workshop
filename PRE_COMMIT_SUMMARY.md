@@ -6,7 +6,7 @@
 - **Application**: Node.js CTF Tracker (Flask removed)
 - **API Support**: ✅ All 6 challenges supported
   - Challenge results API accepts flexible `challenge_results` object
-  - Automatically handles challenge types: `challenge1_chronyd`, `challenge2_nginx_removal`, etc.
+  - Automatically handles challenge types: `challenge1_chronyd`, `challenge2_bind-utils_removal`, etc.
   - Tracks points and completion status per challenge
   - No code changes required
 
@@ -15,7 +15,7 @@
 #### ✅ NEW: `ctf-challenge-validator.yml` 
 **Status**: Created - Validates ACTUAL CTF challenges
 - Challenge 1: chronyd service running/enabled (5 pts)
-- Challenge 2: nginx removal from node2 (10 pts)  
+- Challenge 2: bind-utils removal from node2 (10 pts)  
 - Challenge 3: rogue_user removal from node1/node3 (15 pts)
 - Challenge 4: MOTD template with hostname/SRE (20 pts)
 - Challenge 5: firewall HTTP service on node3 (20 pts)
@@ -24,7 +24,7 @@
 
 #### ℹ️ EXISTING: `comprehensive-ctf-playbook.yml`
 **Status**: Kept for reference - Generic challenge validator
-- Checks: apache, nginx, mysql, firewall, users
+- Checks: apache, bind-utils, postgresql, firewall, users
 - More generic/flexible for other use cases
 - **Note**: Does NOT match the specific 6 CTF challenges
 

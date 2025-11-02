@@ -18,11 +18,11 @@ This document summarizes everything that has been created for the CTF Workshop.
 ### 2. Setup & Reset Playbooks ✅
 - **`ctf-setup/setup-all-challenges.yml`** - Creates all problem scenarios
   - Challenge 1: Stops chronyd on all nodes
-  - Challenge 2: Installs nginx on node2
+  - Challenge 2: Installs bind-utils on node2
   - Challenge 3: Creates rogue_user on node1 and node3
   - Challenge 4: Creates inconsistent/defaced MOTD files
   - Challenge 5: Blocks HTTP on node3 firewall
-  - Challenge 6: Breaks application stack (stops httpd and mariadb)
+  - Challenge 6: Breaks application stack (stops httpd and postgresql)
 
 - **`ctf-setup/reset-environment.yml`** - Resets environment to clean state
   - Reverses all challenge setups

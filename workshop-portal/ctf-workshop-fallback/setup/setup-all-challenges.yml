@@ -47,7 +47,7 @@
 # ============================================
 # Challenge 2 Setup: Malicious Package (10 Points)
 # ============================================
-- name: Challenge 2 Setup - Install nginx on database server
+- name: Challenge 2 Setup - Install bind-utils on database server
   hosts: node2
   become: yes
   tags:
@@ -55,14 +55,14 @@
     - setup
   
   tasks:
-    - name: Install nginx package on database server
+    - name: Install bind-utils package on database server
       dnf:
-        name: nginx
+        name: bind-utils
         state: present
       
     - name: Display Challenge 2 setup status
       debug:
-        msg: "✅ Challenge 2: nginx package installed on {{ inventory_hostname }}"
+        msg: "✅ Challenge 2: bind-utils package installed on {{ inventory_hostname }}"
 
 # ============================================
 # Challenge 3 Setup: Rogue User Account (15 Points)
@@ -213,20 +213,20 @@
             state: absent
       when: inventory_hostname == 'node1'
     
-    - name: Stop and remove mariadb on node2
+    - name: Stop and remove postgresql on node2
       block:
-        - name: Stop mariadb service
+        - name: Stop postgresql service
           service:
-            name: mariadb
+            name: postgresql
             state: stopped
             enabled: no
           ignore_errors: yes
         
-        - name: Remove mariadb packages
+        - name: Remove postgresql packages
           dnf:
             name:
-              - mariadb-server
-              - mariadb
+              - postgresql-server
+              - postgresql
             state: absent
           ignore_errors: yes
       when: inventory_hostname == 'node2'
@@ -253,7 +253,7 @@
           ==========================================
           
           Challenge 1: chronyd stopped on all nodes
-          Challenge 2: nginx installed on node2
+          Challenge 2: bind-utils installed on node2
           Challenge 3: rogue_user created on node1 and node3
           Challenge 4: MOTD files inconsistent/defaced
           Challenge 5: HTTP blocked on node3 firewall

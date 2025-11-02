@@ -138,7 +138,7 @@ instructor,instructor@workshop.local,Instructor2024!,true
 
 ### **Configuration**
 - **Image:** `gitea/gitea:1.25.0`
-- **Database:** SQLite (upgradeable to PostgreSQL/MySQL)
+- **Database:** SQLite (upgradeable to PostgreSQL/PostgreSQL)
 - **Storage:** 5Gi PVC
 - **Ports:** 3000 (HTTP), 22 (SSH)
 - **Health Check:** `/api/healthz` endpoint

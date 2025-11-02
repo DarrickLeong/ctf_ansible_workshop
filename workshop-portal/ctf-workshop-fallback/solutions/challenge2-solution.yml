@@ -1,7 +1,7 @@
 ---
 # Challenge 2 Solution: Malicious Package (10 Points)
 # 
-# Mission: Remove nginx package from node2 (database server)
+# Mission: Remove bind-utils package from node2 (database server)
 # Points: 10
 #
 # This playbook demonstrates package management and host targeting
@@ -12,26 +12,26 @@
   gather_facts: yes
   
   tasks:
-    - name: Remove nginx package from database server
+    - name: Remove bind-utils package from database server
       ansible.builtin.dnf:
-        name: nginx
+        name: bind-utils
         state: absent
-      register: nginx_result
+      register: bind-utils_result
     
-    - name: Verify nginx is removed
+    - name: Verify bind-utils is removed
       ansible.builtin.package_facts:
         manager: auto
     
-    - name: Check if nginx is present
+    - name: Check if bind-utils is present
       ansible.builtin.set_fact:
-        nginx_removed: "{{ 'nginx' not in ansible_facts.packages }}"
+        bind-utils_removed: "{{ 'bind-utils' not in ansible_facts.packages }}"
     
     - name: Display result
       ansible.builtin.debug:
         msg: |
           ✅ Challenge 2 Complete on {{ inventory_hostname }}!
-          nginx removed: {{ nginx_removed }}
-          Package change: {{ nginx_result.changed }}
+          bind-utils removed: {{ bind-utils_removed }}
+          Package change: {{ bind-utils_result.changed }}
     
     - name: Report to CTF Tracker
       ansible.builtin.uri:
@@ -45,11 +45,11 @@
           hostname: "{{ inventory_hostname }}"
           challenge_results:
             challenge_2:
-              completed: "{{ nginx_removed }}"
-              points_earned: "{{ 10 if nginx_removed else 0 }}"
+              completed: "{{ bind-utils_removed }}"
+              points_earned: "{{ 10 if bind-utils_removed else 0 }}"
               max_points: 10
               details:
-                package_removed: "{{ nginx_removed }}"
+                package_removed: "{{ bind-utils_removed }}"
                 target_host: "node2"
           aap_cluster_id: "{{ aap_cluster_id | default('') }}"
         validate_certs: no

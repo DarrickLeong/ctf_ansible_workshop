@@ -26,7 +26,7 @@
 #### ⭐ PRIMARY: `ctf-challenge-validator.yml` (NEW)
 **Purpose**: Validates the ACTUAL 6 CTF Workshop challenges
 - **Challenge 1**: chronyd service (5 pts)
-- **Challenge 2**: nginx removal from node2 (10 pts)
+- **Challenge 2**: bind-utils removal from node2 (10 pts)
 - **Challenge 3**: rogue_user removal (15 pts)
 - **Challenge 4**: MOTD template (20 pts)
 - **Challenge 5**: Firewall HTTP on node3 (20 pts)
@@ -36,7 +36,7 @@
 
 #### ℹ️ REFERENCE: `comprehensive-ctf-playbook.yml`
 **Purpose**: Generic challenge validator
-- Checks: apache, nginx, mysql, firewall, users
+- Checks: apache, bind-utils, postgresql, firewall, users
 - Flexible for other scenarios
 - **Note**: Does NOT match the specific workshop challenges
 
@@ -258,7 +258,7 @@ git add PRE_COMMIT_SUMMARY.md sub-controllers/ctf-challenge-validator.yml
 git commit -m "Add CTF challenge validator and pre-commit summary
 
 - Created ctf-challenge-validator.yml for actual workshop challenges
-- Validates all 6 specific challenges (chronyd, nginx, rogue_user, motd, firewall, Phoenix)
+- Validates all 6 specific challenges (chronyd, bind-utils, rogue_user, motd, firewall, Phoenix)
 - Added comprehensive pre-commit validation summary
 - All systems verified and ready for production"
 git push origin main
@@ -301,7 +301,7 @@ ansible-playbook sub-controllers/ctf-challenge-validator.yml \
 ```bash
 ansible-playbook sub-controllers/comprehensive-ctf-playbook.yml \
   -e attendee_name="student1" \
-  -e challenge_config="{'challenge_types': ['apache_check', 'mysql_check']}"
+  -e challenge_config="{'challenge_types': ['apache_check', 'postgresql_check']}"
 ```
 
 ---
