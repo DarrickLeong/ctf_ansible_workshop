@@ -746,6 +746,10 @@ curl http://node3
                 <p>The application stack is not working. The web server (node1) and the database server (node2) are both offline. Packages are missing, services are stopped, and configurations are lost.</p>
                 <p><strong>This is a full-scale disaster recovery scenario!</strong></p>
             </div>
+            <div class="alert alert-primary" style="margin-top: 10px;">
+                <h4>🎯 Target Nodes</h4>
+                <p><strong style="color: #e74c3c;">node1 (web server) and node2 (database server)</strong></p>
+            </div>
         `,
         requirements: `
             <h3>Your Mission</h3>
