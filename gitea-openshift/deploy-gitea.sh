@@ -176,11 +176,14 @@ spec:
           chmod 666 /gitea-data/conf/app.ini
           chmod 666 /home/gitea/conf/app.ini
           echo "Config ready"
+          ls -la /home/gitea/conf/
         volumeMounts:
         - name: gitea-data
           mountPath: /gitea-data
         - name: gitea-config-template
           mountPath: /tmp/gitea-config
+        - name: gitea-config-runtime
+          mountPath: /home/gitea/conf
       containers:
       - name: gitea
         image: quay.io/rhpds/gitea:latest
@@ -192,6 +195,8 @@ spec:
           mountPath: /gitea-data
         - name: gitea-repositories
           mountPath: /gitea-repositories
+        - name: gitea-config-runtime
+          mountPath: /home/gitea/conf
         env:
         - name: GITEA_CUSTOM
           value: "/gitea-data"
@@ -220,6 +225,8 @@ spec:
       - name: gitea-config-template
         configMap:
           name: gitea-config
+      - name: gitea-config-runtime
+        emptyDir: {}
 EOF
 echo -e "${GREEN}✓ Deployment created${NC}"
 echo ""
