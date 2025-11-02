@@ -279,13 +279,13 @@ sleep 30
 echo "➜ Creating admin user..."
 POD_NAME=$(oc get pods -n ${PROJECT_NAME} -l app=gitea -o jsonpath='{.items[0].metadata.name}')
 
-oc exec -n ${PROJECT_NAME} ${POD_NAME} -- /bin/sh -c "gitea admin user create \
+oc exec -n ${PROJECT_NAME} ${POD_NAME} -- /home/gitea/gitea admin user create \
   --username ${ADMIN_USER} \
   --password ${ADMIN_PASS} \
   --email ${ADMIN_EMAIL} \
   --admin \
   --must-change-password=false \
-  -c /gitea-data/conf/app.ini" 2>&1 | grep -v "user already exists" || echo -e "${YELLOW}⚠ Admin user may already exist or was just created${NC}"
+  -c /home/gitea/conf/app.ini 2>&1 | grep -v "user already exists" || echo -e "${YELLOW}⚠ Admin user may already exist or was just created${NC}"
 
 echo -e "${GREEN}✓ Admin user configured${NC}"
 echo ""
@@ -337,13 +337,13 @@ while IFS=',' read -r username email password is_admin; do
         ADMIN_FLAG="--admin"
     fi
     
-    oc exec -n ${PROJECT_NAME} ${POD_NAME} -- /bin/sh -c "gitea admin user create \
+    oc exec -n ${PROJECT_NAME} ${POD_NAME} -- /home/gitea/gitea admin user create \
       --username $username \
       --password $password \
       --email $email \
       $ADMIN_FLAG \
       --must-change-password=false \
-      -c /gitea-data/conf/app.ini" || echo "  ⚠ User may already exist"
+      -c /home/gitea/conf/app.ini || echo "  ⚠ User may already exist"
     
     echo "  ✓ User $username created"
     echo ""
