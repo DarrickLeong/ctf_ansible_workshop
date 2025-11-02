@@ -126,7 +126,9 @@ data:
     ROOT = /gitea-repositories
 
     [security]
-    INSTALL_LOCK = false
+    INSTALL_LOCK = true
+    SECRET_KEY = 
+    INTERNAL_TOKEN = 
 
     [service]
     DISABLE_REGISTRATION = false
