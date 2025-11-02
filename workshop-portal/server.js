@@ -711,7 +711,6 @@ curl http://node3
                         <li><code>http</code> - Port 80/tcp</li>
                         <li><code>https</code> - Port 443/tcp</li>
                         <li><code>ssh</code> - Port 22/tcp</li>
-                        <li><code>mysql</code> - Port 5432/tcp</li>
                         <li><code>postgresql</code> - Port 5432/tcp</li>
                     </ul>
                 </div>
@@ -954,20 +953,16 @@ curl http://node3
         state: started
         enabled: yes
     
-    - name: Create application database
-      community.mysql.mysql_db:
-        name: appdb
-        state: present
-        login_unix_socket: /var/lib/mysql/mysql.sock
+    - name: Initialize PostgreSQL database
+      ansible.builtin.command: postgresql-setup --initdb
+      args:
+        creates: /var/lib/pgsql/data/postgresql.conf
+      ignore_errors: yes
     
-    - name: Create database user
-      community.mysql.mysql_user:
-        name: appuser
-        password: "SecurePass123!"
-        priv: "appdb.*:ALL"
-        host: "%"
-        state: present
-        login_unix_socket: /var/lib/mysql/mysql.sock</code></pre>
+    - name: Wait for PostgreSQL to be ready
+      ansible.builtin.wait_for:
+        port: 5432
+        timeout: 30</code></pre>
 
             <h4>Playbook 2: <code>challenge6-provision-webserver.yml</code></h4>
             <pre><code class="language-yaml">---
@@ -981,7 +976,7 @@ curl http://node3
         name:
           - httpd
           - php
-          - php-mysqlnd
+          - php-pgsql
         state: present
     
     - name: Configure httpd to listen on port 8080
@@ -1023,14 +1018,14 @@ curl http://node3
         content: |
           <?php
           \$servername = "node2";
-          \$username = "appuser";
-          \$password = "SecurePass123!";
+          \$username = "postgres";
+          \$password = "";
           \$dbname = "appdb";
           
-          \$conn = new mysqli(\$servername, \$username, \$password, \$dbname);
+          \$conn = pg_connect("host=\$servername dbname=\$dbname user=\$username");
           
-          if (\$conn->connect_error) {
-              die("Connection failed: " . \$conn->connect_error);
+          if (!\$conn) {
+              die("Connection failed");
           }
           echo "Application is healthy! Database connected successfully.";
           \$conn->close();
@@ -1089,7 +1084,7 @@ curl http://node3
         name:
           - httpd
           - php
-          - php-mysqlnd
+          - php-pgsql
         state: absent</code></pre>
 
             <h4>Playbook 6: <code>challenge6-rollback-database.yml</code></h4>
@@ -1099,25 +1094,17 @@ curl http://node3
   become: yes
   
   tasks:
-    - name: Drop database
-      community.mysql.mysql_db:
-        name: appdb
-        state: absent
-        login_unix_socket: /var/lib/mysql/mysql.sock
-      ignore_errors: yes
-    
-    - name: Drop database user
-      community.mysql.mysql_user:
-        name: appuser
-        state: absent
-        login_unix_socket: /var/lib/mysql/mysql.sock
-      ignore_errors: yes
-    
     - name: Stop PostgreSQL
       ansible.builtin.service:
         name: postgresql
         state: stopped
         enabled: no
+      ignore_errors: yes
+    
+    - name: Remove PostgreSQL data directory
+      ansible.builtin.file:
+        path: /var/lib/pgsql/data
+        state: absent
       ignore_errors: yes</code></pre>
 
             <h4>Workflow Structure (AAP):</h4>
