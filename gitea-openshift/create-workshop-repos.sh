@@ -1108,7 +1108,114 @@ EOF
     cd - &>/dev/null
     rm -rf "$REPO_DIR"
     
-    echo -e "  ${GREEN}✓ Repository structure initialized${NC}"
+    echo -e "  ${GREEN}✓ Repository structure initialized and pushed${NC}"
 }
 
+# Counter for statistics
+USERS_CREATED=0
+USERS_EXISTED=0
+REPOS_CREATED=0
+REPOS_EXISTED=0
+REPOS_INITIALIZED=0
+
 # Main execution
+echo "=========================================="
+echo "  Processing Users and Repositories"
+echo "=========================================="
+echo ""
+
+while IFS=',' read -r username email password is_admin; do
+    # Skip empty lines
+    if [ -z "$username" ]; then
+        continue
+    fi
+    
+    # Skip commented lines (starting with #)
+    if [[ "$username" =~ ^#.*$ ]] || [[ "$username" =~ ^[[:space:]]*#.*$ ]]; then
+        continue
+    fi
+    
+    # Skip header
+    if [ "$username" = "username" ]; then
+        continue
+    fi
+    
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  User: $username"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    # Create user
+    if create_user "$username" "$email" "$password" "$is_admin"; then
+        if echo "$RESPONSE" | grep -q "already exists"; then
+            ((USERS_EXISTED++))
+        else
+            ((USERS_CREATED++))
+        fi
+    fi
+    
+    # Small delay between API calls
+    sleep 1
+    
+    # Create repository
+    if create_repository "$username"; then
+        if echo "$RESPONSE" | grep -q "already exists"; then
+            ((REPOS_EXISTED++))
+        else
+            ((REPOS_CREATED++))
+        fi
+    fi
+    
+    # Wait for repo to be fully ready
+    sleep 2
+    
+    # Initialize repository structure
+    if initialize_repo_structure "$username" "$password"; then
+        ((REPOS_INITIALIZED++))
+    fi
+    
+    echo ""
+    
+done < "$CSV_FILE"
+
+# Cleanup
+rm -rf "$TEMP_DIR"
+
+echo ""
+echo "=========================================="
+echo "  ✅ Workshop Setup Complete!"
+echo "=========================================="
+echo ""
+echo -e "${GREEN}📊 Summary:${NC}"
+echo "  • Users created: $USERS_CREATED"
+echo "  • Users already existed: $USERS_EXISTED"
+echo "  • Repositories created: $REPOS_CREATED"
+echo "  • Repositories already existed: $REPOS_EXISTED"
+echo "  • Repositories initialized: $REPOS_INITIALIZED"
+echo ""
+echo -e "${BLUE}📦 Repository Structure:${NC}"
+echo "  • Name: ${REPO_NAME}"
+echo "  • Challenges: 6 (challenge1 to challenge6)"
+echo "  • Each with detailed README and templates"
+echo ""
+echo -e "${YELLOW}👥 Participant Next Steps:${NC}"
+echo "  1. Clone repository:"
+echo "     git clone ${GITEA_URL}/USERNAME/${REPO_NAME}.git"
+echo ""
+echo "  2. Navigate to challenge directory:"
+echo "     cd ${REPO_NAME}/challenge1"
+echo ""
+echo "  3. Read instructions:"
+echo "     cat README.md"
+echo ""
+echo "  4. Create solution playbook:"
+echo "     vim solution.yml"
+echo ""
+echo "  5. Commit and push:"
+echo "     git add solution.yml"
+echo "     git commit -m 'Complete challenge 1'"
+echo "     git push"
+echo ""
+echo -e "${GREEN}🎯 All set for the workshop!${NC}"
+echo "=========================================="
+echo ""
