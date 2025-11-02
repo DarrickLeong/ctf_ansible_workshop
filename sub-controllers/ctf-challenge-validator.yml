@@ -231,8 +231,8 @@
         - name: Evaluate Challenge 5
           set_fact:
             challenge5_firewall_running: "{{ firewalld_status.status.ActiveState == 'active' if firewalld_status.status is defined else false }}"
-            challenge5_http_allowed: "{{ http_service_check.rc == 0 if http_service_check.rc is defined else false }}"
-            challenge5_http_permanent: "{{ http_permanent_check.rc == 0 if http_permanent_check.rc is defined else false }}"
+            challenge5_http_allowed: "{{ (http_service_check.rc is defined and http_service_check.rc == 0) }}"
+            challenge5_http_permanent: "{{ (http_permanent_check.rc is defined and http_permanent_check.rc == 0) }}"
             challenge5_applies: "{{ inventory_hostname == 'node3' or 'node3' in inventory_hostname }}"
 
         - name: Calculate Challenge 5 points
