@@ -30,7 +30,7 @@ This enhanced CTF Tracker now supports a more flexible and scalable architecture
 
 ```bash
 # Deploy the updated application
-cd /Users/dleong/Documents/CTF
+cd ctf-tracker-nodejs
 ./deploy.sh
 
 # Verify deployment

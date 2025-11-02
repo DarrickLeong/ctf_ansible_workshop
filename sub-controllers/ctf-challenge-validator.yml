@@ -1,0 +1,380 @@
+---
+# CTF Workshop Challenge Validator
+# This playbook validates the 6 specific CTF challenges and reports scores to the tracker
+# Designed to work with the CTF Workshop structure
+
+- name: CTF Workshop Challenge Validation
+  hosts: "{{ target_host | default('all') }}"
+  gather_facts: yes
+  vars:
+    # CTF Tracker URL (required)
+    # ctf_tracker_url: "http://ctf-tracker.apps.YOUR-CLUSTER.com"
+    
+    # Attendee information (required)
+    # attendee_name: "student1"
+    
+    # AAP cluster identifier (optional)
+    # aap_cluster_id: "sub-controller-east"
+
+  tasks:
+    - name: Display validation information
+      debug:
+        msg: |
+          ==========================================
+          CTF WORKSHOP CHALLENGE VALIDATION
+          ==========================================
+          Host: {{ inventory_hostname }}
+          Attendee: {{ attendee_name | default('Not specified') }}
+          Tracker: {{ ctf_tracker_url | default('Not configured') }}
+          ==========================================
+
+    - name: Initialize challenge results
+      set_fact:
+        challenge_results: {}
+
+    # ==========================================
+    # CHALLENGE 1: Out of Sync (5 Points)
+    # Check if chronyd service is running and enabled
+    # ==========================================
+    - name: Challenge 1 - Check chronyd service
+      block:
+        - name: Check chronyd service status
+          systemd:
+            name: chronyd
+          register: chronyd_status
+          ignore_errors: yes
+
+        - name: Evaluate Challenge 1
+          set_fact:
+            challenge1_running: "{{ chronyd_status.status.ActiveState == 'active' if chronyd_status.status is defined else false }}"
+            challenge1_enabled: "{{ chronyd_status.status.UnitFileState == 'enabled' if chronyd_status.status is defined else false }}"
+
+        - name: Calculate Challenge 1 points
+          set_fact:
+            challenge1_points: "{{ ((challenge1_running | int * 3) + (challenge1_enabled | int * 2)) }}"
+            challenge1_completed: "{{ (challenge1_running and challenge1_enabled) }}"
+
+        - name: Update Challenge 1 results
+          set_fact:
+            challenge_results: >-
+              {{
+                challenge_results | combine({
+                  'challenge1_chronyd': {
+                    'completed': challenge1_completed,
+                    'points_earned': challenge1_points | int,
+                    'max_points': 5,
+                    'details': {
+                      'service_running': challenge1_running,
+                      'service_enabled': challenge1_enabled
+                    }
+                  }
+                })
+              }}
+
+    # ==========================================
+    # CHALLENGE 2: Malicious Package (10 Points)
+    # Check if nginx package is ABSENT from node2
+    # ==========================================
+    - name: Challenge 2 - Check nginx package removal
+      block:
+        - name: Get package facts
+          package_facts:
+            manager: auto
+
+        - name: Evaluate Challenge 2
+          set_fact:
+            challenge2_nginx_absent: "{{ 'nginx' not in ansible_facts.packages }}"
+            challenge2_applies: "{{ inventory_hostname == 'node2' or 'node2' in inventory_hostname }}"
+
+        - name: Calculate Challenge 2 points
+          set_fact:
+            challenge2_points: "{{ 10 if (challenge2_applies and challenge2_nginx_absent) else 0 }}"
+            challenge2_completed: "{{ challenge2_applies and challenge2_nginx_absent }}"
+
+        - name: Update Challenge 2 results
+          set_fact:
+            challenge_results: >-
+              {{
+                challenge_results | combine({
+                  'challenge2_nginx_removal': {
+                    'completed': challenge2_completed,
+                    'points_earned': challenge2_points | int,
+                    'max_points': 10,
+                    'details': {
+                      'applies_to_node2': challenge2_applies,
+                      'nginx_absent': challenge2_nginx_absent,
+                      'hostname': inventory_hostname
+                    }
+                  }
+                })
+              }}
+      when: "'node2' in inventory_hostname or inventory_hostname == 'node2'"
+
+    # ==========================================
+    # CHALLENGE 3: Rogue User Account (15 Points)
+    # Check if rogue_user is ABSENT from node1 and node3
+    # ==========================================
+    - name: Challenge 3 - Check rogue_user removal
+      block:
+        - name: Check if rogue_user exists
+          getent:
+            database: passwd
+            key: rogue_user
+          register: rogue_user_check
+          ignore_errors: yes
+
+        - name: Evaluate Challenge 3
+          set_fact:
+            challenge3_user_absent: "{{ rogue_user_check is failed }}"
+            challenge3_applies: "{{ inventory_hostname in ['node1', 'node3'] or 'node1' in inventory_hostname or 'node3' in inventory_hostname }}"
+
+        - name: Calculate Challenge 3 points
+          set_fact:
+            challenge3_points: "{{ 15 if (challenge3_applies and challenge3_user_absent) else 0 }}"
+            challenge3_completed: "{{ challenge3_applies and challenge3_user_absent }}"
+
+        - name: Update Challenge 3 results
+          set_fact:
+            challenge_results: >-
+              {{
+                challenge_results | combine({
+                  'challenge3_rogue_user': {
+                    'completed': challenge3_completed,
+                    'points_earned': challenge3_points | int,
+                    'max_points': 15,
+                    'details': {
+                      'applies_to_host': challenge3_applies,
+                      'user_absent': challenge3_user_absent,
+                      'hostname': inventory_hostname
+                    }
+                  }
+                })
+              }}
+      when: "'node1' in inventory_hostname or 'node3' in inventory_hostname or inventory_hostname in ['node1', 'node3']"
+
+    # ==========================================
+    # CHALLENGE 4: Inconsistent Messaging (20 Points)
+    # Check if MOTD matches expected template
+    # ==========================================
+    - name: Challenge 4 - Check MOTD configuration
+      block:
+        - name: Check if /etc/motd exists
+          stat:
+            path: /etc/motd
+          register: motd_file
+
+        - name: Read MOTD content
+          slurp:
+            src: /etc/motd
+          register: motd_content
+          when: motd_file.stat.exists
+
+        - name: Evaluate Challenge 4
+          set_fact:
+            challenge4_file_exists: "{{ motd_file.stat.exists }}"
+            challenge4_content: "{{ motd_content.content | b64decode if motd_file.stat.exists else '' }}"
+
+        - name: Check MOTD content correctness
+          set_fact:
+            challenge4_has_hostname: "{{ ansible_hostname in challenge4_content }}"
+            challenge4_has_sre: "{{ 'SRE Team' in challenge4_content or 'Managed by SRE' in challenge4_content }}"
+            challenge4_correct: "{{ challenge4_file_exists and challenge4_has_hostname and challenge4_has_sre }}"
+
+        - name: Calculate Challenge 4 points
+          set_fact:
+            challenge4_points: "{{ ((challenge4_file_exists | int * 5) + (challenge4_has_hostname | int * 8) + (challenge4_has_sre | int * 7)) }}"
+            challenge4_completed: "{{ challenge4_correct }}"
+
+        - name: Update Challenge 4 results
+          set_fact:
+            challenge_results: >-
+              {{
+                challenge_results | combine({
+                  'challenge4_motd': {
+                    'completed': challenge4_completed,
+                    'points_earned': challenge4_points | int,
+                    'max_points': 20,
+                    'details': {
+                      'file_exists': challenge4_file_exists,
+                      'contains_hostname': challenge4_has_hostname,
+                      'contains_sre_team': challenge4_has_sre,
+                      'hostname': ansible_hostname
+                    }
+                  }
+                })
+              }}
+
+    # ==========================================
+    # CHALLENGE 5: Firewall Anomaly (20 Points)
+    # Check if HTTP service is allowed in firewall on node3
+    # ==========================================
+    - name: Challenge 5 - Check firewall HTTP service
+      block:
+        - name: Check firewalld service status
+          systemd:
+            name: firewalld
+          register: firewalld_status
+          ignore_errors: yes
+
+        - name: Check if HTTP service is allowed
+          command: firewall-cmd --query-service=http
+          register: http_service_check
+          ignore_errors: yes
+          when: firewalld_status.status.ActiveState == 'active'
+
+        - name: Check if HTTP is permanent
+          command: firewall-cmd --permanent --query-service=http
+          register: http_permanent_check
+          ignore_errors: yes
+          when: firewalld_status.status.ActiveState == 'active'
+
+        - name: Evaluate Challenge 5
+          set_fact:
+            challenge5_firewall_running: "{{ firewalld_status.status.ActiveState == 'active' if firewalld_status.status is defined else false }}"
+            challenge5_http_allowed: "{{ http_service_check.rc == 0 if http_service_check.rc is defined else false }}"
+            challenge5_http_permanent: "{{ http_permanent_check.rc == 0 if http_permanent_check.rc is defined else false }}"
+            challenge5_applies: "{{ inventory_hostname == 'node3' or 'node3' in inventory_hostname }}"
+
+        - name: Calculate Challenge 5 points
+          set_fact:
+            challenge5_points: "{{ ((challenge5_firewall_running | int * 5) + (challenge5_http_allowed | int * 7) + (challenge5_http_permanent | int * 8)) if challenge5_applies else 0 }}"
+            challenge5_completed: "{{ challenge5_applies and challenge5_firewall_running and challenge5_http_allowed and challenge5_http_permanent }}"
+
+        - name: Update Challenge 5 results
+          set_fact:
+            challenge_results: >-
+              {{
+                challenge_results | combine({
+                  'challenge5_firewall': {
+                    'completed': challenge5_completed,
+                    'points_earned': challenge5_points | int,
+                    'max_points': 20,
+                    'details': {
+                      'applies_to_node3': challenge5_applies,
+                      'firewall_running': challenge5_firewall_running,
+                      'http_allowed': challenge5_http_allowed,
+                      'http_permanent': challenge5_http_permanent,
+                      'hostname': inventory_hostname
+                    }
+                  }
+                })
+              }}
+      when: "'node3' in inventory_hostname or inventory_hostname == 'node3'"
+
+    # ==========================================
+    # CHALLENGE 6: Phoenix Protocol (30 Points)
+    # This is validated through AAP Workflow completion
+    # Check for marker files or service states
+    # ==========================================
+    - name: Challenge 6 - Check Phoenix Protocol completion
+      block:
+        - name: Check for database service (node2)
+          systemd:
+            name: mariadb
+          register: db_service_check
+          ignore_errors: yes
+          when: inventory_hostname == 'node2' or 'node2' in inventory_hostname
+
+        - name: Check for web service (node1)
+          systemd:
+            name: httpd
+          register: web_service_check
+          ignore_errors: yes
+          when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
+
+        - name: Check for validation marker
+          stat:
+            path: /tmp/phoenix_validated
+          register: phoenix_marker
+          ignore_errors: yes
+
+        - name: Evaluate Challenge 6
+          set_fact:
+            challenge6_db_running: "{{ db_service_check.status.ActiveState == 'active' if db_service_check.status is defined else false }}"
+            challenge6_web_running: "{{ web_service_check.status.ActiveState == 'active' if web_service_check.status is defined else false }}"
+            challenge6_marker_exists: "{{ phoenix_marker.stat.exists if phoenix_marker.stat is defined else false }}"
+
+        - name: Calculate Challenge 6 points
+          set_fact:
+            challenge6_points: "{{ ((challenge6_db_running | int * 10) + (challenge6_web_running | int * 10) + (challenge6_marker_exists | int * 10)) }}"
+            challenge6_completed: "{{ challenge6_marker_exists }}"
+
+        - name: Update Challenge 6 results
+          set_fact:
+            challenge_results: >-
+              {{
+                challenge_results | combine({
+                  'challenge6_phoenix': {
+                    'completed': challenge6_completed,
+                    'points_earned': challenge6_points | int,
+                    'max_points': 30,
+                    'details': {
+                      'database_running': challenge6_db_running,
+                      'webserver_running': challenge6_web_running,
+                      'validation_marker': challenge6_marker_exists,
+                      'hostname': inventory_hostname
+                    }
+                  }
+                })
+              }}
+
+    # ==========================================
+    # CALCULATE TOTALS
+    # ==========================================
+    - name: Calculate total results
+      set_fact:
+        total_points: "{{ (challenge_results | dict2items | map(attribute='value.points_earned') | sum | default(0)) | int }}"
+        max_possible_points: "{{ (challenge_results | dict2items | map(attribute='value.max_points') | sum | default(0)) | int }}"
+        challenges_completed: "{{ (challenge_results | dict2items | selectattr('value.completed', 'equalto', true) | list | length) | int }}"
+        total_challenges: "{{ (challenge_results | dict2items | list | length) | int }}"
+
+    # ==========================================
+    # REPORT TO CTF TRACKER
+    # ==========================================
+    - name: Report results to CTF Tracker
+      uri:
+        url: "{{ ctf_tracker_url }}/api/challenge_results"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          attendee_name: "{{ attendee_name | default('Team-' + inventory_hostname) }}"
+          hostname: "{{ inventory_hostname }}"
+          challenge_results: "{{ challenge_results }}"
+          aap_cluster_id: "{{ aap_cluster_id | default('') }}"
+        validate_certs: no
+      register: tracker_response
+      ignore_errors: yes
+      when: 
+        - ctf_tracker_url is defined
+        - ctf_tracker_url != ''
+        - attendee_name is defined
+
+    # ==========================================
+    # DISPLAY RESULTS
+    # ==========================================
+    - name: Display Challenge Results
+      debug:
+        msg: |
+          ==========================================
+          CTF WORKSHOP VALIDATION COMPLETE
+          ==========================================
+          Host: {{ inventory_hostname }}
+          Attendee: {{ attendee_name | default('unknown') }}
+          
+          📊 SUMMARY:
+          Total Points: {{ total_points }}/{{ max_possible_points }}
+          Challenges: {{ challenges_completed }}/{{ total_challenges }} completed
+          
+          📝 CHALLENGE BREAKDOWN:
+          Challenge 1 (chronyd): {{ challenge_results.challenge1_chronyd.points_earned | default(0) }}/5 points
+          Challenge 2 (nginx): {{ challenge_results.challenge2_nginx_removal.points_earned | default(0) }}/10 points
+          Challenge 3 (rogue_user): {{ challenge_results.challenge3_rogue_user.points_earned | default(0) }}/15 points
+          Challenge 4 (MOTD): {{ challenge_results.challenge4_motd.points_earned | default(0) }}/20 points
+          Challenge 5 (firewall): {{ challenge_results.challenge5_firewall.points_earned | default(0) }}/20 points
+          Challenge 6 (Phoenix): {{ challenge_results.challenge6_phoenix.points_earned | default(0) }}/30 points
+          
+          Tracker: {{ 'SUCCESS' if tracker_response is defined and tracker_response is succeeded else 'SKIPPED' }}
+          ==========================================
+
