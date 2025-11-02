@@ -22,9 +22,27 @@
 
     # Job Template Configuration
     job_templates:
-      - name: "CTF Challenge Verification"
-        playbook: "sub-controllers/comprehensive-ctf-playbook.yml"
-        description: "Execute CTF challenges and report results"
+      - name: "CTF Environment Reset"
+        playbook: "ctf-workshop/setup/reset-environment.yml"
+        description: "Reset all CTF challenges to clean state"
+        job_type: "run"
+        verbosity: 1
+        ask_variables_on_launch: false
+        ask_inventory_on_launch: true
+        ask_credential_on_launch: true
+        variables: {}
+      - name: "CTF Environment Setup"
+        playbook: "ctf-workshop/setup/setup-all-challenges.yml"
+        description: "Setup all CTF challenge scenarios (break things)"
+        job_type: "run"
+        verbosity: 1
+        ask_variables_on_launch: false
+        ask_inventory_on_launch: true
+        ask_credential_on_launch: true
+        variables: {}
+      - name: "CTF Challenge Validation"
+        playbook: "sub-controllers/ctf-challenge-validator.yml"
+        description: "Validate CTF challenge solutions and report results"
         job_type: "run"
         verbosity: 1
         ask_variables_on_launch: true
@@ -414,7 +432,9 @@
           {% endif %}
           
           Job Templates Deployed:
-          - CTF Challenge Verification
+          - CTF Environment Reset
+          - CTF Environment Setup
+          - CTF Challenge Validation
           - CTF Connectivity Test
           
           CTF TRACKER ONBOARDING:
