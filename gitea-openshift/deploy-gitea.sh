@@ -102,7 +102,7 @@ echo ""
 
 # Create ConfigMap with initial configuration
 echo "➜ Creating Gitea configuration..."
-cat <<'EOF' | oc apply -f -
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -117,7 +117,6 @@ data:
     [server]
     PROTOCOL = http
     DOMAIN = localhost
-    ROOT_URL = %(PROTOCOL)s://%(DOMAIN)s:%(HTTP_PORT)s/
     HTTP_PORT = 3000
     DISABLE_SSH = false
     SSH_PORT = 22
