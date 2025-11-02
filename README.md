@@ -26,6 +26,19 @@ ctf-ansible-workshop/
 │   │   └── README.md
 │   └── README.md               # Workshop overview
 │
+├── workshop-portal/            # 📖 Workshop Documentation Portal
+│   ├── server.js               # Express server with markdown rendering
+│   ├── deploy.sh               # Automated deployment script
+│   ├── package.json            # Node.js dependencies
+│   └── README.md               # Portal documentation
+│
+├── gitea-openshift/            # 🔧 Gitea Git Server Deployment
+│   ├── deploy-gitea.sh         # Automated Gitea deployment
+│   ├── create-users-api.sh     # API-based user creation
+│   ├── manage-gitea.sh         # Management helper script
+│   ├── workshop-users.csv      # Example user list
+│   └── README.md               # Gitea deployment guide
+│
 ├── ctf-tracker-nodejs/         # 🚀 Node.js CTF Tracker Application
 │   ├── server.js               # Express server
 │   ├── deploy.sh               # Automated deployment script
@@ -259,9 +272,13 @@ Deploy App → Configure Files → Setup AAP → Test → Deploy → CTF Ready
   - **[Setup Playbooks](ctf-workshop/setup/README.md)**: Environment setup and reset
   - **[Solutions](ctf-workshop/solutions/README.md)**: Complete solution playbooks (instructor only)
 
+### Web Applications
+- **[Workshop Portal](workshop-portal/README.md)**: Beautiful web portal for workshop documentation
+- **[CTF Tracker](ctf-tracker-nodejs/README.md)**: Real-time scoring and leaderboard application
+- **[Gitea Git Server](gitea-openshift/README.md)**: Self-hosted Git server with bulk user creation
+
 ### Infrastructure Components
 - **[Central Controller Setup](central-controller/README.md)**: Complete AAP controller configuration
-- **[CTF Tracker Application](ctf-tracker-nodejs/README.md)**: Node.js tracker deployment guide  
 - **[Sub Controller Playbooks](sub-controllers/README.md)**: Challenge and connectivity playbooks
 - **[OpenShift Templates](openshift/README.md)**: Container deployment templates
 - **[AAP Setup Guide](docs/AAP_SETUP_GUIDE.md)**: Detailed AAP integration guide

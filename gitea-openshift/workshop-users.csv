@@ -1,0 +1,19 @@
+# Example users for Gitea workshop
+# Format: username,email,password,is_admin
+
+# Workshop Participants
+participant1,participant1@workshop.local,Workshop2024!,false
+participant2,participant2@workshop.local,Workshop2024!,false
+participant3,participant3@workshop.local,Workshop2024!,false
+participant4,participant4@workshop.local,Workshop2024!,false
+participant5,participant5@workshop.local,Workshop2024!,false
+
+# Instructors
+instructor,instructor@workshop.local,Instructor2024!,true
+assistant,assistant@workshop.local,Assistant2024!,false
+
+# Team accounts
+team_red,team_red@workshop.local,TeamRed2024!,false
+team_blue,team_blue@workshop.local,TeamBlue2024!,false
+team_green,team_green@workshop.local,TeamGreen2024!,false
+
