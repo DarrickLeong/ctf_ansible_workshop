@@ -554,7 +554,6 @@ ssh node1</code></pre>
                 <li><strong>node3:</strong> "Welcome to node3 - Managed by SRE Team"</li>
             </ul>
         `
-    }
     },
     challenge5: {
         objective: "Practice managing firewall rules with the ansible.posix.firewalld module, a critical skill for securing servers.",
