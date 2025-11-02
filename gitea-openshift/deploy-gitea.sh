@@ -158,6 +158,22 @@ spec:
       labels:
         app: gitea
     spec:
+      initContainers:
+      - name: init-config
+        image: quay.io/rhpds/gitea:latest
+        command:
+        - sh
+        - -c
+        - |
+          mkdir -p /home/gitea/conf
+          if [ ! -f /home/gitea/conf/app.ini ]; then
+            cp /tmp/gitea-config/app.ini /home/gitea/conf/app.ini
+          fi
+        volumeMounts:
+        - name: gitea-data
+          mountPath: /home/gitea
+        - name: gitea-config-template
+          mountPath: /tmp/gitea-config
       containers:
       - name: gitea
         image: quay.io/rhpds/gitea:latest
@@ -166,10 +182,9 @@ spec:
           name: http
         volumeMounts:
         - name: gitea-data
+          mountPath: /home/gitea
+        - name: gitea-repositories
           mountPath: /gitea-repositories
-        - name: gitea-config
-          mountPath: /home/gitea/conf/app.ini
-          subPath: app.ini
         env:
         - name: GITEA_HOME
           value: "/home/gitea"
@@ -193,7 +208,9 @@ spec:
       - name: gitea-data
         persistentVolumeClaim:
           claimName: gitea-data
-      - name: gitea-config
+      - name: gitea-repositories
+        emptyDir: {}
+      - name: gitea-config-template
         configMap:
           name: gitea-config
 EOF
