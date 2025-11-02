@@ -110,35 +110,28 @@ metadata:
   namespace: ${PROJECT_NAME}
 data:
   app.ini: |
-    APP_NAME = Gitea: Git with a cup of tea
+    APP_NAME = CTF Workshop - Gitea
     RUN_MODE = prod
-    RUN_USER = git
 
     [server]
     PROTOCOL = http
-    DOMAIN = localhost
     HTTP_PORT = 3000
-    DISABLE_SSH = false
-    SSH_PORT = 22
-    START_SSH_SERVER = true
+    DISABLE_SSH = true
 
     [database]
     DB_TYPE = sqlite3
-    PATH = /data/gitea/gitea.db
+    PATH = /gitea-repositories/gitea.db
 
     [repository]
-    ROOT = /data/git/repositories
+    ROOT = /gitea-repositories
 
     [security]
-    INSTALL_LOCK = true
+    INSTALL_LOCK = false
 
     [service]
     DISABLE_REGISTRATION = false
     REQUIRE_SIGNIN_VIEW = false
     ENABLE_NOTIFY_MAIL = false
-
-    [oauth2]
-    ENABLE = true
 
     [log]
     MODE = console
@@ -165,52 +158,33 @@ spec:
       labels:
         app: gitea
     spec:
-      securityContext:
-        fsGroup: 1000
       containers:
       - name: gitea
-        image: gitea/gitea:1.25.0
-        securityContext:
-          runAsNonRoot: true
-          runAsUser: 1000
+        image: quay.io/rhpds/gitea:latest
         ports:
         - containerPort: 3000
           name: http
-        - containerPort: 22
-          name: ssh
         volumeMounts:
         - name: gitea-data
-          mountPath: /data
+          mountPath: /gitea-repositories
         - name: gitea-config
-          mountPath: /etc/gitea
-          readOnly: true
-        - name: gitea-config-writable
-          mountPath: /data/gitea/conf
+          mountPath: /home/gitea/conf
+          subPath: app.ini
         env:
-        - name: USER_UID
-          value: "1000"
-        - name: USER_GID
-          value: "1000"
-        - name: GITEA__database__DB_TYPE
-          value: "sqlite3"
-        - name: GITEA__database__PATH
-          value: "/data/gitea/gitea.db"
-        - name: GITEA_WORK_DIR
-          value: "/data/gitea"
-        - name: GITEA_TEMP
-          value: "/tmp/gitea"
+        - name: GITEA_HOME
+          value: "/home/gitea"
         livenessProbe:
           httpGet:
-            path: /api/healthz
+            path: /
             port: 3000
-          initialDelaySeconds: 200
+          initialDelaySeconds: 120
           timeoutSeconds: 5
           periodSeconds: 10
           successThreshold: 1
           failureThreshold: 10
         readinessProbe:
           httpGet:
-            path: /api/healthz
+            path: /
             port: 3000
           initialDelaySeconds: 30
           timeoutSeconds: 5
@@ -222,8 +196,6 @@ spec:
       - name: gitea-config
         configMap:
           name: gitea-config
-      - name: gitea-config-writable
-        emptyDir: {}
 EOF
 echo -e "${GREEN}✓ Deployment created${NC}"
 echo ""
@@ -243,10 +215,6 @@ spec:
     targetPort: 3000
     protocol: TCP
     name: http
-  - port: 22
-    targetPort: 22
-    protocol: TCP
-    name: ssh
   selector:
     app: gitea
 EOF
