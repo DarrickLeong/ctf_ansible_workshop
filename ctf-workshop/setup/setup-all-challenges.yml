@@ -160,6 +160,11 @@
         state: started
         enabled: yes
     
+    - name: Install firewalld
+      dnf:
+        name: firewalld
+        state: present
+    
     - name: Ensure firewalld is running
       service:
         name: firewalld
