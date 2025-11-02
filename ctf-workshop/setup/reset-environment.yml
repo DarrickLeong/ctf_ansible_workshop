@@ -135,6 +135,33 @@
             name: httpd
             state: present
         
+        - name: Remove custom httpd configurations
+          file:
+            path: "{{ item }}"
+            state: absent
+          loop:
+            - /etc/httpd/conf.d/custom.conf
+            - /var/www/html/index.php
+          ignore_errors: yes
+        
+        - name: Reset httpd Listen port to 80
+          lineinfile:
+            path: /etc/httpd/conf/httpd.conf
+            regexp: '^Listen '
+            line: 'Listen 80'
+          ignore_errors: yes
+        
+        - name: Create default index.html
+          copy:
+            content: |
+              <html>
+              <head><title>Web Server</title></head>
+              <body><h1>Web Server on {{ ansible_hostname }}</h1></body>
+              </html>
+            dest: /var/www/html/index.html
+            mode: '0644'
+          ignore_errors: yes
+        
         - name: Start httpd service
           service:
             name: httpd
