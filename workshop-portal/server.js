@@ -204,6 +204,8 @@ ansible-playbook challenge1-fix-time-sync.yml -i inventory
 
 # Verify service status
 ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
+                </div>
+            </details>
         `
     },
     challenge2: {
@@ -302,6 +304,8 @@ ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
             <pre><code class="language-bash"># Check if nginx is removed
 ansible node2 -m shell -a "rpm -qa | grep nginx" -i inventory
 # Should return empty (no output)</code></pre>
+                </div>
+            </details>
         `
     },
     challenge3: {
@@ -402,12 +406,14 @@ ansible all -m shell -a "id rogue_user 2>&1" -i inventory
 # Verify home directory is gone
 ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i inventory</code></pre>
 
-            <h4>Expected Output:</h4>
-            <ul>
-                <li><strong>node1:</strong> changed (user was removed)</li>
-                <li><strong>node2:</strong> ok (user didn't exist)</li>
-                <li><strong>node3:</strong> changed (user was removed)</li>
-            </ul>
+                    <h4>Expected Output:</h4>
+                    <ul>
+                        <li><strong>node1:</strong> changed (user was removed)</li>
+                        <li><strong>node2:</strong> ok (user didn't exist)</li>
+                        <li><strong>node3:</strong> changed (user was removed)</li>
+                    </ul>
+                </div>
+            </details>
         `
     },
     challenge4: {
@@ -553,6 +559,8 @@ ssh node1</code></pre>
                 <li><strong>node2:</strong> "Welcome to node2 - Managed by SRE Team"</li>
                 <li><strong>node3:</strong> "Welcome to node3 - Managed by SRE Team"</li>
             </ul>
+                </div>
+            </details>
         `
     },
     challenge5: {
@@ -694,6 +702,8 @@ curl http://node3
                 <li><code>mysql</code> - Port 3306/tcp</li>
                 <li><code>postgresql</code> - Port 5432/tcp</li>
             </ul>
+                </div>
+            </details>
         `
     },
     challenge6: {
@@ -905,12 +915,14 @@ curl http://node3
             </div>
         `,
         solution: `
-            <h3>Complete Solution</h3>
-            <div class="alert alert-warning">
-                <strong>⚠️ Spoiler Alert!</strong> This is a complex solution with multiple files!
-            </div>
+            <details style="margin-top: 40px;">
+                <summary><strong>🔓 Click to Reveal Complete Solution (Complex - Multiple Files)</strong></summary>
+                <div style="margin-top: 20px;">
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Spoiler Alert!</strong> This is a complex solution with multiple files. Make sure you've attempted it first!
+                    </div>
 
-            <h4>Playbook 1: <code>challenge6-provision-database.yml</code></h4>
+                    <h4>Playbook 1: <code>challenge6-provision-database.yml</code></h4>
             <pre><code class="language-yaml">---
 - name: Provision Database Server
   hosts: node2
@@ -1133,6 +1145,8 @@ END
                 <h4>🎉 Congratulations!</h4>
                 <p>You've mastered complex workflow orchestration! This pattern is used in real-world disaster recovery, blue/green deployments, and complex multi-tier application management.</p>
             </div>
+                </div>
+            </details>
         `
     }
 };
