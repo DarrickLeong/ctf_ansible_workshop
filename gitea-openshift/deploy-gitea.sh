@@ -167,8 +167,11 @@ spec:
         - |
           mkdir -p /home/gitea/conf
           if [ ! -f /home/gitea/conf/app.ini ]; then
+            echo "Copying initial config..."
             cp /tmp/gitea-config/app.ini /home/gitea/conf/app.ini
+            chmod 644 /home/gitea/conf/app.ini
           fi
+          echo "Config ready"
         volumeMounts:
         - name: gitea-data
           mountPath: /home/gitea
