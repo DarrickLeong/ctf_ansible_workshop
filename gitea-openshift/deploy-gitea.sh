@@ -334,7 +334,7 @@ while IFS=',' read -r username email password is_admin; do
       --email $email \
       $ADMIN_FLAG \
       --must-change-password=false \
-      -c /etc/gitea/app.ini" || echo "  ⚠ User may already exist"
+      -c /gitea-data/conf/app.ini" || echo "  ⚠ User may already exist"
     
     echo "  ✓ User $username created"
     echo ""
