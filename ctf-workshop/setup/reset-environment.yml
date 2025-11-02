@@ -89,9 +89,9 @@
         mode: '0644'
 
 # ============================================
-# Challenge 5 Reset: Block HTTP (Clean State)
+# Challenge 5 Reset: Allow HTTP (Clean State)
 # ============================================
-- name: Challenge 5 Reset - Remove HTTP firewall rule on node3
+- name: Challenge 5 Reset - Allow HTTP on node3 (clean functional state)
   hosts: node3
   become: yes
   tags:
@@ -99,17 +99,29 @@
     - reset
   
   tasks:
-    - name: Stop httpd service
-      service:
-        name: httpd
-        state: stopped
-      ignore_errors: yes
-    
-    - name: Remove httpd package
+    - name: Install httpd for testing
       dnf:
         name: httpd
-        state: absent
-      ignore_errors: yes
+        state: present
+    
+    - name: Create test web page
+      copy:
+        content: |
+          <html>
+          <head><title>Backup Web Server</title></head>
+          <body>
+            <h1>Backup Web Server on node3</h1>
+            <p>This server is accessible - clean state!</p>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        mode: '0644'
+    
+    - name: Start httpd service
+      service:
+        name: httpd
+        state: started
+        enabled: yes
     
     - name: Install firewalld
       dnf:
@@ -122,11 +134,11 @@
         state: started
         enabled: yes
     
-    - name: Remove http service from firewall (clean state)
+    - name: Allow http service in firewall (clean functional state)
       firewalld:
         service: http
         permanent: yes
-        state: disabled
+        state: enabled
         immediate: yes
       ignore_errors: yes
 
