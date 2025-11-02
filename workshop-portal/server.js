@@ -1646,6 +1646,12 @@ app.get('/exercise/:id', (req, res) => {
         return res.status(404).send(generateHTML('Not Found', '<div class="main-content"><h1>Exercise not found</h1></div>'));
     }
 
+    // Find previous and next exercises
+    const allExercises = [...workshops.section1.exercises, ...workshops.section2.exercises];
+    const currentIndex = allExercises.findIndex(e => e.id === exerciseId);
+    const prevExercise = currentIndex > 0 ? allExercises[currentIndex - 1] : null;
+    const nextExercise = currentIndex < allExercises.length - 1 ? allExercises[currentIndex + 1] : null;
+
     const content = `
         <div class="breadcrumb">
             <a href="/">Home</a> / <a href="/#${sectionMeta.title.replace(/ /g, '-').toLowerCase()}">${sectionMeta.title}</a> / Exercise ${exerciseMeta.number}
@@ -1677,19 +1683,8 @@ app.get('/exercise/:id', (req, res) => {
                 ${challenge.solution}
 
                 <div class="nav-buttons">
-                    <a href="/" class="secondary">← Back to Overview</a>
-                    <a href="http://ctf-tracker.apps.YOUR-CLUSTER.com" target="_blank" class="secondary">📊 View Leaderboard</a>
-                </div>
-                
-                <div class="alert alert-info" style="margin-top: 20px;">
-                    <h4>📤 How to Submit Your Solution</h4>
-                    <ol>
-                        <li>Create your playbook in Ansible Automation Platform (AAP)</li>
-                        <li>Run it as a Job Template to test</li>
-                        <li>Once successful, your playbook automatically updates the CTF Tracker</li>
-                        <li>Check the leaderboard to see your score!</li>
-                    </ol>
-                    <p><strong>Note:</strong> Make sure your playbook includes the CTF tracker API call to register points.</p>
+                    ${prevExercise ? `<a href="/exercise/${prevExercise.id}" class="secondary">← Previous: ${prevExercise.title}</a>` : '<a href="/" class="secondary">← Back to Overview</a>'}
+                    ${nextExercise ? `<a href="/exercise/${nextExercise.id}">Next: ${nextExercise.title} →</a>` : '<a href="/" class="secondary">🎉 Back to Overview</a>'}
                 </div>
             </div>
         </div>
