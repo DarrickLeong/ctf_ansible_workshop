@@ -243,8 +243,12 @@ echo ""
 
 # Expose route
 echo "➜ Exposing route..."
-oc expose service gitea -n ${PROJECT_NAME}
-echo -e "${GREEN}✓ Route exposed${NC}"
+if oc get route gitea -n ${PROJECT_NAME} &> /dev/null; then
+    echo -e "${YELLOW}! Route already exists${NC}"
+else
+    oc expose service gitea -n ${PROJECT_NAME}
+    echo -e "${GREEN}✓ Route exposed${NC}"
+fi
 echo ""
 
 # Wait for deployment
