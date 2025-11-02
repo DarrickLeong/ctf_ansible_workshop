@@ -169,12 +169,15 @@ spec:
         - sh
         - -c
         - |
-          mkdir -p /gitea-data/conf
+          mkdir -p /gitea-data/conf /home/gitea/conf
           if [ ! -f /gitea-data/conf/app.ini ]; then
             echo "Copying initial config..."
             cp /tmp/gitea-config/app.ini /gitea-data/conf/app.ini
             chmod 666 /gitea-data/conf/app.ini
           fi
+          # Also copy to Gitea's default location
+          cp /gitea-data/conf/app.ini /home/gitea/conf/app.ini
+          chmod 666 /home/gitea/conf/app.ini
           echo "Config ready"
         volumeMounts:
         - name: gitea-data
