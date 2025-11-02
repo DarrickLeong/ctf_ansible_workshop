@@ -17,10 +17,12 @@ Since you have no sub controllers onboarded yet, here's the complete step-by-ste
    Name: CTF Sub Controller Management
    Description: Manages deployment to multiple sub AAP controllers
    SCM Type: Git
-   SCM URL: https://github.com/DarrickLeong/ctf_ansible_workshop.git
+   SCM URL: https://github.com/YOUR-ORG/ctf_ansible_workshop.git
    SCM Branch: main
    SCM Update on Launch: ✅ Enabled
    ```
+
+**⚠️ IMPORTANT**: Replace `YOUR-ORG` with your GitHub organization or username!
 
 ### **Step 2: Create Inventory in Central AAP**
 
@@ -47,7 +49,7 @@ For **each sub controller** you want to manage:
    ```yaml
    ---
    # Required variables for sub controller
-   sub_controller_host: "aap-east.company.com"
+   sub_controller_host: "aap-east.YOUR-COMPANY.com"
    sub_controller_username: "admin"
    sub_controller_password: "{{ vault_east_password }}"
    sub_controller_organization: "CTF Organization"
@@ -57,6 +59,10 @@ For **each sub controller** you want to manage:
    controller_region: "east"
    controller_description: "East Coast CTF Sub Controller"
    ```
+
+**⚠️ SECURITY NOTE**: 
+- Never hardcode passwords - always use vault variables
+- Replace `YOUR-COMPANY.com` with your actual domain
 
 4. **Repeat for each sub controller** (west, central, etc.)
 
@@ -107,14 +113,14 @@ For **each sub controller** you want to manage:
    Answer Variable Name: ctf_tracker_url
    Answer Type: Text
    Required: ✅
-   Default: http://ctf-tracker-nodejs-ctf-nodejs.apps.cluster-r7xph.r7xph.sandbox2418.opentlc.com
+   Default: http://ctf-tracker.apps.YOUR-CLUSTER.com
 
    # Survey Question 2  
    Question: Git Repository URL
    Answer Variable Name: scm_repository_url
    Answer Type: Text
    Required: ✅
-   Default: https://github.com/DarrickLeong/ctf_ansible_workshop.git
+   Default: https://github.com/YOUR-ORG/ctf_ansible_workshop.git
 
    # Survey Question 3
    Question: Git Branch
@@ -131,6 +137,10 @@ For **each sub controller** you want to manage:
    Default: CTF Challenge Playbooks
    ```
 
+**⚠️ IMPORTANT**: Replace placeholder values:
+- `YOUR-CLUSTER.com` with your actual OpenShift cluster domain
+- `YOUR-ORG` with your GitHub organization or username
+
 ---
 
 ## **Phase 2: Execute Onboarding** ⚡
@@ -140,8 +150,8 @@ For **each sub controller** you want to manage:
 1. **Run Job Template**: "Test Sub Controller Connectivity"
 2. **Expected Output**:
    ```
-   ✅ sub-controller-east: aap-east.company.com - PASS
-   ✅ sub-controller-west: aap-west.company.com - PASS
+   ✅ sub-controller-east: aap-east.YOUR-COMPANY.com - PASS
+   ✅ sub-controller-west: aap-west.YOUR-COMPANY.com - PASS
    ```
 3. **⚠️ MUST PASS** before proceeding to next step
 
@@ -150,11 +160,14 @@ For **each sub controller** you want to manage:
 1. **Run Job Template**: "Deploy CTF Playbooks to Sub Controllers"
 2. **Survey Answers**:
    ```yaml
-   CTF Tracker URL: http://ctf-tracker-nodejs-ctf-nodejs.apps.cluster-r7xph.r7xph.sandbox2418.opentlc.com
-   Git Repository URL: https://github.com/DarrickLeong/ctf_ansible_workshop.git
+   CTF Tracker URL: http://ctf-tracker.apps.YOUR-CLUSTER.com
+   Git Repository URL: https://github.com/YOUR-ORG/ctf_ansible_workshop.git
    Git Branch: main
    Project Name: CTF Challenge Playbooks
    ```
+   
+   **⚠️ IMPORTANT**: Replace placeholder values with your actual URLs!
+   
 3. **Expected Output**:
    ```
    ✅ Project created on sub-controller-east
@@ -185,15 +198,17 @@ For **each sub controller** you want to manage:
    ```yaml
    Extra Variables:
    attendee_name: "Team Alpha"
-   ctf_tracker_url: http://ctf-tracker-nodejs-ctf-nodejs.apps.cluster-r7xph.r7xph.sandbox2418.opentlc.com
+   ctf_tracker_url: http://ctf-tracker.apps.YOUR-CLUSTER.com
    ```
 
 2. **Run**: "CTF Challenge Verification"
    ```yaml
    Extra Variables:
    attendee_name: "Team Alpha"
-   ctf_tracker_url: http://ctf-tracker-nodejs-ctf-nodejs.apps.cluster-r7xph.r7xph.sandbox2418.opentlc.com
+   ctf_tracker_url: http://ctf-tracker.apps.YOUR-CLUSTER.com
    ```
+
+**⚠️ IMPORTANT**: Replace `YOUR-CLUSTER.com` with your actual cluster domain!
 
 3. **Watch Dashboard**: Scores update in real-time!
 

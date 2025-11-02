@@ -80,11 +80,16 @@ Upload these playbooks to your AAP project:
    - Click "Onboard AAP Cluster"
    - Enter cluster details:
      - Name: `Production AAP`
-     - Base URL: `https://controller.lw6q8.sandbox437.opentlc.com`
+     - Base URL: `https://controller.YOUR-DOMAIN.com`
      - Username: `admin`
-     - Password: `R3dh4t1!`
+     - Password: Use a secure vault variable or credential
      - Assign to Attendee: Select attendee
    - System tests connectivity automatically
+
+**⚠️ SECURITY NOTE**: 
+- Never hardcode passwords in configuration files
+- Replace `YOUR-DOMAIN.com` with your actual AAP controller domain
+- Use AAP credential system or vault for sensitive data
 
 ### Step 2: Add RHEL Machines
 
@@ -228,11 +233,13 @@ Extend playbooks for additional checks:
 ```bash
 # Check network connectivity
 oc rsh deployment/ctf-tracker
-curl -k https://controller.lw6q8.sandbox437.opentlc.com/api/v2/ping/
+curl -k https://controller.YOUR-DOMAIN.com/api/v2/ping/
 
 # Verify credentials
 # Check AAP cluster status in CTF dashboard
 ```
+
+**⚠️ IMPORTANT**: Replace `YOUR-DOMAIN.com` with your actual AAP controller domain!
 
 #### 2. Playbook Execution Errors
 ```bash

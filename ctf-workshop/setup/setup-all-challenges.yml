@@ -1,0 +1,271 @@
+---
+# CTF Workshop - Environment Setup Playbook
+# This playbook sets up all the problem scenarios for the CTF challenges
+# Run this BEFORE starting the workshop to prepare the environment
+
+- name: CTF Workshop - Setup All Challenge Scenarios
+  hosts: all
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Display setup information
+      debug:
+        msg: |
+          ==========================================
+          CTF Workshop Environment Setup
+          ==========================================
+          Setting up problem scenarios for all challenges
+          Target Hosts: {{ ansible_play_hosts }}
+          ==========================================
+
+# ============================================
+# Challenge 1 Setup: Out of Sync (5 Points)
+# ============================================
+- name: Challenge 1 Setup - Stop chronyd service
+  hosts: all
+  become: yes
+  tags: 
+    - challenge1
+    - setup
+  
+  tasks:
+    - name: Stop and disable chronyd service
+      service:
+        name: chronyd
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+
+    - name: Verify chronyd is stopped
+      service_facts:
+      
+    - name: Display Challenge 1 setup status
+      debug:
+        msg: "✅ Challenge 1: chronyd service stopped on {{ inventory_hostname }}"
+
+# ============================================
+# Challenge 2 Setup: Malicious Package (10 Points)
+# ============================================
+- name: Challenge 2 Setup - Install nginx on database server
+  hosts: node2
+  become: yes
+  tags:
+    - challenge2
+    - setup
+  
+  tasks:
+    - name: Install nginx package on database server
+      dnf:
+        name: nginx
+        state: present
+      
+    - name: Display Challenge 2 setup status
+      debug:
+        msg: "✅ Challenge 2: nginx package installed on {{ inventory_hostname }}"
+
+# ============================================
+# Challenge 3 Setup: Rogue User Account (15 Points)
+# ============================================
+- name: Challenge 3 Setup - Create rogue user account
+  hosts: node1,node3
+  become: yes
+  tags:
+    - challenge3
+    - setup
+  
+  tasks:
+    - name: Create rogue_user account
+      user:
+        name: rogue_user
+        comment: "Unauthorized Account - Security Risk"
+        shell: /bin/bash
+        state: present
+        
+    - name: Display Challenge 3 setup status
+      debug:
+        msg: "✅ Challenge 3: rogue_user created on {{ inventory_hostname }}"
+
+# ============================================
+# Challenge 4 Setup: Inconsistent Messaging (20 Points)
+# ============================================
+- name: Challenge 4 Setup - Create inconsistent MOTD files
+  hosts: all
+  become: yes
+  tags:
+    - challenge4
+    - setup
+  
+  tasks:
+    - name: Create defaced MOTD on node1
+      copy:
+        content: |
+          HACKED BY DISRUPTIVE DEZIGN!
+          Your server belongs to us now!
+        dest: /etc/motd
+        mode: '0644'
+      when: inventory_hostname == 'node1'
+    
+    - name: Create outdated MOTD on node2
+      copy:
+        content: |
+          Welcome to the old server
+          Last updated: Never
+        dest: /etc/motd
+        mode: '0644'
+      when: inventory_hostname == 'node2'
+    
+    - name: Create missing MOTD on node3
+      file:
+        path: /etc/motd
+        state: absent
+      when: inventory_hostname == 'node3'
+    
+    - name: Display Challenge 4 setup status
+      debug:
+        msg: "✅ Challenge 4: Inconsistent MOTD created on {{ inventory_hostname }}"
+
+# ============================================
+# Challenge 5 Setup: Firewall Anomaly (20 Points)
+# ============================================
+- name: Challenge 5 Setup - Block HTTP on node3
+  hosts: node3
+  become: yes
+  tags:
+    - challenge5
+    - setup
+  
+  tasks:
+    - name: Install httpd for testing
+      dnf:
+        name: httpd
+        state: present
+    
+    - name: Create test web page
+      copy:
+        content: |
+          <html>
+          <head><title>Backup Web Server</title></head>
+          <body>
+            <h1>Backup Web Server on node3</h1>
+            <p>This server is running but blocked by firewall!</p>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        mode: '0644'
+    
+    - name: Start httpd service
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+    
+    - name: Ensure firewalld is running
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
+    
+    - name: Remove http service from firewall
+      firewalld:
+        service: http
+        permanent: yes
+        state: disabled
+        immediate: yes
+      ignore_errors: yes
+    
+    - name: Reload firewalld
+      command: firewall-cmd --reload
+      
+    - name: Display Challenge 5 setup status
+      debug:
+        msg: "✅ Challenge 5: HTTP blocked on firewall for {{ inventory_hostname }}"
+
+# ============================================
+# Challenge 6 Setup: Phoenix Protocol (30 Points)
+# ============================================
+- name: Challenge 6 Setup - Break application stack
+  hosts: node1,node2
+  become: yes
+  tags:
+    - challenge6
+    - setup
+  
+  tasks:
+    - name: Stop and remove httpd on node1
+      block:
+        - name: Stop httpd service
+          service:
+            name: httpd
+            state: stopped
+            enabled: no
+          ignore_errors: yes
+        
+        - name: Remove httpd package
+          dnf:
+            name: httpd
+            state: absent
+          ignore_errors: yes
+        
+        - name: Remove web content
+          file:
+            path: /var/www/html
+            state: absent
+      when: inventory_hostname == 'node1'
+    
+    - name: Stop and remove mariadb on node2
+      block:
+        - name: Stop mariadb service
+          service:
+            name: mariadb
+            state: stopped
+            enabled: no
+          ignore_errors: yes
+        
+        - name: Remove mariadb packages
+          dnf:
+            name:
+              - mariadb-server
+              - mariadb
+            state: absent
+          ignore_errors: yes
+      when: inventory_hostname == 'node2'
+    
+    - name: Display Challenge 6 setup status
+      debug:
+        msg: "✅ Challenge 6: Application stack broken on {{ inventory_hostname }}"
+
+# ============================================
+# Final Setup Summary
+# ============================================
+- name: Display Setup Summary
+  hosts: localhost
+  gather_facts: no
+  tags:
+    - always
+  
+  tasks:
+    - name: Setup Complete
+      debug:
+        msg: |
+          ==========================================
+          CTF Workshop Setup Complete!
+          ==========================================
+          
+          Challenge 1: chronyd stopped on all nodes
+          Challenge 2: nginx installed on node2
+          Challenge 3: rogue_user created on node1 and node3
+          Challenge 4: MOTD files inconsistent/defaced
+          Challenge 5: HTTP blocked on node3 firewall
+          Challenge 6: Application stack broken (node1, node2)
+          
+          ✅ Environment is ready for CTF workshop!
+          ==========================================
+          
+          Next Steps:
+          1. Share the CHALLENGES.md file with participants
+          2. Provide them with AAP access
+          3. Start the CTF timer!
+          
+          Good luck to all participants! 🚀
+

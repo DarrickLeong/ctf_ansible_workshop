@@ -1,0 +1,58 @@
+---
+# Challenge 1 Solution: Out of Sync (5 Points)
+# 
+# Mission: Ensure chronyd service is running and enabled on all servers
+# Points: 5
+#
+# This playbook demonstrates proper service management using ansible.builtin.service
+
+- name: Challenge 1 - Fix Time Synchronization
+  hosts: all
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Ensure chronyd service is started and enabled
+      ansible.builtin.service:
+        name: chronyd
+        state: started
+        enabled: yes
+      register: chronyd_result
+    
+    - name: Verify chronyd is running
+      ansible.builtin.service_facts:
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: |
+          ✅ Challenge 1 Complete on {{ inventory_hostname }}!
+          chronyd status: {{ ansible_facts.services['chronyd.service'].state }}
+          chronyd enabled: {{ ansible_facts.services['chronyd.service'].status }}
+      when: "'chronyd.service' in ansible_facts.services"
+    
+    - name: Report to CTF Tracker
+      ansible.builtin.uri:
+        url: "{{ ctf_tracker_url }}/api/challenge_results"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          attendee_name: "{{ attendee_name }}"
+          hostname: "{{ inventory_hostname }}"
+          challenge_results:
+            challenge_1:
+              completed: true
+              points_earned: 5
+              max_points: 5
+              details:
+                service_running: "{{ ansible_facts.services['chronyd.service'].state == 'running' }}"
+                service_enabled: "{{ ansible_facts.services['chronyd.service'].status == 'enabled' }}"
+          aap_cluster_id: "{{ aap_cluster_id | default('') }}"
+        validate_certs: no
+      when: 
+        - ctf_tracker_url is defined
+        - attendee_name is defined
+        - "'chronyd.service' in ansible_facts.services"
+      ignore_errors: yes
+

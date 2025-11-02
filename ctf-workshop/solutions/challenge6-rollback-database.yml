@@ -1,0 +1,41 @@
+---
+# Challenge 6 Solution - Part 6: Rollback Database
+# Phoenix Protocol - Full Stack Disaster Recovery
+# 
+# This playbook rolls back the database changes if validation fails
+
+- name: Challenge 6 - Rollback Database
+  hosts: node2
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Stop mariadb service
+      ansible.builtin.service:
+        name: mariadb
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+    
+    - name: Remove database files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/mysql/ctf_app
+      ignore_errors: yes
+    
+    - name: Display rollback result
+      ansible.builtin.debug:
+        msg: |
+          ⚠️ Database rolled back on {{ inventory_hostname }}
+          Services stopped
+          Database files cleaned up
+          
+          ==========================================
+          ROLLBACK COMPLETE
+          ==========================================
+          The Phoenix Protocol encountered errors
+          and has been rolled back to safe state.
+          ==========================================
+

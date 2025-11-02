@@ -1,0 +1,177 @@
+---
+# CTF Workshop - Reset/Cleanup Playbook
+# This playbook resets the environment to clean state
+# Run this AFTER the workshop or to reset between sessions
+
+- name: CTF Workshop - Reset Environment
+  hosts: all
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Display reset information
+      debug:
+        msg: |
+          ==========================================
+          CTF Workshop Environment Reset
+          ==========================================
+          Resetting all challenge scenarios to clean state
+          Target Hosts: {{ ansible_play_hosts }}
+          ==========================================
+
+# ============================================
+# Challenge 1 Reset: Start chronyd
+# ============================================
+- name: Challenge 1 Reset - Start chronyd service
+  hosts: all
+  become: yes
+  tags: 
+    - challenge1
+    - reset
+  
+  tasks:
+    - name: Start and enable chronyd service
+      service:
+        name: chronyd
+        state: started
+        enabled: yes
+
+# ============================================
+# Challenge 2 Reset: Remove nginx
+# ============================================
+- name: Challenge 2 Reset - Remove nginx from node2
+  hosts: node2
+  become: yes
+  tags:
+    - challenge2
+    - reset
+  
+  tasks:
+    - name: Remove nginx package
+      dnf:
+        name: nginx
+        state: absent
+
+# ============================================
+# Challenge 3 Reset: Remove rogue user
+# ============================================
+- name: Challenge 3 Reset - Remove rogue_user
+  hosts: all
+  become: yes
+  tags:
+    - challenge3
+    - reset
+  
+  tasks:
+    - name: Remove rogue_user account
+      user:
+        name: rogue_user
+        state: absent
+        remove: yes
+      ignore_errors: yes
+
+# ============================================
+# Challenge 4 Reset: Clean MOTD
+# ============================================
+- name: Challenge 4 Reset - Clean MOTD files
+  hosts: all
+  become: yes
+  tags:
+    - challenge4
+    - reset
+  
+  tasks:
+    - name: Create default MOTD
+      copy:
+        content: |
+          Welcome to {{ ansible_hostname }}
+        dest: /etc/motd
+        mode: '0644'
+
+# ============================================
+# Challenge 5 Reset: Allow HTTP
+# ============================================
+- name: Challenge 5 Reset - Allow HTTP on node3
+  hosts: node3
+  become: yes
+  tags:
+    - challenge5
+    - reset
+  
+  tasks:
+    - name: Ensure firewalld is running
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
+    
+    - name: Allow http service in firewall
+      firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+        immediate: yes
+
+# ============================================
+# Challenge 6 Reset: Install services
+# ============================================
+- name: Challenge 6 Reset - Restore application stack
+  hosts: node1,node2
+  become: yes
+  tags:
+    - challenge6
+    - reset
+  
+  tasks:
+    - name: Install and start httpd on node1
+      block:
+        - name: Install httpd
+          dnf:
+            name: httpd
+            state: present
+        
+        - name: Start httpd service
+          service:
+            name: httpd
+            state: started
+            enabled: yes
+      when: inventory_hostname == 'node1'
+    
+    - name: Install and start mariadb on node2
+      block:
+        - name: Install mariadb
+          dnf:
+            name:
+              - mariadb-server
+              - mariadb
+            state: present
+        
+        - name: Start mariadb service
+          service:
+            name: mariadb
+            state: started
+            enabled: yes
+      when: inventory_hostname == 'node2'
+
+# ============================================
+# Final Reset Summary
+# ============================================
+- name: Display Reset Summary
+  hosts: localhost
+  gather_facts: no
+  tags:
+    - always
+  
+  tasks:
+    - name: Reset Complete
+      debug:
+        msg: |
+          ==========================================
+          CTF Workshop Reset Complete!
+          ==========================================
+          
+          ✅ All challenges have been reset to clean state
+          
+          Environment is ready for next session!
+          ==========================================
+

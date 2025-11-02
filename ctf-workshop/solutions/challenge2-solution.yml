@@ -1,0 +1,60 @@
+---
+# Challenge 2 Solution: Malicious Package (10 Points)
+# 
+# Mission: Remove nginx package from node2 (database server)
+# Points: 10
+#
+# This playbook demonstrates package management and host targeting
+
+- name: Challenge 2 - Remove Malicious Package
+  hosts: node2
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Remove nginx package from database server
+      ansible.builtin.dnf:
+        name: nginx
+        state: absent
+      register: nginx_result
+    
+    - name: Verify nginx is removed
+      ansible.builtin.package_facts:
+        manager: auto
+    
+    - name: Check if nginx is present
+      ansible.builtin.set_fact:
+        nginx_removed: "{{ 'nginx' not in ansible_facts.packages }}"
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: |
+          ✅ Challenge 2 Complete on {{ inventory_hostname }}!
+          nginx removed: {{ nginx_removed }}
+          Package change: {{ nginx_result.changed }}
+    
+    - name: Report to CTF Tracker
+      ansible.builtin.uri:
+        url: "{{ ctf_tracker_url }}/api/challenge_results"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          attendee_name: "{{ attendee_name }}"
+          hostname: "{{ inventory_hostname }}"
+          challenge_results:
+            challenge_2:
+              completed: "{{ nginx_removed }}"
+              points_earned: "{{ 10 if nginx_removed else 0 }}"
+              max_points: 10
+              details:
+                package_removed: "{{ nginx_removed }}"
+                target_host: "node2"
+          aap_cluster_id: "{{ aap_cluster_id | default('') }}"
+        validate_certs: no
+      when: 
+        - ctf_tracker_url is defined
+        - attendee_name is defined
+      ignore_errors: yes
+

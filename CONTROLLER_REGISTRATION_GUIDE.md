@@ -20,17 +20,21 @@ The system now properly registers **only the AAP sub controllers** you define in
 
 ### **Step 1: Clear Existing Data**
 ```bash
-# Already done - cleared all invalid controllers
-curl -X DELETE "http://ctf-tracker-nodejs-ctf-nodejs.apps.cluster-r7xph.r7xph.sandbox2418.opentlc.com/api/clear_all"
+# Clear all invalid controllers from the CTF Tracker
+curl -X DELETE "http://ctf-tracker.apps.YOUR-CLUSTER.com/api/clear_all"
 ```
+
+**⚠️ IMPORTANT**: Replace `YOUR-CLUSTER.com` with your actual OpenShift cluster domain!
 
 ### **Step 2: Re-run Central Controller Deployment**
 From your **central AAP controller**, run:
 - **Job Template**: `"Deploy CTF Playbooks to Sub Controllers"`
 - **Variables**:
   ```yaml
-  ctf_tracker_base_url: "http://ctf-tracker-nodejs-ctf-nodejs.apps.cluster-r7xph.r7xph.sandbox2418.opentlc.com"
+  ctf_tracker_base_url: "http://ctf-tracker.apps.YOUR-CLUSTER.com"
   ```
+
+**⚠️ IMPORTANT**: Replace `YOUR-CLUSTER.com` with your actual OpenShift cluster domain!
 
 This will:
 - ✅ Deploy playbooks to your sub controller(s)
@@ -43,9 +47,11 @@ On your **sub controller**, run:
 - **Variables**:
   ```yaml
   attendee_name: "Team Alpha"
-  ctf_tracker_url: "http://ctf-tracker-nodejs-ctf-nodejs.apps.cluster-r7xph.r7xph.sandbox2418.opentlc.com"
+  ctf_tracker_url: "http://ctf-tracker.apps.YOUR-CLUSTER.com"
   sub_controller_name: "sub-controller-east"  # Your actual sub controller name
   ```
+
+**⚠️ IMPORTANT**: Replace `YOUR-CLUSTER.com` with your actual OpenShift cluster domain!
 
 ## 📊 **Expected Result**
 

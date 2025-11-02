@@ -1,0 +1,35 @@
+---
+# Challenge 6 Solution - Part 5: Rollback Web Server
+# Phoenix Protocol - Full Stack Disaster Recovery
+# 
+# This playbook rolls back the web server changes if validation fails
+
+- name: Challenge 6 - Rollback Web Server
+  hosts: node1
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Stop httpd service
+      ansible.builtin.service:
+        name: httpd
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+    
+    - name: Remove application files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/www/html/index.html
+        - /var/www/html/config.txt
+      ignore_errors: yes
+    
+    - name: Display rollback result
+      ansible.builtin.debug:
+        msg: |
+          ⚠️ Web server rolled back on {{ inventory_hostname }}
+          Services stopped
+          Application files removed
+

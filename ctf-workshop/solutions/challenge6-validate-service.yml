@@ -1,0 +1,113 @@
+---
+# Challenge 6 Solution - Part 4: Validate Service
+# Phoenix Protocol - Full Stack Disaster Recovery
+# 
+# This playbook validates that the application stack is working
+# If validation fails, it triggers the rollback workflow
+
+- name: Challenge 6 - Validate Service
+  hosts: node1,node2
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Check if httpd is running on node1
+      ansible.builtin.service:
+        name: httpd
+      register: httpd_status
+      when: inventory_hostname == 'node1'
+    
+    - name: Check if mariadb is running on node2
+      ansible.builtin.service:
+        name: mariadb
+      register: mariadb_status
+      when: inventory_hostname == 'node2'
+    
+    - name: Test HTTP response from web server
+      ansible.builtin.uri:
+        url: "http://{{ hostvars['node1']['ansible_default_ipv4']['address'] }}"
+        method: GET
+        status_code: 200
+        timeout: 10
+      register: http_test
+      when: inventory_hostname == 'node1'
+      delegate_to: localhost
+    
+    - name: Test database connectivity
+      ansible.builtin.wait_for:
+        host: "{{ ansible_default_ipv4.address }}"
+        port: 3306
+        timeout: 5
+      register: db_test
+      when: inventory_hostname == 'node2'
+    
+    - name: Verify web server validation
+      ansible.builtin.assert:
+        that:
+          - httpd_status.state is defined
+          - http_test.status == 200
+        fail_msg: "Web server validation failed!"
+        success_msg: "✅ Web server validation passed"
+      when: inventory_hostname == 'node1'
+    
+    - name: Verify database validation
+      ansible.builtin.assert:
+        that:
+          - mariadb_status.state is defined
+          - db_test is succeeded
+        fail_msg: "Database validation failed!"
+        success_msg: "✅ Database validation passed"
+      when: inventory_hostname == 'node2'
+    
+    - name: Display validation results
+      ansible.builtin.debug:
+        msg: |
+          ==========================================
+          ✅ VALIDATION SUCCESSFUL!
+          ==========================================
+          Web Server (node1): OPERATIONAL
+          - HTTP Status: {{ http_test.status if inventory_hostname == 'node1' else 'N/A' }}
+          - Service: Running
+          
+          Database Server (node2): OPERATIONAL
+          - Port 3306: Accessible
+          - Service: Running
+          
+          🔥 Phoenix Protocol Complete! 🔥
+          Application stack is fully restored!
+          ==========================================
+
+- name: Report Challenge 6 to CTF Tracker
+  hosts: localhost
+  gather_facts: no
+  
+  tasks:
+    - name: Report Challenge 6 completion
+      ansible.builtin.uri:
+        url: "{{ ctf_tracker_url }}/api/challenge_results"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          attendee_name: "{{ attendee_name }}"
+          hostname: "phoenix-protocol"
+          challenge_results:
+            challenge_6:
+              completed: true
+              points_earned: 30
+              max_points: 30
+              details:
+                workflow_created: true
+                playbooks_created: 6
+                success_path: true
+                rollback_path: true
+                web_server_validated: true
+                database_validated: true
+          aap_cluster_id: "{{ aap_cluster_id | default('') }}"
+        validate_certs: no
+      when: 
+        - ctf_tracker_url is defined
+        - attendee_name is defined
+      ignore_errors: yes
+

@@ -4,6 +4,37 @@ A clean, simple CTF (Capture The Flag) tracking application built with Node.js a
 
 ## 🚀 Quick Start
 
+### OpenShift Deployment (Automated)
+
+**Use the deployment script for easy setup:**
+
+```bash
+cd ctf-tracker-nodejs
+./deploy.sh
+```
+
+The script will:
+- ✅ Check OpenShift CLI and authentication
+- ✅ Prompt for configuration (project name, Git repo, etc.)
+- ✅ Create or switch to project
+- ✅ Deploy using Node.js S2I builder
+- ✅ Optionally configure persistent storage
+- ✅ Expose the service and display the URL
+- ✅ Test the health endpoint
+
+**Example run:**
+```bash
+./deploy.sh
+
+# You'll be prompted for:
+# - Project name: ctf-tracker
+# - App name: ctf-tracker-nodejs
+# - Git repository: https://github.com/YOUR-ORG/ctf_ansible_workshop.git
+# - Git branch: main
+# - Enable persistent storage: y
+# - Storage size: 1Gi
+```
+
 ### Local Development
 
 ```bash
@@ -14,16 +45,21 @@ npm start
 
 Visit: `http://localhost:8080`
 
-### OpenShift Deployment
+### Manual OpenShift Deployment
+
+If you prefer manual deployment:
 
 ```bash
 # Create new app from source
-oc new-app nodejs~https://github.com/your-repo/ctf_ansible_workshop.git#main \
+oc new-app nodejs~https://github.com/YOUR-ORG/ctf_ansible_workshop.git#main \
   --context-dir=ctf-tracker-nodejs \
   --name=ctf-tracker-nodejs
 
 # Expose service
 oc expose service ctf-tracker-nodejs
+
+# Get the URL
+oc get route ctf-tracker-nodejs
 ```
 
 ## 📊 Features

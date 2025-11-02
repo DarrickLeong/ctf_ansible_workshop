@@ -1,0 +1,73 @@
+---
+# Challenge 3 Solution: Rogue User Account (15 Points)
+# 
+# Mission: Remove rogue_user from node1 and node3
+# Points: 15
+#
+# This playbook demonstrates user management and error handling
+
+- name: Challenge 3 - Remove Rogue User Account
+  hosts: all
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Check if rogue_user exists
+      ansible.builtin.getent:
+        database: passwd
+        key: rogue_user
+      register: user_check
+      failed_when: false
+    
+    - name: Remove rogue_user account completely
+      ansible.builtin.user:
+        name: rogue_user
+        state: absent
+        remove: yes
+        force: yes
+      register: user_removal
+      ignore_errors: yes
+    
+    - name: Verify user is removed
+      ansible.builtin.command: id rogue_user
+      register: verify_removal
+      failed_when: false
+      changed_when: false
+    
+    - name: Set removal status
+      ansible.builtin.set_fact:
+        user_removed: "{{ verify_removal.rc != 0 }}"
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: |
+          ✅ Challenge 3 Complete on {{ inventory_hostname }}!
+          rogue_user removed: {{ user_removed }}
+          Home directory removed: {{ user_removal.remove | default(true) }}
+    
+    - name: Report to CTF Tracker
+      ansible.builtin.uri:
+        url: "{{ ctf_tracker_url }}/api/challenge_results"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          attendee_name: "{{ attendee_name }}"
+          hostname: "{{ inventory_hostname }}"
+          challenge_results:
+            challenge_3:
+              completed: "{{ user_removed }}"
+              points_earned: "{{ 15 if user_removed else 0 }}"
+              max_points: 15
+              details:
+                user_removed: "{{ user_removed }}"
+                home_dir_removed: true
+                forced_removal: true
+          aap_cluster_id: "{{ aap_cluster_id | default('') }}"
+        validate_certs: no
+      when: 
+        - ctf_tracker_url is defined
+        - attendee_name is defined
+      ignore_errors: yes
+

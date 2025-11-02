@@ -6,29 +6,41 @@ This repository contains a comprehensive CTF (Capture the Flag) infrastructure m
 
 ```
 ctf-ansible-workshop/
-├── ctf-tracker-nodejs/         # 🚀 Node.js CTF Tracker (NEW)
+├── ctf-workshop/               # 🎯 Complete CTF Workshop Materials
+│   ├── CHALLENGES.md           # Challenge descriptions and scoring
+│   ├── PARTICIPANT_QUICKSTART.md  # Participant quick-start guide
+│   ├── INSTRUCTOR_GUIDE.md     # Complete instructor guide
+│   ├── IMPLEMENTATION_SUMMARY.md  # Technical overview
+│   ├── setup/                  # Environment setup automation
+│   │   ├── setup-all-challenges.yml
+│   │   ├── reset-environment.yml
+│   │   └── README.md
+│   ├── solutions/              # Complete solution playbooks
+│   │   ├── challenge1-solution.yml (5 pts)
+│   │   ├── challenge2-solution.yml (10 pts)
+│   │   ├── challenge3-solution.yml (15 pts)
+│   │   ├── challenge4-solution.yml (20 pts)
+│   │   ├── challenge5-solution.yml (20 pts)
+│   │   ├── challenge6-*.yml (30 pts + 10 extra)
+│   │   ├── templates/motd.j2
+│   │   └── README.md
+│   └── README.md               # Workshop overview
+│
+├── ctf-tracker-nodejs/         # 🚀 Node.js CTF Tracker Application
 │   ├── server.js               # Express server
+│   ├── deploy.sh               # Automated deployment script
 │   ├── package.json            # Node.js dependencies  
 │   ├── public/index.html       # Dashboard frontend
 │   └── README.md               # Node.js app guide
 │
-├── ctf-app/                    # 🎯 CTF Tracker Web Application (Flask - Legacy)
-│   ├── app.py                  # Main Flask application
-│   ├── requirements.txt        # Python dependencies
-│   ├── Dockerfile              # Container definition
-│   ├── deploy-quick.sh         # Quick OpenShift deployment
-│   ├── deploy-secure.sh        # Secure interactive deployment
-│   ├── config.template         # Environment variables
-│   └── README.md               # App setup guide
-│
 ├── central-controller/         # 🎛️ Central AAP Controller
 │   ├── test-sub-controllers.yml          # ⚡ RUN FIRST - Connectivity test
 │   ├── deploy-to-sub-controllers.yml     # 🚀 RUN SECOND - Deploy playbooks
-│   ├── central-aap-inventory.ini         # Sub controller inventory
-│   ├── host_vars/                        # Individual controller configs
+│   ├── central-aap-inventory.ini         # Sub controller inventory (template)
+│   ├── host_vars/                        # Individual controller configs (templates)
 │   │   ├── sub-controller-east.yml
 │   │   └── sub-controller-west.yml
-│   ├── group_vars/all/vault.yml          # Encrypted passwords
+│   ├── group_vars/all/vault.yml          # Encrypted passwords (template)
 │   └── README.md                         # Central controller guide
 │
 ├── sub-controllers/            # 🎯 Playbooks for Sub Controllers
@@ -83,15 +95,17 @@ ctf-ansible-workshop/
 
 ## 🚀 Component Overview
 
-### **CTF Tracker Application** (`ctf-app/`)
+### **CTF Tracker Application** (`ctf-tracker-nodejs/`)
 - **Purpose**: Central web application for CTF management
-- **Technology**: Flask-based web application
+- **Technology**: Node.js/Express web application
 - **Deployment**: OpenShift container platform
 - **Features**: 
-  - Real-time challenge tracking
+  - Real-time challenge tracking with no caching issues
   - Multi-AAP cluster support
-  - Leaderboard and scoring
-  - Web-based management interface
+  - Live leaderboard and scoring
+  - Clean REST API for Ansible integration
+  - Auto-refresh dashboard (30 seconds)
+  - SQLite database backend
 
 ### **Central AAP Controller** (`central-controller/`)
 - **Purpose**: Orchestrates deployment to multiple sub controllers
@@ -124,10 +138,18 @@ ctf-ansible-workshop/
 
 ### **Step 1: Deploy CTF Tracker** 🎯
 ```bash
-cd ctf-app/
-oc login <your-openshift-url>
-./deploy-interactive.sh
-# Save the CTF Tracker URL for later steps
+cd ctf-tracker-nodejs/
+
+# Deploy using OpenShift Node.js S2I builder
+oc new-app nodejs~https://github.com/YOUR-ORG/ctf_ansible_workshop.git#main \
+  --context-dir=ctf-tracker-nodejs \
+  --name=ctf-tracker-nodejs
+
+# Expose the service
+oc expose service ctf-tracker-nodejs
+
+# Get the route URL - save this for later steps
+oc get route ctf-tracker-nodejs -o jsonpath='{.spec.host}'
 ```
 
 ### **Step 2: Configure Central Controller** 🎛️
@@ -206,11 +228,12 @@ Deploy App → Configure Files → Setup AAP → Test → Deploy → CTF Ready
 - 📄 **Dynamic inventory** - No more static file management needed
 
 ### **✅ Clean File Structure**
-- **12 executable files** - Only what you need to run
-- **5 README files** - One per component + main guide
+- **Minimal executable files** - Only what you need to run
+- **4 README files** - One per component + main guide
 - **3 docs files** - Extended guides and checklists
-- **1 AAP setup guide** - Complete inventory integration guide
+- **AAP setup guides** - Complete inventory integration guide
 - **Zero redundancy** - No duplicate information
+- **All credentials templated** - No hardcoded secrets
 
 ## 🎯 Final Summary
 
@@ -228,11 +251,20 @@ Deploy App → Configure Files → Setup AAP → Test → Deploy → CTF Ready
 
 ## 📖 Documentation
 
-For detailed setup instructions, see component-specific guides:
+### CTF Workshop
+- **[CTF Workshop](ctf-workshop/README.md)**: Complete workshop materials
+  - **[Challenges](ctf-workshop/CHALLENGES.md)**: Challenge descriptions and scoring
+  - **[Participant Guide](ctf-workshop/PARTICIPANT_QUICKSTART.md)**: Fast-start guide for participants
+  - **[Instructor Guide](ctf-workshop/INSTRUCTOR_GUIDE.md)**: Complete teaching guide
+  - **[Setup Playbooks](ctf-workshop/setup/README.md)**: Environment setup and reset
+  - **[Solutions](ctf-workshop/solutions/README.md)**: Complete solution playbooks (instructor only)
+
+### Infrastructure Components
 - **[Central Controller Setup](central-controller/README.md)**: Complete AAP controller configuration
-- **[CTF Application Setup](ctf-app/README.md)**: OpenShift deployment guide  
+- **[CTF Tracker Application](ctf-tracker-nodejs/README.md)**: Node.js tracker deployment guide  
 - **[Sub Controller Playbooks](sub-controllers/README.md)**: Challenge and connectivity playbooks
 - **[OpenShift Templates](openshift/README.md)**: Container deployment templates
+- **[AAP Setup Guide](docs/AAP_SETUP_GUIDE.md)**: Detailed AAP integration guide
 
 ## 🤝 Contributing
 

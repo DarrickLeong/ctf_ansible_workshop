@@ -122,22 +122,24 @@ vars:
 
 ```bash
 # Check AAP status from the application
-curl -X GET https://your-ctf-app.com/api/aap_status
+curl -X GET http://ctf-tracker.apps.YOUR-CLUSTER.com/api/aap_status
 ```
 
 ### 2. Manual Test Job Launch
 
 ```bash
 # Trigger manual refresh
-curl -X POST https://your-ctf-app.com/api/manual_refresh
+curl -X POST http://ctf-tracker.apps.YOUR-CLUSTER.com/api/manual_refresh
 ```
 
 ### 3. Monitor Job Execution
 
 ```bash
 # View AAP jobs from the application
-curl -X GET https://your-ctf-app.com/api/aap_jobs
+curl -X GET http://ctf-tracker.apps.YOUR-CLUSTER.com/api/aap_jobs
 ```
+
+**⚠️ IMPORTANT**: Replace `YOUR-CLUSTER.com` with your actual OpenShift cluster domain!
 
 ## Troubleshooting
 
