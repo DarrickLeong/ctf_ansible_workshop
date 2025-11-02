@@ -173,11 +173,14 @@ const challengeContent = {
             </div>
         `,
         solution: `
-            <h3>Complete Solution</h3>
-            <div class="alert alert-warning">
-                <strong>⚠️ Spoiler Alert!</strong> Try to solve it yourself first!
-            </div>
-            <pre><code class="language-yaml">---
+            <details>
+                <summary><strong>🔓 Click to Reveal Complete Solution</strong></summary>
+                <div class="solution-content">
+                    <h3>Complete Solution</h3>
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Spoiler Alert!</strong> Try to solve it yourself first!
+                    </div>
+                    <pre><code class="language-yaml">---
 - name: Challenge 1 - Fix Time Synchronization
   hosts: all
   become: yes
@@ -189,17 +192,17 @@ const challengeContent = {
         state: started
         enabled: yes</code></pre>
 
-            <h4>Explanation:</h4>
-            <ul>
-                <li><code>hosts: all</code> - Runs on all servers in inventory</li>
-                <li><code>become: yes</code> - Escalates privileges (sudo)</li>
-                <li><code>name: chronyd</code> - The service to manage</li>
-                <li><code>state: started</code> - Ensures service is running</li>
-                <li><code>enabled: yes</code> - Service starts automatically on boot</li>
-            </ul>
+                    <h4>Explanation:</h4>
+                    <ul>
+                        <li><code>hosts: all</code> - Runs on all servers in inventory</li>
+                        <li><code>become: yes</code> - Escalates privileges (sudo)</li>
+                        <li><code>name: chronyd</code> - The service to manage</li>
+                        <li><code>state: started</code> - Ensures service is running</li>
+                        <li><code>enabled: yes</code> - Service starts automatically on boot</li>
+                    </ul>
 
-            <h4>Testing the Solution:</h4>
-            <pre><code class="language-bash"># Run the playbook
+                    <h4>Testing the Solution:</h4>
+                    <pre><code class="language-bash"># Run the playbook
 ansible-playbook challenge1-fix-time-sync.yml -i inventory
 
 # Verify service status
