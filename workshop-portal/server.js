@@ -945,7 +945,7 @@ curl http://node3
       ansible.builtin.dnf:
         name:
           - postgresql-server
-          - python3-PyMySQL
+          - python3-psycopg2
         state: present
     
     - name: Start and enable PostgreSQL

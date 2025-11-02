@@ -445,8 +445,13 @@ Add a Workflow Approval node before starting the recovery:
       ansible.builtin.dnf:
         name:
           - postgresql-server
-          - python3-PyMySQL
+          - python3-psycopg2
         state: present
+    
+    - name: Initialize PostgreSQL
+      ansible.builtin.command: postgresql-setup --initdb
+      args:
+        creates: /var/lib/pgsql/data/postgresql.conf
     
     - name: Start and enable postgresql
       ansible.builtin.service:
