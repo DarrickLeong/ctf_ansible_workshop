@@ -964,7 +964,9 @@ curl http://node3
                         <li>Add <code>failed_when</code> to handle "already defined" error</li>
                         <li>Configure httpd: Use <code>lineinfile</code> to set Listen 8080</li>
                         <li>Start and enable httpd service</li>
-                        <li>Firewall: Use <code>firewall-cmd --permanent --add-port=8080/tcp</code></li>
+                        <li><strong>Firewall:</strong> Check if firewalld installed, install if needed</li>
+                        <li>Ensure firewalld is started and enabled</li>
+                        <li>Add port: <code>firewall-cmd --permanent --add-port=8080/tcp</code></li>
                         <li>Reload firewall: <code>firewall-cmd --reload</code></li>
                     </ul>
                 </details>
@@ -1206,6 +1208,24 @@ curl http://node3
     - name: Start and enable httpd
       ansible.builtin.service:
         name: httpd
+        state: started
+        enabled: yes
+    
+    - name: Check if firewalld is installed
+      ansible.builtin.command: which firewall-cmd
+      register: firewalld_check
+      failed_when: false
+      changed_when: false
+    
+    - name: Install firewalld if not present
+      ansible.builtin.dnf:
+        name: firewalld
+        state: present
+      when: firewalld_check.rc != 0
+    
+    - name: Ensure firewalld is started and enabled
+      ansible.builtin.service:
+        name: firewalld
         state: started
         enabled: yes
     
