@@ -6,22 +6,36 @@
 # If validation fails, it triggers the rollback workflow
 
 - name: Challenge 6 - Validate Service
-  hosts: node1,node2
+  hosts: web
   become: yes
   gather_facts: yes
   
   tasks:
-    - name: Check if httpd is running on node1
-      ansible.builtin.service:
-        name: httpd
-      register: httpd_status
+    - name: Check httpd service status
+      ansible.builtin.service_facts:
       when: inventory_hostname == 'node1'
     
-    - name: Check if postgresql is running on node2
-      ansible.builtin.service:
-        name: postgresql
-      register: postgresql_status
+    - name: Verify httpd is running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['httpd.service'].state == 'running'
+        fail_msg: "httpd service is not running!"
+        success_msg: "✅ httpd service is running"
+      when: inventory_hostname == 'node1'
+      register: httpd_status
+    
+    - name: Check PostgreSQL service status
+      ansible.builtin.service_facts:
       when: inventory_hostname == 'node2'
+    
+    - name: Verify PostgreSQL is running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['postgresql.service'].state == 'running'
+        fail_msg: "PostgreSQL service is not running!"
+        success_msg: "✅ PostgreSQL service is running"
+      when: inventory_hostname == 'node2'
+      register: postgresql_status
     
     - name: Test HTTP response from web server
       ansible.builtin.uri:
@@ -43,24 +57,6 @@
         port: 5432
         timeout: 5
       register: db_test
-      when: inventory_hostname == 'node2'
-    
-    - name: Verify web server validation
-      ansible.builtin.assert:
-        that:
-          - httpd_status.state is defined
-          - http_test.status == 200
-        fail_msg: "Web server validation failed!"
-        success_msg: "✅ Web server validation passed"
-      when: inventory_hostname == 'node1'
-    
-    - name: Verify database validation
-      ansible.builtin.assert:
-        that:
-          - postgresql_status.state is defined
-          - db_test is succeeded
-        fail_msg: "Database validation failed!"
-        success_msg: "✅ Database validation passed"
       when: inventory_hostname == 'node2'
     
     - name: Create validation marker for Challenge 6 scoring
@@ -87,38 +83,4 @@
           🔥 Phoenix Protocol Complete! 🔥
           Application stack is fully restored!
           ==========================================
-
-- name: Report Challenge 6 to CTF Tracker
-  hosts: localhost
-  gather_facts: no
-  
-  tasks:
-    - name: Report Challenge 6 completion
-      ansible.builtin.uri:
-        url: "{{ ctf_tracker_url }}/api/challenge_results"
-        method: POST
-        body_format: json
-        headers:
-          Content-Type: "application/json"
-        body:
-          attendee_name: "{{ attendee_name }}"
-          hostname: "phoenix-protocol"
-          challenge_results:
-            challenge_6:
-              completed: true
-              points_earned: 30
-              max_points: 30
-              details:
-                workflow_created: true
-                playbooks_created: 6
-                success_path: true
-                rollback_path: true
-                web_server_validated: true
-                database_validated: true
-          aap_cluster_id: "{{ aap_cluster_id | default('') }}"
-        validate_certs: no
-      when: 
-        - ctf_tracker_url is defined
-        - attendee_name is defined
-      ignore_errors: yes
 
