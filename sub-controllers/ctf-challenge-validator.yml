@@ -220,23 +220,25 @@
           register: firewalld_status
           ignore_errors: yes
 
-        - name: Check if HTTP service is allowed
-          command: firewall-cmd --query-service=http
-          register: http_service_check
+        - name: Get firewalld facts
+          ansible.builtin.command: firewall-cmd --list-services
+          register: firewall_services
+          changed_when: false
           ignore_errors: yes
           when: firewalld_status.status.ActiveState == 'active'
 
-        - name: Check if HTTP is permanent
-          command: firewall-cmd --permanent --query-service=http
-          register: http_permanent_check
+        - name: Get permanent firewalld services
+          ansible.builtin.command: firewall-cmd --permanent --list-services
+          register: firewall_services_permanent
+          changed_when: false
           ignore_errors: yes
           when: firewalld_status.status.ActiveState == 'active'
 
         - name: Evaluate Challenge 5
           set_fact:
             challenge5_firewall_running: "{{ firewalld_status.status.ActiveState == 'active' if firewalld_status.status is defined else false }}"
-            challenge5_http_allowed: "{{ (http_service_check.rc is defined and http_service_check.rc == 0) }}"
-            challenge5_http_permanent: "{{ (http_permanent_check.rc is defined and http_permanent_check.rc == 0) }}"
+            challenge5_http_allowed: "{{ ('http' in firewall_services.stdout) if firewall_services.stdout is defined else false }}"
+            challenge5_http_permanent: "{{ ('http' in firewall_services_permanent.stdout) if firewall_services_permanent.stdout is defined else false }}"
             challenge5_applies: "{{ inventory_hostname == 'node3' or 'node3' in inventory_hostname }}"
 
         - name: Calculate Challenge 5 points
