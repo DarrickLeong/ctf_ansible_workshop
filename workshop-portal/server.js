@@ -976,9 +976,12 @@ curl http://node3
                     <summary><strong>🔍 Show me a hint</strong></summary>
                     <ul>
                         <li>Target: node1</li>
-                        <li>Deploy application code</li>
-                        <li>Configure database connection</li>
-                        <li>Set permissions</li>
+                        <li>Deploy <strong>index.php</strong> (not index.html!)</li>
+                        <li>File must be placed in <code>/var/www/html/index.php</code></li>
+                        <li>Content must include the text "Application is healthy!" for validation</li>
+                        <li>Use <code>ansible.builtin.copy</code> with <code>content</code> parameter</li>
+                        <li>Set owner: apache, group: apache, mode: '0644'</li>
+                        <li>Include PHP tags and HTML with status message</li>
                     </ul>
                 </details>
 
@@ -986,9 +989,14 @@ curl http://node3
                 <details>
                     <summary><strong>🔍 Show me a hint</strong></summary>
                     <ul>
-                        <li>Check HTTP endpoint responds</li>
-                        <li>Verify database connectivity</li>
-                        <li>Fail if checks don't pass</li>
+                        <li>Target: web group (both node1 and node2)</li>
+                        <li>Check httpd service status on node1 (use <code>service_facts</code>)</li>
+                        <li>Check PostgreSQL service status on node2</li>
+                        <li>Test HTTP endpoint: <code>http://node1:8080/index.php</code></li>
+                        <li>Use <code>uri</code> module with <code>return_content: yes</code></li>
+                        <li>Verify response contains "healthy" text</li>
+                        <li>Test database port 5432 with <code>wait_for</code> module</li>
+                        <li><strong>CRITICAL:</strong> Create marker file <code>/tmp/phoenix_validated</code> on node1 for scoring!</li>
                     </ul>
                 </details>
 
@@ -1246,62 +1254,137 @@ curl http://node3
 - name: Deploy Application
   hosts: node1
   become: yes
+  gather_facts: yes
+  
+  vars:
+    db_host: "{{ hostvars['node2']['ansible_default_ipv4']['address'] | default('node2') }}"
   
   tasks:
-    - name: Create application directory
-      ansible.builtin.file:
-        path: /var/www/html
-        state: directory
-        owner: apache
-        group: apache
-        mode: '0755'
-    
-    - name: Deploy application code
+    - name: Deploy application index page (PHP)
       ansible.builtin.copy:
         content: |
           <?php
-          \$servername = "node2";
-          \$username = "postgres";
-          \$password = "";
-          \$dbname = "appdb";
-          
-          \$conn = pg_connect("host=\$servername dbname=\$dbname user=\$username");
-          
-          if (!\$conn) {
-              die("Connection failed");
-          }
-          echo "Application is healthy! Database connected successfully.";
-          \$conn->close();
+          // Phoenix Protocol - Application Restored!
           ?>
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Phoenix Protocol - Application Restored!</title>
+              <style>
+                  body {
+                      font-family: Arial, sans-serif;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      color: white;
+                      text-align: center;
+                      padding: 50px;
+                  }
+                  .container {
+                      background: rgba(255, 255, 255, 0.1);
+                      border-radius: 10px;
+                      padding: 30px;
+                      max-width: 600px;
+                      margin: 0 auto;
+                  }
+                  h1 { font-size: 3em; margin-bottom: 20px; }
+                  .status { font-size: 1.5em; color: #4ade80; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>🔥 Phoenix Protocol 🔥</h1>
+                  <p class="status">✅ Application Stack Restored!</p>
+                  <p>Web Server: {{ ansible_hostname }}</p>
+                  <p>Database Server: {{ db_host }}</p>
+                  <p>Status: OPERATIONAL</p>
+                  <p><strong>Application is healthy!</strong></p>
+              </div>
+          </body>
+          </html>
         dest: /var/www/html/index.php
         owner: apache
         group: apache
         mode: '0644'
-    
-    - name: Restart httpd to load PHP
-      ansible.builtin.service:
-        name: httpd
-        state: restarted</code></pre>
+      register: app_deploy</code></pre>
 
             <h4>Playbook 4: <code>challenge6-validate-service.yml</code></h4>
             <pre><code class="language-yaml">---
 - name: Validate Application Stack
-  hosts: localhost
-  gather_facts: no
+  hosts: web
+  become: yes
+  gather_facts: yes
   
   tasks:
-    - name: Check if web service responds
+    - name: Check httpd service status
+      ansible.builtin.service_facts:
+      when: inventory_hostname == 'node1'
+    
+    - name: Verify httpd is running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['httpd.service'].state == 'running'
+        fail_msg: "httpd service is not running!"
+        success_msg: "✅ httpd service is running"
+      when: inventory_hostname == 'node1'
+      register: httpd_status
+    
+    - name: Check PostgreSQL service status
+      ansible.builtin.service_facts:
+      when: inventory_hostname == 'node2'
+    
+    - name: Verify PostgreSQL is running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['postgresql.service'].state == 'running'
+        fail_msg: "PostgreSQL service is not running!"
+        success_msg: "✅ PostgreSQL service is running"
+      when: inventory_hostname == 'node2'
+      register: postgresql_status
+    
+    - name: Test HTTP response from web server
       ansible.builtin.uri:
-        url: "http://node1:8080/index.php"
+        url: "http://{{ hostvars['node1']['ansible_default_ipv4']['address'] }}:8080/index.php"
         method: GET
         status_code: 200
+        timeout: 10
         return_content: yes
-      register: http_response
-      failed_when: "'healthy' not in http_response.content"
+      register: http_test
+      failed_when: 
+        - http_test.status != 200
+        - "'healthy' not in http_test.content"
+      when: inventory_hostname == 'node1'
+      delegate_to: localhost
     
-    - name: Display validation result
-      ansible.builtin.debug:
-        msg: "✅ Application stack validated successfully!"</code></pre>
+    - name: Test database connectivity
+      ansible.builtin.wait_for:
+        host: "{{ ansible_default_ipv4.address }}"
+        port: 5432
+      register: db_test
+      when: inventory_hostname == 'node2'
+    
+    - name: Verify web server validation
+      ansible.builtin.assert:
+        that:
+          - httpd_status.state is defined
+          - http_test.status == 200
+        fail_msg: "Web server validation failed!"
+        success_msg: "✅ Web server validation passed"
+      when: inventory_hostname == 'node1'
+    
+    - name: Verify database validation
+      ansible.builtin.assert:
+        that:
+          - postgresql_status.state is defined
+          - db_test is succeeded
+        fail_msg: "Database validation failed!"
+        success_msg: "✅ Database validation passed"
+      when: inventory_hostname == 'node2'
+    
+    - name: Create validation marker for Challenge 6 scoring
+      ansible.builtin.file:
+        path: /tmp/phoenix_validated
+        state: touch
+        mode: '0644'
+      when: inventory_hostname == 'node1'</code></pre>
 
             <h4>Playbook 5: <code>challenge6-rollback-webserver.yml</code></h4>
             <pre><code class="language-yaml">---

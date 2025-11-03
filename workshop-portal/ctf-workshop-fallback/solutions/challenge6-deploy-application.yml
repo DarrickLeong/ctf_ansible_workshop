@@ -13,9 +13,12 @@
     db_host: "{{ hostvars['node2']['ansible_default_ipv4']['address'] | default('node2') }}"
   
   tasks:
-    - name: Deploy application index page
+    - name: Deploy application index page (PHP)
       ansible.builtin.copy:
         content: |
+          <?php
+          // Phoenix Protocol - Application Restored!
+          ?>
           <!DOCTYPE html>
           <html>
           <head>
@@ -46,32 +49,15 @@
                   <p>Web Server: {{ ansible_hostname }}</p>
                   <p>Database Server: {{ db_host }}</p>
                   <p>Status: OPERATIONAL</p>
+                  <p><strong>Application is healthy!</strong></p>
               </div>
           </body>
           </html>
-        dest: /var/www/html/index.html
+        dest: /var/www/html/index.php
         owner: apache
         group: apache
         mode: '0644'
       register: app_deploy
-    
-    - name: Create application configuration
-      ansible.builtin.copy:
-        content: |
-          # Application Configuration
-          DB_HOST={{ db_host }}
-          DB_PORT=5432
-          DB_NAME=ctf_app
-          APP_STATUS=OPERATIONAL
-        dest: /var/www/html/config.txt
-        owner: apache
-        group: apache
-        mode: '0644'
-    
-    - name: Restart httpd to apply changes
-      ansible.builtin.service:
-        name: httpd
-        state: restarted
     
     - name: Display result
       ansible.builtin.debug:
