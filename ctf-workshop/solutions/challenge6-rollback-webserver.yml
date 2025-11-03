@@ -35,10 +35,11 @@
       ignore_errors: yes
     
     - name: Remove SELinux port 8080 permission
-      ansible.builtin.command: semanage port -d -t http_port_t -p tcp 8080
-      register: semanage_remove
-      failed_when: false
-      changed_when: semanage_remove.rc == 0
+      community.general.seport:
+        ports: 8080
+        proto: tcp
+        setype: http_port_t
+        state: absent
       ignore_errors: yes
     
     - name: Remove firewall rule for port 8080

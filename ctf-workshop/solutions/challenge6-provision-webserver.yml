@@ -29,10 +29,11 @@
       register: web_install
     
     - name: Configure SELinux to allow httpd on port 8080
-      ansible.builtin.command: semanage port -a -t http_port_t -p tcp 8080
-      register: semanage_result
-      failed_when: false
-      changed_when: semanage_result.rc == 0
+      community.general.seport:
+        ports: 8080
+        proto: tcp
+        setype: http_port_t
+        state: present
     
     - name: Configure httpd to listen on port 8080
       ansible.builtin.lineinfile:
