@@ -51,11 +51,17 @@
       ignore_errors: yes
     
     - name: Remove firewall rule for port 8080
-      ansible.posix.firewalld:
-        port: 8080/tcp
-        permanent: yes
-        state: disabled
-        immediate: yes
+      ansible.builtin.command: firewall-cmd --permanent --remove-port=8080/tcp
+      register: firewall_remove
+      changed_when: "'NOT_ENABLED' not in firewall_remove.stderr"
+      failed_when:
+        - firewall_remove.rc != 0
+        - "'NOT_ENABLED' not in firewall_remove.stderr"
+      ignore_errors: yes
+    
+    - name: Reload firewall
+      ansible.builtin.command: firewall-cmd --reload
+      when: firewall_remove.changed
       ignore_errors: yes
     
     - name: Display rollback result

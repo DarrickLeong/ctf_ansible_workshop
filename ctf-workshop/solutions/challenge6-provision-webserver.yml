@@ -57,11 +57,16 @@
       register: web_service
     
     - name: Allow port 8080 through firewall
-      ansible.posix.firewalld:
-        port: 8080/tcp
-        permanent: yes
-        state: enabled
-        immediate: yes
+      ansible.builtin.command: firewall-cmd --permanent --add-port=8080/tcp
+      register: firewall_add
+      changed_when: "'ALREADY_ENABLED' not in firewall_add.stderr"
+      failed_when:
+        - firewall_add.rc != 0
+        - "'ALREADY_ENABLED' not in firewall_add.stderr"
+    
+    - name: Reload firewall to apply changes
+      ansible.builtin.command: firewall-cmd --reload
+      when: firewall_add.changed
     
     - name: Display result
       ansible.builtin.debug:

@@ -964,7 +964,8 @@ curl http://node3
                         <li>Add <code>failed_when</code> to handle "already defined" error</li>
                         <li>Configure httpd: Use <code>lineinfile</code> to set Listen 8080</li>
                         <li>Start and enable httpd service</li>
-                        <li>Firewall: Allow <code>8080/tcp</code> port</li>
+                        <li>Firewall: Use <code>firewall-cmd --permanent --add-port=8080/tcp</code></li>
+                        <li>Reload firewall: <code>firewall-cmd --reload</code></li>
                     </ul>
                 </details>
 
@@ -1208,12 +1209,17 @@ curl http://node3
         state: started
         enabled: yes
     
-    - name: Allow HTTP through firewall
-      ansible.posix.firewalld:
-        port: 8080/tcp
-        permanent: yes
-        state: enabled
-        immediate: yes</code></pre>
+    - name: Allow port 8080 through firewall
+      ansible.builtin.command: firewall-cmd --permanent --add-port=8080/tcp
+      register: firewall_add
+      changed_when: "'ALREADY_ENABLED' not in firewall_add.stderr"
+      failed_when:
+        - firewall_add.rc != 0
+        - "'ALREADY_ENABLED' not in firewall_add.stderr"
+    
+    - name: Reload firewall to apply changes
+      ansible.builtin.command: firewall-cmd --reload
+      when: firewall_add.changed</code></pre>
 
             <h4>Playbook 3: <code>challenge6-deploy-application.yml</code></h4>
             <pre><code class="language-yaml">---
