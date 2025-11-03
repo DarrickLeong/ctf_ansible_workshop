@@ -33,16 +33,6 @@
     
     - name: Display rollback result
       ansible.builtin.debug:
-        msg: |
-          ⚠️ Database rolled back on {{ inventory_hostname }}
-          PostgreSQL service stopped
-          Database files cleaned up
-          
-          ==========================================
-          ROLLBACK COMPLETE
-          ==========================================
-          The Phoenix Protocol encountered errors
-          and has been rolled back to safe state.
-          ==========================================
+        msg: "⚠️ Database rolled back on {{ inventory_hostname }} - Phoenix Protocol rollback complete"
 
 

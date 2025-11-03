@@ -88,9 +88,5 @@
     
     - name: Display result
       ansible.builtin.debug:
-        msg: |
-          ✅ Web server provisioned on {{ inventory_hostname }}!
-          Packages installed: {{ web_install.changed }}
-          Service running: {{ web_service.state }}
-          Listening on port: 8080
+        msg: "✅ Web server provisioned on {{ inventory_hostname }} - listening on port 8080"
 

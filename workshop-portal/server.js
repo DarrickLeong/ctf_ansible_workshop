@@ -1308,83 +1308,59 @@ curl http://node3
 
             <h4>Playbook 4: <code>challenge6-validate-service.yml</code></h4>
             <pre><code class="language-yaml">---
-- name: Validate Application Stack
-  hosts: web
+- name: Challenge 6 - Validate Service
+  hosts: node1
   become: yes
   gather_facts: yes
   
   tasks:
+    # Requirement 1: Check if httpd service is running
     - name: Check httpd service status
       ansible.builtin.service_facts:
-      when: inventory_hostname == 'node1'
     
     - name: Verify httpd is running
       ansible.builtin.assert:
         that:
           - ansible_facts.services['httpd.service'].state == 'running'
-        fail_msg: "httpd service is not running!"
+        fail_msg: "❌ httpd service is not running!"
         success_msg: "✅ httpd service is running"
-      when: inventory_hostname == 'node1'
-      register: httpd_status
     
-    - name: Check PostgreSQL service status
+    # Requirement 2: Check if postgresql service is running on node2
+    - name: Check PostgreSQL service on node2
       ansible.builtin.service_facts:
-      when: inventory_hostname == 'node2'
+      delegate_to: node2
     
-    - name: Verify PostgreSQL is running
+    - name: Verify PostgreSQL is running on node2
       ansible.builtin.assert:
         that:
           - ansible_facts.services['postgresql.service'].state == 'running'
-        fail_msg: "PostgreSQL service is not running!"
-        success_msg: "✅ PostgreSQL service is running"
-      when: inventory_hostname == 'node2'
-      register: postgresql_status
+        fail_msg: "❌ PostgreSQL service is not running on node2!"
+        success_msg: "✅ PostgreSQL service is running on node2"
+      delegate_to: node2
     
-    - name: Test HTTP response from web server
+    # Requirement 3: Use uri module to test HTTP endpoint on port 8080
+    # Requirement 4: Fail the playbook if checks don't pass
+    - name: Test HTTP endpoint on port 8080
       ansible.builtin.uri:
-        url: "http://{{ hostvars['node1']['ansible_default_ipv4']['address'] }}:8080/index.php"
+        url: "http://node1:8080/index.php"
         method: GET
         status_code: 200
-        timeout: 10
         return_content: yes
       register: http_test
       failed_when: 
         - http_test.status != 200
         - "'healthy' not in http_test.content"
-      when: inventory_hostname == 'node1'
-      delegate_to: localhost
     
-    - name: Test database connectivity
-      ansible.builtin.wait_for:
-        host: "{{ ansible_default_ipv4.address }}"
-        port: 5432
-      register: db_test
-      when: inventory_hostname == 'node2'
-    
-    - name: Verify web server validation
-      ansible.builtin.assert:
-        that:
-          - httpd_status.state is defined
-          - http_test.status == 200
-        fail_msg: "Web server validation failed!"
-        success_msg: "✅ Web server validation passed"
-      when: inventory_hostname == 'node1'
-    
-    - name: Verify database validation
-      ansible.builtin.assert:
-        that:
-          - postgresql_status.state is defined
-          - db_test is succeeded
-        fail_msg: "Database validation failed!"
-        success_msg: "✅ Database validation passed"
-      when: inventory_hostname == 'node2'
-    
+    # Create marker file for CTF scoring system
     - name: Create validation marker for Challenge 6 scoring
       ansible.builtin.file:
         path: /tmp/phoenix_validated
         state: touch
         mode: '0644'
-      when: inventory_hostname == 'node1'</code></pre>
+    
+    - name: Display validation success
+      ansible.builtin.debug:
+        msg: "✅ All validation checks passed! Application stack is operational."</code></pre>
 
             <h4>Playbook 5: <code>challenge6-rollback-webserver.yml</code></h4>
             <pre><code class="language-yaml">---

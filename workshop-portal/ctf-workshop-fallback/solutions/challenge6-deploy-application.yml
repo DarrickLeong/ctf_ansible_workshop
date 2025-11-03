@@ -57,12 +57,8 @@
         owner: apache
         group: apache
         mode: '0644'
-      register: app_deploy
     
     - name: Display result
       ansible.builtin.debug:
-        msg: |
-          ✅ Application deployed on {{ inventory_hostname }}!
-          Files deployed: {{ app_deploy.changed }}
-          Database host: {{ db_host }}
+        msg: "✅ Application deployed on {{ inventory_hostname }}!"
 

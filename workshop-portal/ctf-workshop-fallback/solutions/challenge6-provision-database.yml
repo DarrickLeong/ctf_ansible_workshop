@@ -2,7 +2,7 @@
 # Challenge 6 Solution - Part 1: Provision Database
 # Phoenix Protocol - Full Stack Disaster Recovery
 # 
-# This playbook provisions the database server (node2)
+# This playbook provisions the database server (node2) with PostgreSQL
 
 - name: Challenge 6 - Provision Database Server
   hosts: node2
@@ -19,6 +19,12 @@
         state: present
       register: db_install
     
+    - name: Initialize PostgreSQL database
+      ansible.builtin.command: postgresql-setup --initdb
+      args:
+        creates: /var/lib/pgsql/data/postgresql.conf
+      ignore_errors: yes
+    
     - name: Ensure PostgreSQL service is started and enabled
       ansible.builtin.service:
         name: postgresql
@@ -29,20 +35,11 @@
     - name: Wait for PostgreSQL to be ready
       ansible.builtin.wait_for:
         port: 5432
-        host: "{{ ansible_default_ipv4.address }}"
+        host: localhost
         timeout: 30
-    
-    - name: Create application database
-      community.mysql.mysql_db:
-        name: ctf_app
-        state: present
-        login_unix_socket: /var/lib/mysql/mysql.sock
-      ignore_errors: yes
     
     - name: Display result
       ansible.builtin.debug:
-        msg: |
-          ✅ Database provisioned on {{ inventory_hostname }}!
-          Packages installed: {{ db_install.changed }}
-          Service running: {{ db_service.state }}
+        msg: "✅ Database provisioned on {{ inventory_hostname }}!"
+
 

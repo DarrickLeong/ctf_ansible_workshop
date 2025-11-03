@@ -17,25 +17,22 @@
         enabled: no
       ignore_errors: yes
     
-    - name: Remove database files
+    - name: Remove PostgreSQL data directory
       ansible.builtin.file:
         path: "{{ item }}"
         state: absent
       loop:
-        - /var/lib/mysql/ctf_app
+        - /var/lib/pgsql/data
       ignore_errors: yes
+    
+    - name: Create rollback marker for validation
+      ansible.builtin.file:
+        path: /tmp/phoenix_db_rollback
+        state: touch
+        mode: '0644'
     
     - name: Display rollback result
       ansible.builtin.debug:
-        msg: |
-          ⚠️ Database rolled back on {{ inventory_hostname }}
-          Services stopped
-          Database files cleaned up
-          
-          ==========================================
-          ROLLBACK COMPLETE
-          ==========================================
-          The Phoenix Protocol encountered errors
-          and has been rolled back to safe state.
-          ==========================================
+        msg: "⚠️ Database rolled back on {{ inventory_hostname }} - Phoenix Protocol rollback complete"
+
 

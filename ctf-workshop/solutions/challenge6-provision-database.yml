@@ -40,9 +40,6 @@
     
     - name: Display result
       ansible.builtin.debug:
-        msg: |
-          ✅ Database provisioned on {{ inventory_hostname }}!
-          Packages installed: {{ db_install.changed }}
-          Service running: {{ db_service.state }}
+        msg: "✅ Database provisioned on {{ inventory_hostname }}!"
 
 

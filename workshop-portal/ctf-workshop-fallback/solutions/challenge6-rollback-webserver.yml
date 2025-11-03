@@ -23,13 +23,54 @@
         state: absent
       loop:
         - /var/www/html/index.html
+        - /var/www/html/index.php
         - /var/www/html/config.txt
       ignore_errors: yes
     
+    - name: Restore httpd.conf to default Listen port 80
+      ansible.builtin.lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^Listen '
+        line: 'Listen 80'
+      ignore_errors: yes
+    
+    - name: Check if port 8080 is configured in SELinux
+      ansible.builtin.shell: semanage port -l | grep "http_port_t" | grep -w "8080"
+      register: selinux_port_check
+      failed_when: false
+      changed_when: false
+      ignore_errors: yes
+    
+    - name: Remove SELinux port 8080 permission
+      ansible.builtin.command: semanage port -d -t http_port_t -p tcp 8080
+      when: selinux_port_check.rc == 0
+      register: selinux_remove_result
+      failed_when:
+        - selinux_remove_result.rc != 0
+        - "'not defined' not in selinux_remove_result.stderr"
+      ignore_errors: yes
+    
+    - name: Remove firewall rule for port 8080
+      ansible.builtin.command: firewall-cmd --permanent --remove-port=8080/tcp
+      register: firewall_remove
+      changed_when: "'NOT_ENABLED' not in firewall_remove.stderr"
+      failed_when:
+        - firewall_remove.rc != 0
+        - "'NOT_ENABLED' not in firewall_remove.stderr"
+      ignore_errors: yes
+    
+    - name: Reload firewall
+      ansible.builtin.command: firewall-cmd --reload
+      when: firewall_remove.changed
+      ignore_errors: yes
+    
+    - name: Create rollback marker for validation
+      ansible.builtin.file:
+        path: /tmp/phoenix_web_rollback
+        state: touch
+        mode: '0644'
+    
     - name: Display rollback result
       ansible.builtin.debug:
-        msg: |
-          ⚠️ Web server rolled back on {{ inventory_hostname }}
-          Services stopped
-          Application files removed
+        msg: "⚠️ Web server rolled back on {{ inventory_hostname }}"
 

@@ -72,9 +72,5 @@
     
     - name: Display rollback result
       ansible.builtin.debug:
-        msg: |
-          ⚠️ Web server rolled back on {{ inventory_hostname }}
-          Services stopped
-          Application files removed
-          Port 8080 configuration cleaned up
+        msg: "⚠️ Web server rolled back on {{ inventory_hostname }}"
 
