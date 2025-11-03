@@ -109,11 +109,23 @@ const challengeContent = {
         requirements: `
             <h3>Your Mission</h3>
             <p>Write a single playbook to ensure the <code>chronyd</code> service is running and enabled on <strong>all three nodes</strong>.</p>
+            
+            <h4>Tasks:</h4>
+            <ol>
+                <li><strong>Create playbook:</strong> <code>challenge1-fix-time-sync.yml</code></li>
+                <li><strong>Target hosts:</strong> All nodes (node1, node2, node3)</li>
+                <li><strong>Use module:</strong> <code>ansible.builtin.service</code></li>
+                <li><strong>Service name:</strong> <code>chronyd</code></li>
+                <li><strong>Required state:</strong> Service must be <code>started</code></li>
+                <li><strong>Boot behavior:</strong> Service must be <code>enabled</code> (starts on boot)</li>
+            </ol>
+            
             <h4>Success Criteria:</h4>
             <ul>
-                <li>✅ Service is running on <strong>node1, node2, and node3</strong></li>
-                <li>✅ Service is enabled to start on boot on <strong>all nodes</strong></li>
+                <li>✅ <code>chronyd</code> service is <strong>running</strong> on node1, node2, and node3</li>
+                <li>✅ <code>chronyd</code> service is <strong>enabled</strong> to start on boot</li>
                 <li>✅ Playbook is idempotent (can run multiple times safely)</li>
+                <li>✅ Playbook uses <code>become: yes</code> for privilege escalation</li>
             </ul>
         `,
         guide: `
@@ -237,11 +249,23 @@ ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
         requirements: `
             <h3>Your Mission</h3>
             <p>Create a playbook that removes the <code>bind-utils</code> package from <strong>node2 only</strong>.</p>
+            
+            <h4>Tasks:</h4>
+            <ol>
+                <li><strong>Create playbook:</strong> <code>challenge2-remove-package.yml</code></li>
+                <li><strong>Target host:</strong> <code>node2</code> ONLY (database server)</li>
+                <li><strong>Use module:</strong> <code>ansible.builtin.dnf</code></li>
+                <li><strong>Package name:</strong> <code>bind-utils</code></li>
+                <li><strong>Required state:</strong> Package must be <code>absent</code> (removed)</li>
+                <li><strong>Privilege escalation:</strong> Use <code>become: yes</code></li>
+            </ol>
+            
             <h4>Success Criteria:</h4>
             <ul>
-                <li>✅ bind-utils package is removed from <strong>node2</strong></li>
-                <li>✅ Other servers (node1, node3) are not affected</li>
-                <li>✅ Playbook targets only the correct host</li>
+                <li>✅ <code>bind-utils</code> package is <strong>removed</strong> from node2</li>
+                <li>✅ <strong>node1 and node3</strong> are <strong>NOT affected</strong></li>
+                <li>✅ Playbook targets only <code>node2</code> in hosts declaration</li>
+                <li>✅ Uses <code>ansible.builtin.dnf</code> module with <code>state: absent</code></li>
             </ul>
         `,
         guide: `
@@ -350,12 +374,25 @@ ansible node2 -m shell -a "rpm -qa | grep bind-utils" -i inventory
         requirements: `
             <h3>Your Mission</h3>
             <p>Write a playbook that ensures the <code>rogue_user</code> user is completely removed from <strong>node1 and node3</strong>.</p>
+            
+            <h4>Tasks:</h4>
+            <ol>
+                <li><strong>Create playbook:</strong> <code>challenge3-remove-user.yml</code></li>
+                <li><strong>Target hosts:</strong> <code>node1</code> and <code>node3</code> (NOT node2)</li>
+                <li><strong>Use module:</strong> <code>ansible.builtin.user</code></li>
+                <li><strong>Username:</strong> <code>rogue_user</code></li>
+                <li><strong>Required state:</strong> User must be <code>absent</code> (removed)</li>
+                <li><strong>Remove home directory:</strong> Set <code>remove: yes</code> to delete home folder</li>
+                <li><strong>Privilege escalation:</strong> Use <code>become: yes</code></li>
+            </ol>
+            
             <h4>Success Criteria:</h4>
             <ul>
-                <li>✅ rogue_user is removed from <strong>node1</strong></li>
-                <li>✅ rogue_user is removed from <strong>node3</strong></li>
-                <li>✅ Playbook doesn't fail if user doesn't exist</li>
-                <li>✅ User's home directory is also removed</li>
+                <li>✅ <code>rogue_user</code> is <strong>removed</strong> from node1</li>
+                <li>✅ <code>rogue_user</code> is <strong>removed</strong> from node3</li>
+                <li>✅ User's <strong>home directory</strong> is also deleted</li>
+                <li>✅ Playbook is idempotent (doesn't fail if user doesn't exist)</li>
+                <li>✅ Playbook targets <code>node1,node3</code> or uses proper host pattern</li>
             </ul>
         `,
         guide: `
@@ -471,20 +508,35 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
         `,
         requirements: `
             <h3>Your Mission</h3>
-            <p>Create a standardized MOTD using a Jinja2 template. The message must:</p>
-            <ul>
-                <li>✅ Include the text "Welcome to" followed by the server's <strong>actual hostname</strong></li>
-                <li>✅ Include the text "Managed by SRE Team" or "SRE Team"</li>
-                <li>✅ Be deployed to <code>/etc/motd</code> on <strong>all three servers</strong></li>
-                <li>✅ Each server must display its <strong>own unique hostname</strong> (node1, node2, node3)</li>
-            </ul>
+            <p>Create a standardized MOTD using a Jinja2 template that displays each server's unique hostname.</p>
+            
+            <h4>Tasks:</h4>
+            <ol>
+                <li><strong>Create template file:</strong> <code>templates/motd.j2</code> in your playbook directory</li>
+                <li><strong>Template content must include:</strong>
+                    <ul>
+                        <li>Text "Welcome to" followed by the server's hostname</li>
+                        <li>Text "Managed by SRE Team" or "SRE Team"</li>
+                        <li>Use Jinja2 variable: <code>{{ ansible_hostname }}</code> for dynamic hostname</li>
+                    </ul>
+                </li>
+                <li><strong>Create playbook:</strong> <code>challenge4-deploy-motd.yml</code></li>
+                <li><strong>Target hosts:</strong> All nodes (node1, node2, node3)</li>
+                <li><strong>Use module:</strong> <code>ansible.builtin.template</code></li>
+                <li><strong>Source:</strong> <code>templates/motd.j2</code></li>
+                <li><strong>Destination:</strong> <code>/etc/motd</code></li>
+                <li><strong>File permissions:</strong> Set <code>mode: '0644'</code></li>
+                <li><strong>Privilege escalation:</strong> Use <code>become: yes</code></li>
+            </ol>
+            
             <h4>Success Criteria:</h4>
             <ul>
-                <li>✅ Template file created in a <code>templates/</code> directory</li>
-                <li>✅ Template uses Ansible facts to display the hostname dynamically</li>
-                <li>✅ MOTD file deployed to <code>/etc/motd</code> on all three nodes</li>
+                <li>✅ Template file <code>templates/motd.j2</code> created</li>
+                <li>✅ Template uses <code>{{ ansible_hostname }}</code> variable</li>
+                <li>✅ <code>/etc/motd</code> deployed on all three nodes</li>
+                <li>✅ Each node shows its <strong>own unique hostname</strong> (node1, node2, node3)</li>
                 <li>✅ Message includes "SRE Team" text</li>
-                <li>✅ File permissions are preserved (0644)</li>
+                <li>✅ File permissions are <code>0644</code></li>
             </ul>
         `,
         guide: `
@@ -631,11 +683,26 @@ ssh node1</code></pre>
         requirements: `
             <h3>Your Mission</h3>
             <p>Write a playbook that adds a permanent rule to the firewall on <strong>node3</strong> to allow traffic for the <code>http</code> service.</p>
+            
+            <h4>Tasks:</h4>
+            <ol>
+                <li><strong>Create playbook:</strong> <code>challenge5-allow-http.yml</code></li>
+                <li><strong>Target host:</strong> <code>node3</code> ONLY (backup web server)</li>
+                <li><strong>Use module:</strong> <code>ansible.posix.firewalld</code></li>
+                <li><strong>Service to allow:</strong> <code>http</code></li>
+                <li><strong>Make it permanent:</strong> Set <code>permanent: yes</code></li>
+                <li><strong>Apply immediately:</strong> Set <code>immediate: yes</code> (or use <code>state: enabled</code>)</li>
+                <li><strong>Rule state:</strong> <code>state: enabled</code></li>
+                <li><strong>Privilege escalation:</strong> Use <code>become: yes</code></li>
+            </ol>
+            
             <h4>Success Criteria:</h4>
             <ul>
-                <li>✅ HTTP service allowed in firewall on <strong>node3</strong></li>
-                <li>✅ Rule is permanent (survives reboot)</li>
-                <li>✅ Firewall is reloaded to apply changes</li>
+                <li>✅ HTTP service is <strong>allowed</strong> in firewalld on node3</li>
+                <li>✅ Rule is <strong>permanent</strong> (survives reboot)</li>
+                <li>✅ Rule is <strong>active immediately</strong> (no reboot needed)</li>
+                <li>✅ Uses <code>ansible.posix.firewalld</code> module</li>
+                <li>✅ Playbook targets only <code>node3</code></li>
             </ul>
         `,
         guide: `
@@ -791,21 +858,74 @@ curl http://node3
             
             <h4>Tasks:</h4>
             <ol>
-                <li>Create six separate playbooks for each recovery step</li>
-                <li>Create six Job Templates in AAP (one for each playbook)</li>
-                <li>Create a Workflow Template with proper dependency ordering</li>
-                <li>Implement success and failure paths</li>
-                <li><strong>Extra Credit:</strong> Add an approval gate before execution</li>
+                <li><strong>Create 6 playbooks</strong> (details below)</li>
+                <li><strong>Create 6 Job Templates in AAP</strong> (one for each playbook)</li>
+                <li><strong>Create 1 Workflow Template</strong> with proper dependency ordering</li>
+                <li><strong>Implement success path:</strong> Database → Web → App → Validation</li>
+                <li><strong>Implement failure path:</strong> Validation fail → Rollback Web → Rollback DB</li>
+                <li><strong>Extra Credit:</strong> Add an approval gate before execution (+10 pts)</li>
+            </ol>
+
+            <h4>Required Playbooks:</h4>
+            <ol>
+                <li><strong>challenge6-provision-database.yml</strong> (Target: node2)
+                    <ul>
+                        <li>Install <code>postgresql-server</code> and <code>python3-psycopg2</code></li>
+                        <li>Initialize PostgreSQL: <code>postgresql-setup --initdb</code></li>
+                        <li>Start and enable <code>postgresql</code> service</li>
+                        <li>Wait for port 5432 to be ready</li>
+                    </ul>
+                </li>
+                <li><strong>challenge6-provision-webserver.yml</strong> (Target: node1)
+                    <ul>
+                        <li>Install <code>httpd</code>, <code>php</code>, and <code>php-pgsql</code> packages</li>
+                        <li>Configure httpd to listen on port <code>8080</code></li>
+                        <li>Start and enable <code>httpd</code> service</li>
+                        <li>Allow port <code>8080/tcp</code> in firewalld</li>
+                    </ul>
+                </li>
+                <li><strong>challenge6-deploy-application.yml</strong> (Target: node1)
+                    <ul>
+                        <li>Create <code>/var/www/html</code> directory (owner: apache, mode: 0755)</li>
+                        <li>Deploy PHP application code to <code>/var/www/html/index.php</code></li>
+                        <li>PHP should connect to PostgreSQL on node2</li>
+                        <li>Restart httpd to load new app</li>
+                    </ul>
+                </li>
+                <li><strong>challenge6-validate-service.yml</strong> (Target: node1)
+                    <ul>
+                        <li>Check if httpd service is running</li>
+                        <li>Check if postgresql service is running on node2</li>
+                        <li>Use <code>uri</code> module to test HTTP endpoint on port 8080</li>
+                        <li><strong>Fail the playbook if checks don't pass</strong></li>
+                    </ul>
+                </li>
+                <li><strong>challenge6-rollback-webserver.yml</strong> (Target: node1)
+                    <ul>
+                        <li>Stop and disable <code>httpd</code> service</li>
+                        <li>Remove <code>/var/www/html/index.php</code></li>
+                        <li>Remove custom httpd configurations</li>
+                    </ul>
+                </li>
+                <li><strong>challenge6-rollback-database.yml</strong> (Target: node2)
+                    <ul>
+                        <li>Stop and disable <code>postgresql</code> service</li>
+                        <li>Remove PostgreSQL data directory <code>/var/lib/pgsql/data</code></li>
+                    </ul>
+                </li>
             </ol>
 
             <h4>Success Criteria:</h4>
             <ul>
-                <li>✅ Database provisions before web server</li>
-                <li>✅ Web server provisions before app deployment</li>
-                <li>✅ App deploys before validation</li>
-                <li>✅ Validation failures trigger rollbacks</li>
-                <li>✅ Rollbacks execute in reverse order</li>
-                <li>✅ <strong>Extra Credit:</strong> Approval gate implemented</li>
+                <li>✅ All 6 playbooks created and working</li>
+                <li>✅ All 6 Job Templates created in AAP</li>
+                <li>✅ Workflow Template created with proper flow</li>
+                <li>✅ <strong>Success path:</strong> Database provisions before web server</li>
+                <li>✅ <strong>Success path:</strong> Web server provisions before app deployment</li>
+                <li>✅ <strong>Success path:</strong> App deploys before validation</li>
+                <li>✅ <strong>Failure path:</strong> Validation failures trigger rollbacks</li>
+                <li>✅ <strong>Failure path:</strong> Rollbacks execute in reverse order (Web → DB)</li>
+                <li>✅ <strong>Extra Credit:</strong> Approval gate implemented (+10 points)</li>
             </ul>
         `,
         guide: `
