@@ -35,6 +35,16 @@ while IFS=',' read -r username email password is_admin; do
         continue
     fi
     
+    # Skip commented lines (starting with #)
+    if [[ "$username" =~ ^#.*$ ]]; then
+        continue
+    fi
+    
+    # Skip empty lines
+    if [ -z "$username" ]; then
+        continue
+    fi
+    
     echo "Creating user: $username..."
     
     ADMIN_VALUE="false"
