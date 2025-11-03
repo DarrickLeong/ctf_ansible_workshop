@@ -262,39 +262,50 @@ app.post('/api/challenge_results', (req, res) => {
             // Wait for all inserts and recalculate attendee total
             Promise.all(insertPromises)
                 .then(() => {
-                    // Recalculate total points from all challenge results for this attendee
-                    // Use MAX to avoid counting the same challenge multiple times across different hosts
-                    db.get(`SELECT SUM(max_points_per_challenge) as total 
-                            FROM (
-                                SELECT challenge_type, MAX(points_earned) as max_points_per_challenge
-                                FROM challenge_results 
-                                WHERE attendee_id = ?
-                                GROUP BY challenge_type
-                            )`,
-                           [attendee_id], (err, result) => {
+                    // Get old total before recalculating
+                    db.get('SELECT total_points FROM attendees WHERE id = ?', [attendee_id], (err, oldAttendee) => {
                         if (err) {
-                            console.error('Error calculating total points:', err);
-                            return res.status(500).json({ error: 'Error calculating points' });
+                            console.error('Error fetching old points:', err);
+                            return res.status(500).json({ error: 'Error fetching old points' });
                         }
-
-                        const newTotal = result.total || 0;
                         
-                        // Update attendee's total points
-                        db.run('UPDATE attendees SET total_points = ? WHERE id = ?', 
-                               [newTotal, attendee_id], (err) => {
+                        const oldTotal = oldAttendee?.total_points || 0;
+                        
+                        // Recalculate total points from all challenge results for this attendee
+                        // Use MAX to avoid counting the same challenge multiple times across different hosts
+                        db.get(`SELECT SUM(max_points_per_challenge) as total 
+                                FROM (
+                                    SELECT challenge_type, MAX(points_earned) as max_points_per_challenge
+                                    FROM challenge_results 
+                                    WHERE attendee_id = ?
+                                    GROUP BY challenge_type
+                                )`,
+                               [attendee_id], (err, result) => {
                             if (err) {
-                                console.error('Error updating attendee points:', err);
-                                return res.status(500).json({ error: 'Error updating points' });
+                                console.error('Error calculating total points:', err);
+                                return res.status(500).json({ error: 'Error calculating points' });
                             }
 
-                            console.log(`✅ Updated ${attendee_name} total points: ${newTotal} (added ${totalPoints} from ${hostname})`);
-                            res.json({ 
-                                message: 'Challenge results recorded successfully',
-                                attendee_name,
-                                hostname,
-                                points_added: totalPoints,
-                                total_points: newTotal,
-                                challenges_processed: Object.keys(challenge_results).length
+                            const newTotal = result.total || 0;
+                            const pointsDelta = newTotal - oldTotal;  // Calculate actual delta
+                            
+                            // Update attendee's total points
+                            db.run('UPDATE attendees SET total_points = ? WHERE id = ?', 
+                                   [newTotal, attendee_id], (err) => {
+                                if (err) {
+                                    console.error('Error updating attendee points:', err);
+                                    return res.status(500).json({ error: 'Error updating points' });
+                                }
+
+                                console.log(`✅ Updated ${attendee_name} total points: ${newTotal} (delta: +${pointsDelta} from ${hostname})`);
+                                res.json({ 
+                                    message: 'Challenge results recorded successfully',
+                                    attendee_name,
+                                    hostname,
+                                    points_added: pointsDelta,  // Return actual delta, not total points reported
+                                    total_points: newTotal,
+                                    challenges_processed: Object.keys(challenge_results).length
+                                });
                             });
                         });
                     });
