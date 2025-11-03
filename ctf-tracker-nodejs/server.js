@@ -245,7 +245,14 @@ app.post('/api/challenge_results', (req, res) => {
                 Promise.all(insertPromises)
                     .then(() => {
                         // Recalculate total points from all challenge results for this attendee
-                        db.get('SELECT SUM(points_earned) as total FROM challenge_results WHERE attendee_id = ?',
+                        // Use MAX to avoid counting the same challenge multiple times across different hosts
+                        db.get(`SELECT SUM(max_points_per_challenge) as total 
+                                FROM (
+                                    SELECT challenge_type, MAX(points_earned) as max_points_per_challenge
+                                    FROM challenge_results 
+                                    WHERE attendee_id = ?
+                                    GROUP BY challenge_type
+                                )`,
                                [attendee_id], (err, result) => {
                             if (err) {
                                 console.error('Error calculating total points:', err);
