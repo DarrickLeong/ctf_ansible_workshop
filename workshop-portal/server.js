@@ -1140,40 +1140,64 @@ curl http://node3
 
                     <h4>Playbook 1: <code>challenge6-provision-database.yml</code></h4>
             <pre><code class="language-yaml">---
-- name: Provision Database Server
+# Challenge 6 Solution - Part 1: Provision Database
+# Phoenix Protocol - Full Stack Disaster Recovery
+# 
+# This playbook provisions the database server (node2) with PostgreSQL
+
+- name: Challenge 6 - Provision Database Server
   hosts: node2
   become: yes
+  gather_facts: yes
   
   tasks:
-    - name: Install PostgreSQL server
+    # Requirement 1: Install postgresql-server and python3-psycopg2
+    - name: Install PostgreSQL packages
       ansible.builtin.dnf:
         name:
           - postgresql-server
+          - postgresql
           - python3-psycopg2
         state: present
+      register: db_install
     
-    - name: Start and enable PostgreSQL
-      ansible.builtin.service:
-        name: postgresql
-        state: started
-        enabled: yes
-    
+    # Requirement 2: Initialize PostgreSQL (postgresql-setup --initdb)
     - name: Initialize PostgreSQL database
       ansible.builtin.command: postgresql-setup --initdb
       args:
         creates: /var/lib/pgsql/data/postgresql.conf
       ignore_errors: yes
     
+    # Requirement 3: Start and enable postgresql service
+    - name: Ensure PostgreSQL service is started and enabled
+      ansible.builtin.service:
+        name: postgresql
+        state: started
+        enabled: yes
+      register: db_service
+    
+    # Requirement 4: Wait for port 5432 to be ready
     - name: Wait for PostgreSQL to be ready
       ansible.builtin.wait_for:
         port: 5432
-        timeout: 30</code></pre>
+        host: localhost
+        timeout: 30
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: "✅ Database provisioned on {{ inventory_hostname }}!"</code></pre>
 
             <h4>Playbook 2: <code>challenge6-provision-webserver.yml</code></h4>
             <pre><code class="language-yaml">---
-- name: Provision Web Server
+# Challenge 6 Solution - Part 2: Provision Web Server
+# Phoenix Protocol - Full Stack Disaster Recovery
+# 
+# This playbook provisions the web server with httpd on port 8080
+
+- name: Challenge 6 - Provision Web Server
   hosts: node1
   become: yes
+  gather_facts: yes
   
   tasks:
     - name: Ensure /var/www/html directory exists
@@ -1184,7 +1208,8 @@ curl http://node3
         group: apache
         mode: '0755'
     
-    - name: Install Apache, PHP, and SELinux tools
+    # Requirement 1: Install httpd, php, php-pgsql, and policycoreutils-python-utils
+    - name: Install Apache (httpd), PHP, and SELinux tools
       ansible.builtin.dnf:
         name:
           - httpd
@@ -1192,7 +1217,9 @@ curl http://node3
           - php-pgsql
           - policycoreutils-python-utils
         state: present
+      register: web_install
     
+    # Requirement 2: Check if port 8080 configured in SELinux, add if not present
     - name: Check if port 8080 is already configured in SELinux
       ansible.builtin.shell: semanage port -l | grep "http_port_t" | grep -w "8080"
       register: selinux_port_check
@@ -1207,6 +1234,7 @@ curl http://node3
         - selinux_add_result.rc != 0
         - "'already defined' not in selinux_add_result.stderr"
     
+    # Requirement 3: Configure httpd to listen on port 8080
     - name: Configure httpd to listen on port 8080
       ansible.builtin.lineinfile:
         path: /etc/httpd/conf/httpd.conf
@@ -1214,12 +1242,15 @@ curl http://node3
         line: 'Listen 8080'
         backup: yes
     
-    - name: Start and enable httpd
+    # Requirement 4: Start and enable httpd service
+    - name: Start and enable httpd service
       ansible.builtin.service:
         name: httpd
         state: started
         enabled: yes
+      register: web_service
     
+    # Requirement 5: Allow port 8080/tcp in firewalld
     - name: Check if firewalld is installed
       ansible.builtin.command: which firewall-cmd
       register: firewalld_check
@@ -1248,7 +1279,11 @@ curl http://node3
     
     - name: Reload firewall to apply changes
       ansible.builtin.command: firewall-cmd --reload
-      when: firewall_add.changed</code></pre>
+      when: firewall_add.changed
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: "✅ Web server provisioned on {{ inventory_hostname }} - listening on port 8080"</code></pre>
 
             <h4>Playbook 3: <code>challenge6-deploy-application.yml</code></h4>
             <pre><code class="language-yaml">---
@@ -1283,6 +1318,16 @@ curl http://node3
 
             <h4>Playbook 4: <code>challenge6-validate-service.yml</code></h4>
             <pre><code class="language-yaml">---
+# Challenge 6 Solution - Part 4: Validate Service
+# Phoenix Protocol - Full Stack Disaster Recovery
+# 
+# This playbook validates that the application stack is working
+# Requirements:
+#   1. Check if httpd service is running
+#   2. Check if postgresql service is running on node2
+#   3. Use uri module to test HTTP endpoint on port 8080
+#   4. Fail the playbook if checks don't pass
+
 - name: Challenge 6 - Validate Service
   hosts: node1
   become: yes
@@ -1332,11 +1377,18 @@ curl http://node3
 
             <h4>Playbook 5: <code>challenge6-rollback-webserver.yml</code></h4>
             <pre><code class="language-yaml">---
-- name: Rollback Web Server
+# Challenge 6 Solution - Part 5: Rollback Web Server
+# Phoenix Protocol - Full Stack Disaster Recovery
+# 
+# This playbook rolls back the web server changes if validation fails
+
+- name: Challenge 6 - Rollback Web Server
   hosts: node1
   become: yes
+  gather_facts: yes
   
   tasks:
+    # Requirement 1: Stop and disable httpd service
     - name: Stop httpd service
       ansible.builtin.service:
         name: httpd
@@ -1344,38 +1396,104 @@ curl http://node3
         enabled: no
       ignore_errors: yes
     
-    - name: Remove application code
+    # Requirement 2: Remove /var/www/html/index.php
+    - name: Remove application files
       ansible.builtin.file:
-        path: /var/www/html/index.php
+        path: "{{ item }}"
         state: absent
+      loop:
+        - /var/www/html/index.html
+        - /var/www/html/index.php
+        - /var/www/html/config.txt
+      ignore_errors: yes
     
-    - name: Remove packages
-      ansible.builtin.dnf:
-        name:
-          - httpd
-          - php
-          - php-pgsql
-        state: absent</code></pre>
+    # Requirement 3: Remove custom httpd configurations
+    - name: Restore httpd.conf to default Listen port 80
+      ansible.builtin.lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^Listen '
+        line: 'Listen 80'
+      ignore_errors: yes
+    
+    - name: Check if port 8080 is configured in SELinux
+      ansible.builtin.shell: semanage port -l | grep "http_port_t" | grep -w "8080"
+      register: selinux_port_check
+      failed_when: false
+      changed_when: false
+      ignore_errors: yes
+    
+    - name: Remove SELinux port 8080 permission
+      ansible.builtin.command: semanage port -d -t http_port_t -p tcp 8080
+      when: selinux_port_check.rc == 0
+      register: selinux_remove_result
+      failed_when:
+        - selinux_remove_result.rc != 0
+        - "'not defined' not in selinux_remove_result.stderr"
+      ignore_errors: yes
+    
+    - name: Remove firewall rule for port 8080
+      ansible.builtin.command: firewall-cmd --permanent --remove-port=8080/tcp
+      register: firewall_remove
+      changed_when: "'NOT_ENABLED' not in firewall_remove.stderr"
+      failed_when:
+        - firewall_remove.rc != 0
+        - "'NOT_ENABLED' not in firewall_remove.stderr"
+      ignore_errors: yes
+    
+    - name: Reload firewall
+      ansible.builtin.command: firewall-cmd --reload
+      when: firewall_remove.changed
+      ignore_errors: yes
+    
+    - name: Create rollback marker for validation
+      ansible.builtin.file:
+        path: /tmp/phoenix_web_rollback
+        state: touch
+        mode: '0644'
+    
+    - name: Display rollback result
+      ansible.builtin.debug:
+        msg: "⚠️ Web server rolled back on {{ inventory_hostname }}"</code></pre>
 
             <h4>Playbook 6: <code>challenge6-rollback-database.yml</code></h4>
             <pre><code class="language-yaml">---
-- name: Rollback Database Server
+# Challenge 6 Solution - Part 6: Rollback Database
+# Phoenix Protocol - Full Stack Disaster Recovery
+# 
+# This playbook rolls back the database changes if validation fails
+
+- name: Challenge 6 - Rollback Database
   hosts: node2
   become: yes
+  gather_facts: yes
   
   tasks:
-    - name: Stop PostgreSQL
+    # Requirement 1: Stop and disable postgresql service
+    - name: Stop postgresql service
       ansible.builtin.service:
         name: postgresql
         state: stopped
         enabled: no
       ignore_errors: yes
     
+    # Requirement 2: Remove PostgreSQL data directory /var/lib/pgsql/data
     - name: Remove PostgreSQL data directory
       ansible.builtin.file:
-        path: /var/lib/pgsql/data
+        path: "{{ item }}"
         state: absent
-      ignore_errors: yes</code></pre>
+      loop:
+        - /var/lib/pgsql/data
+      ignore_errors: yes
+    
+    - name: Create rollback marker for validation
+      ansible.builtin.file:
+        path: /tmp/phoenix_db_rollback
+        state: touch
+        mode: '0644'
+    
+    - name: Display rollback result
+      ansible.builtin.debug:
+        msg: "⚠️ Database rolled back on {{ inventory_hostname }} - Phoenix Protocol rollback complete"</code></pre>
 
             <h4>Workflow Structure (AAP):</h4>
             <pre>
