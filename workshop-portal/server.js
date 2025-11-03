@@ -958,9 +958,10 @@ curl http://node3
                         <li>Target: node1</li>
                         <li>Install Apache/httpd, PHP, and php-pgsql packages</li>
                         <li><strong>CRITICAL:</strong> Install <code>policycoreutils-python-utils</code> (for semanage)</li>
-                        <li><strong>SELinux:</strong> Check if port 8080 exists, then add with semanage</li>
-                        <li>Use <code>shell</code> to check: <code>semanage port -l | grep -q "http_port_t.*8080"</code></li>
-                        <li>Use <code>when</code> condition to only add if not present (idempotent)</li>
+                        <li><strong>SELinux:</strong> Check if port 8080 exists with word boundary check</li>
+                        <li>Use <code>shell</code>: <code>semanage port -l | grep "http_port_t" | grep -w "8080"</code></li>
+                        <li>Use <code>when</code> condition to only add if not present</li>
+                        <li>Add <code>failed_when</code> to handle "already defined" error</li>
                         <li>Configure httpd: Use <code>lineinfile</code> to set Listen 8080</li>
                         <li>Start and enable httpd service</li>
                         <li>Firewall: Allow <code>8080/tcp</code> port</li>
@@ -1181,7 +1182,7 @@ curl http://node3
         state: present
     
     - name: Check if port 8080 is already configured in SELinux
-      ansible.builtin.shell: semanage port -l | grep -q "http_port_t.*8080"
+      ansible.builtin.shell: semanage port -l | grep "http_port_t" | grep -w "8080"
       register: selinux_port_check
       failed_when: false
       changed_when: false
@@ -1189,6 +1190,10 @@ curl http://node3
     - name: Configure SELinux to allow httpd on port 8080
       ansible.builtin.command: semanage port -a -t http_port_t -p tcp 8080
       when: selinux_port_check.rc != 0
+      register: selinux_add_result
+      failed_when: 
+        - selinux_add_result.rc != 0
+        - "'already defined' not in selinux_add_result.stderr"
     
     - name: Configure httpd to listen on port 8080
       ansible.builtin.lineinfile:
