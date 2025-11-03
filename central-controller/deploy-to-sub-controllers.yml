@@ -5,10 +5,13 @@
 # Requires: ansible-core >= 2.12, awx.awx collection
 
 - name: Deploy CTF Playbooks to Sub Ansible Controllers
-  hosts: all  # Run against all inventory hosts, filter by variables below
+  hosts: "{{ target_controllers | default('all') }}"  # Run against all inventory hosts, filter by variables below
   gather_facts: no
   serial: 1  # Deploy to one controller at a time to avoid overwhelming central controller
   vars:
+    # Target Controller Selection
+    # Override via survey or extra_vars to deploy to specific controllers:
+    # - target_controllers: 'all' (default), 'sub-controller-east', 'sub-controller-east,sub-controller-west'
     # Project and SCM Configuration
     # Override these via job template survey or extra_vars:
     # - scm_source_type: 'git' (default), 'manual', or 'archive'  

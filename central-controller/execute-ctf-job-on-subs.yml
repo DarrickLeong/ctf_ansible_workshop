@@ -1,0 +1,201 @@
+---
+# Execute CTF Job Templates on Specific Sub-Controllers
+# Run from Central AAP to trigger jobs on sub-controllers
+# Requires: ansible-core >= 2.12, awx.awx collection
+
+- name: Execute CTF Job on Selected Sub-Controllers
+  hosts: "{{ target_controllers | default('all') }}"
+  gather_facts: no
+  vars:
+    # Survey variables (set by job template survey):
+    # - job_template_name: Name of the job template to run on sub-controller
+    # - target_inventory: Inventory to use on sub-controller
+    # - target_credential: Credential to use on sub-controller
+    # - extra_variables: Extra vars to pass to job (optional, JSON format)
+    
+    # Connection to sub-controllers (from inventory host_vars)
+    awx_host: "{{ sub_controller_host }}"
+    awx_username: "{{ sub_controller_username }}"
+    awx_password: "{{ sub_controller_password | default('') }}"
+    awx_token: "{{ sub_controller_token | default('') }}"
+    awx_validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
+
+  pre_tasks:
+    - name: Display execution plan
+      debug:
+        msg: |
+          ==========================================
+          CTF JOB EXECUTION PLAN
+          ==========================================
+          Target Controllers: {{ ansible_play_hosts | join(', ') }}
+          Job Template: {{ job_template_name | default('NOT SPECIFIED') }}
+          Inventory: {{ target_inventory | default('NOT SPECIFIED') }}
+          Credential: {{ target_credential | default('NOT SPECIFIED') }}
+          ==========================================
+      run_once: true
+
+    - name: Validate required variables
+      assert:
+        that:
+          - job_template_name is defined
+          - target_inventory is defined
+          - target_credential is defined
+        fail_msg: |
+          Required variables missing:
+          - job_template_name: {{ job_template_name | default('NOT DEFINED') }}
+          - target_inventory: {{ target_inventory | default('NOT DEFINED') }}
+          - target_credential: {{ target_credential | default('NOT DEFINED') }}
+          
+          Please configure survey form with these questions!
+      run_once: true
+
+    - name: Skip hosts that are not sub controllers
+      meta: end_host
+      when: >
+        sub_controller_host is not defined or
+        sub_controller_username is not defined or
+        (sub_controller_password is not defined and sub_controller_token is not defined)
+
+  tasks:
+    - name: Execute job template on sub-controller
+      block:
+        - name: Display execution target
+          debug:
+            msg: |
+              ==========================================
+              EXECUTING JOB ON SUB-CONTROLLER
+              ==========================================
+              Controller: {{ inventory_hostname }}
+              Host: {{ awx_host }}
+              Job Template: {{ job_template_name }}
+              Inventory: {{ target_inventory }}
+              Credential: {{ target_credential }}
+              ==========================================
+        
+        - name: Test sub-controller connectivity
+          uri:
+            url: "https://{{ awx_host }}/api/controller/v2/"
+            method: GET
+            user: "{{ awx_username }}"
+            password: "{{ awx_password }}"
+            force_basic_auth: yes
+            validate_certs: "{{ awx_validate_certs }}"
+            timeout: 30
+          register: ping_result
+          failed_when: false
+          delegate_to: localhost
+
+        - name: Fail if controller unreachable
+          fail:
+            msg: "Cannot reach sub-controller {{ inventory_hostname }} at {{ awx_host }}"
+          when: ping_result.status != 200
+        
+        - name: Launch job template on sub-controller
+          ansible.controller.job_launch:
+            controller_host: "{{ awx_host }}"
+            controller_username: "{{ awx_username }}"
+            controller_password: "{{ awx_password }}"
+            validate_certs: "{{ awx_validate_certs }}"
+            job_template: "{{ job_template_name }}"
+            inventory: "{{ target_inventory }}"
+            credentials:
+              - "{{ target_credential }}"
+            extra_vars: "{{ extra_variables | default({}) }}"
+            wait: true
+            timeout: 600
+          register: job_result
+          delegate_to: localhost
+        
+        - name: Report job execution success
+          debug:
+            msg: |
+              ✅ Job executed successfully on {{ inventory_hostname }}:
+              - Job ID: {{ job_result.id }}
+              - Status: {{ job_result.status }}
+              - Job URL: https://{{ awx_host }}/#/jobs/playbook/{{ job_result.id }}
+              - Started: {{ job_result.started | default('N/A') }}
+              - Finished: {{ job_result.finished | default('N/A') }}
+
+        - name: Record successful execution
+          set_fact:
+            execution_success: true
+            execution_job_id: "{{ job_result.id }}"
+            execution_job_url: "https://{{ awx_host }}/#/jobs/playbook/{{ job_result.id }}"
+
+      rescue:
+        - name: Record execution failure
+          set_fact:
+            execution_success: false
+            execution_error: "{{ ansible_failed_result.msg | default('Unknown error') }}"
+
+        - name: Report job execution failure
+          debug:
+            msg: |
+              ❌ Failed to execute job on {{ inventory_hostname }}:
+              - Controller: {{ awx_host }}
+              - Job Template: {{ job_template_name }}
+              - Error: {{ execution_error }}
+
+# Execution Summary
+- name: Execution Summary
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Collect execution results
+      block:
+        - name: Initialize result lists
+          set_fact:
+            successful_executions: []
+            failed_executions: []
+
+        - name: Build successful executions list
+          set_fact:
+            successful_executions: "{{ successful_executions + [item] }}"
+          loop: "{{ ansible_play_hosts }}"
+          when:
+            - hostvars[item]['execution_success'] is defined
+            - hostvars[item]['execution_success'] == true
+
+        - name: Build failed executions list
+          set_fact:
+            failed_executions: "{{ failed_executions + [item] }}"
+          loop: "{{ ansible_play_hosts }}"
+          when:
+            - hostvars[item]['execution_success'] is defined
+            - hostvars[item]['execution_success'] == false
+
+    - name: Display final summary
+      debug:
+        msg: |
+          ==========================================
+          EXECUTION SUMMARY
+          ==========================================
+          Job Template: {{ job_template_name }}
+          Target Inventory: {{ target_inventory }}
+          Target Credential: {{ target_credential }}
+          
+          Total Controllers: {{ ansible_play_hosts | length }}
+          Successful: {{ successful_executions | length }}
+          Failed: {{ failed_executions | length }}
+          
+          SUCCESSFUL EXECUTIONS:
+          {% for controller in successful_executions %}
+          ✅ {{ controller }}:
+             - Job ID: {{ hostvars[controller]['execution_job_id'] }}
+             - Job URL: {{ hostvars[controller]['execution_job_url'] }}
+          {% endfor %}
+          
+          {% if failed_executions | length > 0 %}
+          FAILED EXECUTIONS:
+          {% for controller in failed_executions %}
+          ❌ {{ controller }}: {{ hostvars[controller]['execution_error'] | default('Unknown error') }}
+          {% endfor %}
+          {% endif %}
+          ==========================================
+
+    - name: Fail if any executions failed
+      fail:
+        msg: "{{ failed_executions | length }} execution(s) failed. Check logs above."
+      when: failed_executions | length > 0
+
