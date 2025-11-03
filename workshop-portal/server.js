@@ -989,14 +989,14 @@ curl http://node3
                 <details>
                     <summary><strong>🔍 Show me a hint</strong></summary>
                     <ul>
-                        <li>Target: web group (both node1 and node2)</li>
-                        <li>Check httpd service status on node1 (use <code>service_facts</code>)</li>
-                        <li>Check PostgreSQL service status on node2</li>
-                        <li>Test HTTP endpoint: <code>http://node1:8080/index.php</code></li>
-                        <li>Use <code>uri</code> module with <code>return_content: yes</code></li>
-                        <li>Verify response contains "healthy" text</li>
-                        <li>Test database port 5432 with <code>wait_for</code> module</li>
+                        <li>Target: node1 (use <code>delegate_to: node2</code> for PostgreSQL checks)</li>
+                        <li><strong>Requirement 1:</strong> Check httpd service on node1 using <code>service_facts</code> + <code>assert</code></li>
+                        <li><strong>Requirement 2:</strong> Check PostgreSQL service on node2 using <code>service_facts</code> with <code>delegate_to: node2</code> + <code>assert</code></li>
+                        <li><strong>Requirement 3:</strong> Test HTTP endpoint <code>http://node1:8080/index.php</code> using <code>uri</code> module</li>
+                        <li>Use <code>return_content: yes</code> and <code>failed_when</code> to check for "healthy" in response</li>
+                        <li><strong>Requirement 4:</strong> Playbook fails automatically if any check doesn't pass (via <code>assert</code>)</li>
                         <li><strong>CRITICAL:</strong> Create marker file <code>/tmp/phoenix_validated</code> on node1 for scoring!</li>
+                        <li><strong>Tip:</strong> You don't need extra verification tasks - <code>assert</code> already fails the playbook!</li>
                     </ul>
                 </details>
 
