@@ -229,6 +229,11 @@ echo -e "${GREEN}✓ Gitea PVC created${NC}"
 ##############################################################################
 echo ""
 echo -e "${GREEN}➜ Step 5: Creating Gitea configuration${NC}"
+
+# Generate secrets outside the heredoc
+SECRET_KEY=$(openssl rand -base64 32)
+INTERNAL_TOKEN=$(openssl rand -base64 106)
+
 cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: ConfigMap
@@ -239,7 +244,7 @@ data:
   app.ini: |
     APP_NAME = Ansible CTF Workshop - Gitea
     RUN_MODE = prod
-    RUN_USER = git
+    RUN_USER = gitea
 
     [server]
     PROTOCOL = http
@@ -266,8 +271,8 @@ data:
 
     [security]
     INSTALL_LOCK = true
-    SECRET_KEY = $(openssl rand -base64 32)
-    INTERNAL_TOKEN = $(openssl rand -base64 106)
+    SECRET_KEY = ${SECRET_KEY}
+    INTERNAL_TOKEN = ${INTERNAL_TOKEN}
 
     [service]
     DISABLE_REGISTRATION = false
