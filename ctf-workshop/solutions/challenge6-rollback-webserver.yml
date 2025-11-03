@@ -64,6 +64,12 @@
       when: firewall_remove.changed
       ignore_errors: yes
     
+    - name: Create rollback marker for validation
+      ansible.builtin.file:
+        path: /tmp/phoenix_web_rollback
+        state: touch
+        mode: '0644'
+    
     - name: Display rollback result
       ansible.builtin.debug:
         msg: |

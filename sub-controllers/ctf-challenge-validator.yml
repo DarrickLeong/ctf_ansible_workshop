@@ -268,42 +268,140 @@
       when: "'node3' in inventory_hostname or inventory_hostname == 'node3'"
 
     # ==========================================
-    # CHALLENGE 6: Phoenix Protocol (30 Points)
-    # This is validated through AAP Workflow completion
-    # Check for marker files or service states
+    # CHALLENGE 6: Phoenix Protocol (30 Points Total)
+    # Incremental scoring for each playbook:
+    #   1. Provision Database (5 points)
+    #   2. Provision Web Server (5 points)
+    #   3. Deploy Application (5 points)
+    #   4. Validate Service (5 points)
+    #   5. Rollback Web Server (5 points)
+    #   6. Rollback Database (5 points)
     # ==========================================
     - name: Challenge 6 - Check Phoenix Protocol completion
       block:
-        - name: Check for database service (node2)
+        # Step 1: Check Database Provisioning (5 points)
+        - name: Check if PostgreSQL service is running (node2)
           systemd:
             name: postgresql
           register: db_service_check
           ignore_errors: yes
           when: inventory_hostname == 'node2' or 'node2' in inventory_hostname
 
-        - name: Check for web service (node1)
+        - name: Check if PostgreSQL is initialized (node2)
+          stat:
+            path: /var/lib/pgsql/data/postgresql.conf
+          register: db_initialized
+          ignore_errors: yes
+          when: inventory_hostname == 'node2' or 'node2' in inventory_hostname
+
+        # Step 2: Check Web Server Provisioning (5 points)
+        - name: Check if httpd service is running (node1)
           systemd:
             name: httpd
           register: web_service_check
           ignore_errors: yes
           when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
 
+        - name: Check if httpd is listening on port 8080 (node1)
+          shell: netstat -tuln | grep ':8080 ' || ss -tuln | grep ':8080 '
+          register: port_8080_check
+          failed_when: false
+          changed_when: false
+          ignore_errors: yes
+          when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
+
+        - name: Check if SELinux port 8080 is configured (node1)
+          shell: semanage port -l | grep "http_port_t" | grep -w "8080"
+          register: selinux_8080_check
+          failed_when: false
+          changed_when: false
+          ignore_errors: yes
+          when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
+
+        - name: Check if firewall allows port 8080 (node1)
+          command: firewall-cmd --list-ports
+          register: firewall_8080_check
+          failed_when: false
+          changed_when: false
+          ignore_errors: yes
+          when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
+
+        # Step 3: Check Application Deployment (5 points)
+        - name: Check if application file exists (node1)
+          stat:
+            path: /var/www/html/index.php
+          register: app_deployed
+          ignore_errors: yes
+          when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
+
+        # Step 4: Check Validation marker (5 points)
         - name: Check for validation marker
           stat:
             path: /tmp/phoenix_validated
           register: phoenix_marker
           ignore_errors: yes
 
-        - name: Evaluate Challenge 6
-          set_fact:
-            challenge6_db_running: "{{ db_service_check.status.ActiveState == 'active' if db_service_check.status is defined else false }}"
-            challenge6_web_running: "{{ web_service_check.status.ActiveState == 'active' if web_service_check.status is defined else false }}"
-            challenge6_marker_exists: "{{ phoenix_marker.stat.exists if phoenix_marker.stat is defined else false }}"
+        # Steps 5 & 6: Rollback checks (5 points each)
+        # These are validated by checking if rollback was executed AND services are in clean state
+        - name: Check for web rollback marker (node1)
+          stat:
+            path: /tmp/phoenix_web_rollback
+          register: web_rollback_marker
+          ignore_errors: yes
+          when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
 
+        - name: Check for db rollback marker (node2)
+          stat:
+            path: /tmp/phoenix_db_rollback
+          register: db_rollback_marker
+          ignore_errors: yes
+          when: inventory_hostname == 'node2' or 'node2' in inventory_hostname
+
+        # Evaluate each step
+        - name: Evaluate Challenge 6 - Step 1 (Provision Database)
+          set_fact:
+            challenge6_step1_db_provisioned: "{{ 
+              (db_service_check.status.ActiveState == 'active' if db_service_check.status is defined else false) and
+              (db_initialized.stat.exists if db_initialized.stat is defined else false)
+            }}"
+
+        - name: Evaluate Challenge 6 - Step 2 (Provision Web Server)
+          set_fact:
+            challenge6_step2_web_provisioned: "{{
+              (web_service_check.status.ActiveState == 'active' if web_service_check.status is defined else false) and
+              (port_8080_check.rc == 0 if port_8080_check.rc is defined else false) and
+              (selinux_8080_check.rc == 0 if selinux_8080_check.rc is defined else false) and
+              ('8080' in firewall_8080_check.stdout if firewall_8080_check.stdout is defined else false)
+            }}"
+
+        - name: Evaluate Challenge 6 - Step 3 (Deploy Application)
+          set_fact:
+            challenge6_step3_app_deployed: "{{ app_deployed.stat.exists if app_deployed.stat is defined else false }}"
+
+        - name: Evaluate Challenge 6 - Step 4 (Validate Service)
+          set_fact:
+            challenge6_step4_validated: "{{ phoenix_marker.stat.exists if phoenix_marker.stat is defined else false }}"
+
+        - name: Evaluate Challenge 6 - Step 5 (Rollback Web)
+          set_fact:
+            challenge6_step5_web_rollback: "{{ web_rollback_marker.stat.exists if web_rollback_marker.stat is defined else false }}"
+
+        - name: Evaluate Challenge 6 - Step 6 (Rollback DB)
+          set_fact:
+            challenge6_step6_db_rollback: "{{ db_rollback_marker.stat.exists if db_rollback_marker.stat is defined else false }}"
+
+        # Calculate total points (5 points per step)
         - name: Calculate Challenge 6 points
           set_fact:
-            challenge6_points: "{{ ((challenge6_db_running | int * 10) + (challenge6_web_running | int * 10) + (challenge6_marker_exists | int * 10)) }}"
-            challenge6_completed: "{{ challenge6_marker_exists }}"
+            challenge6_points: "{{
+              (challenge6_step1_db_provisioned | default(false) | bool | int * 5) +
+              (challenge6_step2_web_provisioned | default(false) | bool | int * 5) +
+              (challenge6_step3_app_deployed | default(false) | bool | int * 5) +
+              (challenge6_step4_validated | default(false) | bool | int * 5) +
+              (challenge6_step5_web_rollback | default(false) | bool | int * 5) +
+              (challenge6_step6_db_rollback | default(false) | bool | int * 5)
+            }}"
+            challenge6_completed: "{{ challenge6_step4_validated | default(false) }}"
 
         - name: Update Challenge 6 results
           set_fact:
@@ -315,9 +413,12 @@
                     'points_earned': challenge6_points | int,
                     'max_points': 30,
                     'details': {
-                      'database_running': challenge6_db_running,
-                      'webserver_running': challenge6_web_running,
-                      'validation_marker': challenge6_marker_exists,
+                      'step1_database_provisioned': challenge6_step1_db_provisioned | default(false),
+                      'step2_webserver_provisioned': challenge6_step2_web_provisioned | default(false),
+                      'step3_application_deployed': challenge6_step3_app_deployed | default(false),
+                      'step4_validation_passed': challenge6_step4_validated | default(false),
+                      'step5_web_rollback': challenge6_step5_web_rollback | default(false),
+                      'step6_db_rollback': challenge6_step6_db_rollback | default(false),
                       'hostname': inventory_hostname
                     }
                   }
@@ -379,7 +480,13 @@
           Challenge 3 (rogue_user): {{ challenge_results.challenge3_rogue_user.points_earned | default(0) }}/15 points
           Challenge 4 (MOTD): {{ challenge_results.challenge4_motd.points_earned | default(0) }}/20 points
           Challenge 5 (firewall): {{ challenge_results.challenge5_firewall.points_earned | default(0) }}/20 points
-          Challenge 6 (Phoenix): {{ challenge_results.challenge6_phoenix.points_earned | default(0) }}/30 points
+          Challenge 6 (Phoenix Protocol): {{ challenge_results.challenge6_phoenix.points_earned | default(0) }}/30 points
+            ├─ Step 1 (Provision Database): {{ '+5' if challenge_results.challenge6_phoenix.details.step1_database_provisioned else '0' }} pts
+            ├─ Step 2 (Provision Web Server): {{ '+5' if challenge_results.challenge6_phoenix.details.step2_webserver_provisioned else '0' }} pts
+            ├─ Step 3 (Deploy Application): {{ '+5' if challenge_results.challenge6_phoenix.details.step3_application_deployed else '0' }} pts
+            ├─ Step 4 (Validate Service): {{ '+5' if challenge_results.challenge6_phoenix.details.step4_validation_passed else '0' }} pts
+            ├─ Step 5 (Rollback Web Server): {{ '+5' if challenge_results.challenge6_phoenix.details.step5_web_rollback else '0' }} pts
+            └─ Step 6 (Rollback Database): {{ '+5' if challenge_results.challenge6_phoenix.details.step6_db_rollback else '0' }} pts
           
           Tracker: {{ 'SUCCESS' if tracker_response is defined and tracker_response is succeeded else 'SKIPPED' }}
           ==========================================

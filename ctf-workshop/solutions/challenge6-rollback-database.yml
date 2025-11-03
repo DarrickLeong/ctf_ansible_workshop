@@ -25,6 +25,12 @@
         - /var/lib/pgsql/data
       ignore_errors: yes
     
+    - name: Create rollback marker for validation
+      ansible.builtin.file:
+        path: /tmp/phoenix_db_rollback
+        state: touch
+        mode: '0644'
+    
     - name: Display rollback result
       ansible.builtin.debug:
         msg: |
