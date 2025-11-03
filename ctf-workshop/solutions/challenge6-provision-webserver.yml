@@ -28,12 +28,15 @@
         state: present
       register: web_install
     
+    - name: Check if port 8080 is already configured in SELinux
+      ansible.builtin.shell: semanage port -l | grep -q "http_port_t.*8080"
+      register: selinux_port_check
+      failed_when: false
+      changed_when: false
+    
     - name: Configure SELinux to allow httpd on port 8080
-      community.general.seport:
-        ports: 8080
-        proto: tcp
-        setype: http_port_t
-        state: present
+      ansible.builtin.command: semanage port -a -t http_port_t -p tcp 8080
+      when: selinux_port_check.rc != 0
     
     - name: Configure httpd to listen on port 8080
       ansible.builtin.lineinfile:
