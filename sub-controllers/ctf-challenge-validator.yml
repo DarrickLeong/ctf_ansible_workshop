@@ -241,7 +241,7 @@
 
         - name: Calculate Challenge 5 points
           set_fact:
-            challenge5_points: "{{ ((challenge5_firewall_running | int * 5) + (challenge5_http_allowed | int * 7) + (challenge5_http_permanent | int * 8)) if challenge5_applies else 0 }}"
+            challenge5_points: "{{ 20 if (challenge5_applies and challenge5_firewall_running and challenge5_http_allowed and challenge5_http_permanent) else 0 }}"
             challenge5_completed: "{{ challenge5_applies and challenge5_firewall_running and challenge5_http_allowed and challenge5_http_permanent }}"
 
         - name: Update Challenge 5 results
