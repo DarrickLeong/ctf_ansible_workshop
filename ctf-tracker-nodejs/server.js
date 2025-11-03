@@ -225,17 +225,20 @@ app.post('/api/challenge_results', (req, res) => {
                     const points = result.points_earned || 0;
                     totalPoints += points;
 
-                    insertPromises.push(new Promise((resolve, reject) => {
-                        db.run(`INSERT INTO challenge_results 
-                                (attendee_id, hostname, challenge_type, points_earned, max_points, completed, details, aap_cluster_id) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                               [attendee_id, hostname, challenge_type, points, result.max_points || 0, 
-                                result.completed ? 1 : 0, result.details || '', aap_cluster_id || ''],
-                               function(err) {
-                                   if (err) reject(err);
-                                   else resolve(this.lastID);
-                               });
-                    }));
+                    // Only record results with points > 0 to avoid cluttering activity feed
+                    if (points > 0) {
+                        insertPromises.push(new Promise((resolve, reject) => {
+                            db.run(`INSERT INTO challenge_results 
+                                    (attendee_id, hostname, challenge_type, points_earned, max_points, completed, details, aap_cluster_id) 
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                                   [attendee_id, hostname, challenge_type, points, result.max_points || 0, 
+                                    result.completed ? 1 : 0, result.details || '', aap_cluster_id || ''],
+                                   function(err) {
+                                       if (err) reject(err);
+                                       else resolve(this.lastID);
+                                   });
+                        }));
+                    }
                 });
 
                 // Wait for all inserts and recalculate attendee total

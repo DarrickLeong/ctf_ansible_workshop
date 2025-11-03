@@ -186,7 +186,7 @@
 
         - name: Calculate Challenge 4 points
           set_fact:
-            challenge4_points: "{{ ((challenge4_file_exists | int * 5) + (challenge4_has_hostname | int * 8) + (challenge4_has_sre | int * 7)) }}"
+            challenge4_points: "{{ 20 if challenge4_correct else 0 }}"
             challenge4_completed: "{{ challenge4_correct }}"
 
         - name: Update Challenge 4 results
