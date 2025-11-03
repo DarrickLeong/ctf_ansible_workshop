@@ -1634,6 +1634,39 @@ app.get('/', (req, res) => {
                     <p>This workshop provides hands-on experience with Ansible through practical, real-world scenarios. You'll learn by solving challenges that progressively build your automation skills.</p>
                 </div>
 
+                <div class="alert alert-success">
+                    <h4>🔗 Workshop Materials & Git Repository</h4>
+                    <p><strong>Access your personal Git repository:</strong></p>
+                    <p>🌐 <strong>Gitea URL:</strong> <a href="https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com" target="_blank" style="color: #34d399; text-decoration: underline;">https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com</a></p>
+                    
+                    <h5 style="margin-top: 15px;">📦 What's in Your Repository:</h5>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>Repository Name:</strong> <code>ansible-ctf-challenges</code></li>
+                        <li><strong>6 Challenge Directories:</strong> One for each exercise with problem descriptions and templates</li>
+                        <li><strong>Solution Templates:</strong> Starter playbooks to help you begin</li>
+                        <li><strong>README Files:</strong> Detailed instructions and hints for each challenge</li>
+                    </ul>
+
+                    <h5 style="margin-top: 15px;">🚀 Quick Start:</h5>
+                    <ol style="margin-left: 20px;">
+                        <li><strong>Login to Gitea</strong> with your provided credentials</li>
+                        <li><strong>Find your repository:</strong> <code>your-username/ansible-ctf-challenges</code></li>
+                        <li><strong>Clone it:</strong>
+                            <pre style="background: #1f1f23; padding: 10px; border-radius: 4px; margin-top: 5px;"><code>git clone https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com/your-username/ansible-ctf-challenges.git</code></pre>
+                        </li>
+                        <li><strong>Navigate to challenge folders</strong> (challenge1/ through challenge6/)</li>
+                        <li><strong>Write your playbooks</strong> and commit your solutions</li>
+                    </ol>
+
+                    <h5 style="margin-top: 15px;">💡 Pro Tips:</h5>
+                    <ul style="margin-left: 20px;">
+                        <li>Each challenge folder has a README.md with the problem description</li>
+                        <li>Use the templates/ directory for Challenge 4 (MOTD template)</li>
+                        <li>Commit your work regularly to track your progress</li>
+                        <li>You can reference the workshop portal for step-by-step guides</li>
+                    </ul>
+                </div>
+
                 <h2>Workshop Structure</h2>
                 
                 <h3>Section 1 - Fundamental Ansible Challenges</h3>
