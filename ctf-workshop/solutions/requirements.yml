@@ -1,0 +1,19 @@
+---
+# Collection Requirements for CTF Workshop Solutions
+# Install with: ansible-galaxy collection install -r requirements.yml
+
+collections:
+  # Required for Challenge 5 (Firewall) and Challenge 6 (Web Server Firewall)
+  - name: ansible.posix
+    version: ">=1.5.4"
+  
+  # Required for Challenge 6 SELinux Management (RECOMMENDED METHOD)
+  - name: fedora.linux_system_roles
+    version: ">=1.0.0"
+    # Contains: linux-system-roles.selinux role for proper SELinux management
+    # Docs: https://github.com/linux-system-roles/selinux
+    # Red Hat Docs: https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/using_selinux/deploying-the-same-selinux-configuration-on-multiple-systems_using-selinux
+
+# Alternative: Install directly from Galaxy
+# ansible-galaxy role install linux-system-roles.selinux
+

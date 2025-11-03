@@ -1,0 +1,63 @@
+---
+# Challenge 6 Rollback - Web Server (v2 - System Roles)
+# Phoenix Protocol - Rollback Web Server Using System Roles
+#
+# This playbook removes the web server configuration using linux-system-roles.selinux
+
+- name: Challenge 6 - Rollback Web Server (System Roles Method)
+  hosts: node1
+  become: yes
+  gather_facts: no
+  
+  tasks:
+    - name: Stop httpd service
+      ansible.builtin.service:
+        name: httpd
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+    
+    - name: Remove web application files
+      ansible.builtin.file:
+        path: /var/www/html/index.php
+        state: absent
+      ignore_errors: yes
+    
+    - name: Restore httpd.conf to default Listen port 80
+      ansible.builtin.lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^Listen '
+        line: 'Listen 80'
+      ignore_errors: yes
+    
+    # BEST PRACTICE: Use linux-system-roles.selinux role for SELinux management
+    - name: Remove SELinux port 8080 permission
+      ansible.builtin.include_role:
+        name: linux-system-roles.selinux
+      vars:
+        selinux_ports:
+          - ports: 8080
+            proto: tcp
+            setype: http_port_t
+            state: absent
+            local: true
+      ignore_errors: yes
+    
+    - name: Remove firewall rule for port 8080
+      ansible.posix.firewalld:
+        port: 8080/tcp
+        permanent: yes
+        state: disabled
+        immediate: yes
+      ignore_errors: yes
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: |
+          ✅ Web server rolled back on {{ inventory_hostname }}!
+          - httpd stopped and disabled
+          - Application files removed
+          - httpd.conf restored to port 80
+          - SELinux port 8080 permission removed
+          - Firewall rule removed
+

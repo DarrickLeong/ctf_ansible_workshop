@@ -1,0 +1,72 @@
+---
+# Challenge 6 Solution - Part 2: Provision Web Server (v2 - System Roles)
+# Phoenix Protocol - Full Stack Disaster Recovery
+# 
+# This playbook provisions the web server (node1) using linux-system-roles.selinux
+# BEST PRACTICE: Uses official Red Hat System Role for SELinux management
+
+- name: Challenge 6 - Provision Web Server (System Roles Method)
+  hosts: node1
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Ensure /var/www/html directory exists
+      ansible.builtin.file:
+        path: /var/www/html
+        state: directory
+        owner: apache
+        group: apache
+        mode: '0755'
+    
+    - name: Install Apache (httpd), PHP, and PostgreSQL client
+      ansible.builtin.dnf:
+        name:
+          - httpd
+          - php
+          - php-pgsql
+        state: present
+      register: web_install
+    
+    # BEST PRACTICE: Use linux-system-roles.selinux role for SELinux management
+    - name: Configure SELinux to allow httpd on port 8080
+      ansible.builtin.include_role:
+        name: linux-system-roles.selinux
+      vars:
+        selinux_ports:
+          - ports: 8080
+            proto: tcp
+            setype: http_port_t
+            state: present
+            local: true
+    
+    - name: Configure httpd to listen on port 8080
+      ansible.builtin.lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^Listen '
+        line: 'Listen 8080'
+        backup: yes
+    
+    - name: Start and enable httpd service
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: yes
+      register: web_service
+    
+    - name: Allow port 8080 through firewall
+      ansible.posix.firewalld:
+        port: 8080/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: |
+          ✅ Web server provisioned on {{ inventory_hostname }}!
+          Packages installed: {{ web_install.changed }}
+          Service running: {{ web_service.state }}
+          Listening on port: 8080
+          SELinux configured: Port 8080 allowed for http_port_t
+

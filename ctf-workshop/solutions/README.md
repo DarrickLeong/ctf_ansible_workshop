@@ -16,11 +16,17 @@ This directory contains complete solution playbooks for all CTF challenges. Thes
 
 ### Advanced Challenge (Workflow)
 - **`challenge6-provision-database.yml`** - Part 1: Provision DB
-- **`challenge6-provision-webserver.yml`** - Part 2: Provision Web
+- **`challenge6-provision-webserver.yml`** - Part 2: Provision Web (Command-based SELinux) ⭐
+- **`challenge6-provision-webserver-v2.yml`** - Part 2: Provision Web (System Roles SELinux) 🌟
 - **`challenge6-deploy-application.yml`** - Part 3: Deploy App
 - **`challenge6-validate-service.yml`** - Part 4: Validate
-- **`challenge6-rollback-webserver.yml`** - Part 5: Rollback Web
+- **`challenge6-rollback-webserver.yml`** - Part 5: Rollback Web (Command-based)
+- **`challenge6-rollback-webserver-v2.yml`** - Part 5: Rollback Web (System Roles) 🌟
 - **`challenge6-rollback-database.yml`** - Part 6: Rollback DB
+
+### Support Files
+- **`requirements.yml`** - Collection requirements for solutions
+- **`SELINUX_METHODS_COMPARISON.md`** - Detailed comparison of SELinux configuration methods
 
 ## 🚀 Usage
 
@@ -181,11 +187,67 @@ Validate [ON FAILURE] → Rollback Web → Rollback DB → END
 
 ### Challenge 6 (30 Points + 10 Extra)
 **Key Concept**: Workflow orchestration with dependencies and rollbacks
-- 6 separate playbooks
+
+**SELinux Configuration (Two Methods)**:
+
+**Method 1: Command-Based (Default)** ⭐
+```yaml
+# Check if already configured
+- name: Check if port 8080 is already configured in SELinux
+  ansible.builtin.shell: semanage port -l | grep -q "http_port_t.*8080"
+  register: selinux_port_check
+  failed_when: false
+  changed_when: false
+
+# Add only if not present
+- name: Configure SELinux to allow httpd on port 8080
+  ansible.builtin.command: semanage port -a -t http_port_t -p tcp 8080
+  when: selinux_port_check.rc != 0
+```
+- ✅ Works in any Execution Environment
+- ✅ No external dependencies
+- ✅ Teaches idempotency patterns
+- ⚠️ Requires manual state checking
+
+**Method 2: System Roles (Best Practice)** 🌟
+```yaml
+# Using official Red Hat System Role
+- name: Configure SELinux to allow httpd on port 8080
+  ansible.builtin.include_role:
+    name: linux-system-roles.selinux
+  vars:
+    selinux_ports:
+      - ports: 8080
+        proto: tcp
+        setype: http_port_t
+        state: present
+        local: true
+```
+- ✅ Official Red Hat supported
+- ✅ Idempotent by design
+- ✅ Declarative configuration
+- ⚠️ Requires collection: `fedora.linux_system_roles`
+
+**Installation**:
+```bash
+# Install collections
+ansible-galaxy collection install -r ctf-workshop/solutions/requirements.yml
+
+# Or install role directly
+ansible-galaxy role install linux-system-roles.selinux
+```
+
+**Files**:
+- 6 separate playbooks (two versions for webserver provision/rollback)
 - 6 job templates
 - 1 workflow template
 - Success and failure paths
 - Optional approval gate
+
+**Resources**:
+- [System Roles Method Comparison](SELINUX_METHODS_COMPARISON.md)
+- [GitHub - linux-system-roles/selinux](https://github.com/linux-system-roles/selinux)
+- [Red Hat Docs - SELinux System Role](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/using_selinux/deploying-the-same-selinux-configuration-on-multiple-systems_using-selinux)
 
 ## 🎓 Teaching Points
 
@@ -220,6 +282,9 @@ Validate [ON FAILURE] → Rollback Web → Rollback DB → END
 - Rollback strategies
 - Manual approval gates
 - Multi-tier application recovery
+- **SELinux management** (two approaches: command-based vs system roles)
+- **Idempotency patterns** (making commands idempotent)
+- **Production best practices** (declarative vs imperative)
 
 ## 🔍 Verification
 
