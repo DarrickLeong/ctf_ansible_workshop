@@ -209,83 +209,100 @@ app.post('/api/challenge_results', (req, res) => {
             // Do NOT auto-register controllers from challenge results
             // Controllers should only be registered via the central controller deployment
             
-            // Clear previous results for this attendee and hostname to avoid duplicates
-            db.run('DELETE FROM challenge_results WHERE attendee_id = ? AND hostname = ?', 
-                   [attendee_id, hostname], (err) => {
-                if (err) {
-                    console.error('Error clearing previous results:', err);
-                    return res.status(500).json({ error: 'Error clearing previous results' });
-                }
+            // NEW LOGIC: Keep existing records, only add NEW or IMPROVED scores
+            // This prevents duplicate activities when multiple nodes report the same challenge
+            
+            let totalPoints = 0;
+            const insertPromises = [];
 
-                let totalPoints = 0;
-                const insertPromises = [];
+            // Process each challenge result
+            Object.entries(challenge_results).forEach(([challenge_type, result]) => {
+                const points = result.points_earned || 0;
+                totalPoints += points;
 
-                // Process each challenge result
-                Object.entries(challenge_results).forEach(([challenge_type, result]) => {
-                    const points = result.points_earned || 0;
-                    totalPoints += points;
-
-                    // Only record results with points > 0 to avoid cluttering activity feed
-                    if (points > 0) {
-                        insertPromises.push(new Promise((resolve, reject) => {
-                            db.run(`INSERT INTO challenge_results 
-                                    (attendee_id, hostname, challenge_type, points_earned, max_points, completed, details, aap_cluster_id) 
-                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                                   [attendee_id, hostname, challenge_type, points, result.max_points || 0, 
-                                    result.completed ? 1 : 0, result.details || '', aap_cluster_id || ''],
-                                   function(err) {
-                                       if (err) reject(err);
-                                       else resolve(this.lastID);
-                                   });
-                        }));
-                    }
-                });
-
-                // Wait for all inserts and recalculate attendee total
-                Promise.all(insertPromises)
-                    .then(() => {
-                        // Recalculate total points from all challenge results for this attendee
-                        // Use MAX to avoid counting the same challenge multiple times across different hosts
-                        db.get(`SELECT SUM(max_points_per_challenge) as total 
-                                FROM (
-                                    SELECT challenge_type, MAX(points_earned) as max_points_per_challenge
-                                    FROM challenge_results 
-                                    WHERE attendee_id = ?
-                                    GROUP BY challenge_type
-                                )`,
-                               [attendee_id], (err, result) => {
+                // Only record results with points > 0 to avoid cluttering activity feed
+                if (points > 0) {
+                    // Check if this challenge already has an equal or higher score
+                    insertPromises.push(new Promise((resolve, reject) => {
+                        db.get(`SELECT MAX(points_earned) as max_points 
+                                FROM challenge_results 
+                                WHERE attendee_id = ? AND challenge_type = ?`,
+                               [attendee_id, challenge_type], (err, existing) => {
                             if (err) {
-                                console.error('Error calculating total points:', err);
-                                return res.status(500).json({ error: 'Error calculating points' });
+                                reject(err);
+                                return;
+                            }
+                            
+                            const existingPoints = existing?.max_points || 0;
+                            
+                            // Only insert if this is a NEW achievement or HIGHER score
+                            if (points > existingPoints) {
+                                db.run(`INSERT INTO challenge_results 
+                                        (attendee_id, hostname, challenge_type, points_earned, max_points, completed, details, aap_cluster_id) 
+                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                                       [attendee_id, hostname, challenge_type, points, result.max_points || 0, 
+                                        result.completed ? 1 : 0, result.details || '', aap_cluster_id || ''],
+                                       function(err) {
+                                           if (err) reject(err);
+                                           else {
+                                               console.log(`🎯 NEW/IMPROVED: ${attendee_name} earned ${points} pts for ${challenge_type} on ${hostname} (previous: ${existingPoints})`);
+                                               resolve(this.lastID);
+                                           }
+                                       });
+                            } else {
+                                // Challenge already completed with same or higher score - skip duplicate activity
+                                console.log(`⏭️  SKIP: ${attendee_name} already has ${existingPoints} pts for ${challenge_type} (${hostname} reporting ${points})`);
+                                resolve(null);
+                            }
+                        });
+                    }));
+                }
+            });
+
+            // Wait for all inserts and recalculate attendee total
+            Promise.all(insertPromises)
+                .then(() => {
+                    // Recalculate total points from all challenge results for this attendee
+                    // Use MAX to avoid counting the same challenge multiple times across different hosts
+                    db.get(`SELECT SUM(max_points_per_challenge) as total 
+                            FROM (
+                                SELECT challenge_type, MAX(points_earned) as max_points_per_challenge
+                                FROM challenge_results 
+                                WHERE attendee_id = ?
+                                GROUP BY challenge_type
+                            )`,
+                           [attendee_id], (err, result) => {
+                        if (err) {
+                            console.error('Error calculating total points:', err);
+                            return res.status(500).json({ error: 'Error calculating points' });
+                        }
+
+                        const newTotal = result.total || 0;
+                        
+                        // Update attendee's total points
+                        db.run('UPDATE attendees SET total_points = ? WHERE id = ?', 
+                               [newTotal, attendee_id], (err) => {
+                            if (err) {
+                                console.error('Error updating attendee points:', err);
+                                return res.status(500).json({ error: 'Error updating points' });
                             }
 
-                            const newTotal = result.total || 0;
-                            
-                            // Update attendee's total points
-                            db.run('UPDATE attendees SET total_points = ? WHERE id = ?', 
-                                   [newTotal, attendee_id], (err) => {
-                                if (err) {
-                                    console.error('Error updating attendee points:', err);
-                                    return res.status(500).json({ error: 'Error updating points' });
-                                }
-
-                                console.log(`✅ Updated ${attendee_name} total points: ${newTotal} (added ${totalPoints} from ${hostname})`);
-                                res.json({ 
-                                    message: 'Challenge results recorded successfully',
-                                    attendee_name,
-                                    hostname,
-                                    points_added: totalPoints,
-                                    total_points: newTotal,
-                                    challenges_processed: Object.keys(challenge_results).length
-                                });
+                            console.log(`✅ Updated ${attendee_name} total points: ${newTotal} (added ${totalPoints} from ${hostname})`);
+                            res.json({ 
+                                message: 'Challenge results recorded successfully',
+                                attendee_name,
+                                hostname,
+                                points_added: totalPoints,
+                                total_points: newTotal,
+                                challenges_processed: Object.keys(challenge_results).length
                             });
                         });
-                    })
-                    .catch(err => {
-                        console.error('Error inserting challenge results:', err);
-                        res.status(500).json({ error: 'Error recording results' });
                     });
-            });
+                })
+                .catch(err => {
+                    console.error('Error inserting challenge results:', err);
+                    res.status(500).json({ error: 'Error recording results' });
+                });
         };
 
         if (attendee) {
