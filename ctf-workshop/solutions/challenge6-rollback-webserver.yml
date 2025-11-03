@@ -23,7 +23,30 @@
         state: absent
       loop:
         - /var/www/html/index.html
+        - /var/www/html/index.php
         - /var/www/html/config.txt
+      ignore_errors: yes
+    
+    - name: Restore httpd.conf to default Listen port 80
+      ansible.builtin.lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^Listen '
+        line: 'Listen 80'
+      ignore_errors: yes
+    
+    - name: Remove SELinux port 8080 permission
+      ansible.builtin.command: semanage port -d -t http_port_t -p tcp 8080
+      register: semanage_remove
+      failed_when: false
+      changed_when: semanage_remove.rc == 0
+      ignore_errors: yes
+    
+    - name: Remove firewall rule for port 8080
+      ansible.posix.firewalld:
+        port: 8080/tcp
+        permanent: yes
+        state: disabled
+        immediate: yes
       ignore_errors: yes
     
     - name: Display rollback result
@@ -32,4 +55,5 @@
           ⚠️ Web server rolled back on {{ inventory_hostname }}
           Services stopped
           Application files removed
+          Port 8080 configuration cleaned up
 

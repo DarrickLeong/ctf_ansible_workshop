@@ -10,20 +10,7 @@
   gather_facts: yes
   
   tasks:
-    - name: Install Apache (httpd) package
-      ansible.builtin.dnf:
-        name: httpd
-        state: present
-      register: web_install
-    
-    - name: Ensure httpd service is started and enabled
-      ansible.builtin.service:
-        name: httpd
-        state: started
-        enabled: yes
-      register: web_service
-    
-    - name: Create web root directory
+    - name: Ensure /var/www/html directory exists
       ansible.builtin.file:
         path: /var/www/html
         state: directory
@@ -31,10 +18,48 @@
         group: apache
         mode: '0755'
     
+    - name: Install Apache (httpd), PHP, and SELinux tools
+      ansible.builtin.dnf:
+        name:
+          - httpd
+          - php
+          - php-pgsql
+          - policycoreutils-python-utils
+        state: present
+      register: web_install
+    
+    - name: Configure SELinux to allow httpd on port 8080
+      ansible.builtin.command: semanage port -a -t http_port_t -p tcp 8080
+      register: semanage_result
+      failed_when: false
+      changed_when: semanage_result.rc == 0
+    
+    - name: Configure httpd to listen on port 8080
+      ansible.builtin.lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^Listen '
+        line: 'Listen 8080'
+        backup: yes
+    
+    - name: Start and enable httpd service
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: yes
+      register: web_service
+    
+    - name: Allow port 8080 through firewall
+      ansible.posix.firewalld:
+        port: 8080/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes
+    
     - name: Display result
       ansible.builtin.debug:
         msg: |
           ✅ Web server provisioned on {{ inventory_hostname }}!
           Packages installed: {{ web_install.changed }}
           Service running: {{ web_service.state }}
+          Listening on port: 8080
 

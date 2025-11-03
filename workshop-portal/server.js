@@ -955,9 +955,12 @@ curl http://node3
                     <summary><strong>🔍 Show me a hint</strong></summary>
                     <ul>
                         <li>Target: node1</li>
-                        <li>Install Apache/httpd packages</li>
-                        <li>Configure web server</li>
+                        <li>Install Apache/httpd, PHP, and php-pgsql packages</li>
+                        <li><strong>CRITICAL:</strong> Install <code>policycoreutils-python-utils</code> (for semanage)</li>
+                        <li><strong>SELinux:</strong> Run <code>semanage port -a -t http_port_t -p tcp 8080</code></li>
+                        <li>Configure httpd: Use <code>lineinfile</code> to set Listen 8080</li>
                         <li>Start and enable httpd service</li>
+                        <li>Firewall: Allow <code>8080/tcp</code> port</li>
                     </ul>
                 </details>
 
@@ -1157,19 +1160,35 @@ curl http://node3
   become: yes
   
   tasks:
-    - name: Install Apache web server
+    - name: Ensure /var/www/html directory exists
+      ansible.builtin.file:
+        path: /var/www/html
+        state: directory
+        owner: apache
+        group: apache
+        mode: '0755'
+    
+    - name: Install Apache, PHP, and SELinux tools
       ansible.builtin.dnf:
         name:
           - httpd
           - php
           - php-pgsql
+          - policycoreutils-python-utils
         state: present
+    
+    - name: Configure SELinux to allow httpd on port 8080
+      ansible.builtin.command: semanage port -a -t http_port_t -p tcp 8080
+      register: semanage_result
+      failed_when: false
+      changed_when: semanage_result.rc == 0
     
     - name: Configure httpd to listen on port 8080
       ansible.builtin.lineinfile:
         path: /etc/httpd/conf/httpd.conf
         regexp: '^Listen '
         line: 'Listen 8080'
+        backup: yes
     
     - name: Start and enable httpd
       ansible.builtin.service:

@@ -25,7 +25,7 @@
     
     - name: Test HTTP response from web server
       ansible.builtin.uri:
-        url: "http://{{ hostvars['node1']['ansible_default_ipv4']['address'] }}"
+        url: "http://{{ hostvars['node1']['ansible_default_ipv4']['address'] }}:8080"
         method: GET
         status_code: 200
         timeout: 10
