@@ -929,7 +929,7 @@ curl http://node3
             </ul>
         `,
         guide: `
-            <details open>
+            <details>
                 <summary><strong>📖 Click to Show/Hide Step-by-Step Guide</strong></summary>
                 <div style="margin-top: 20px;">
             
