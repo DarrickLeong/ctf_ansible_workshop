@@ -388,10 +388,10 @@
         - name: Evaluate Challenge 6 - Step 4 (Validate Service)
           set_fact:
             challenge6_step4_validated: "{{
-              (web_service_check.status.ActiveState == 'active' if web_service_check.status is defined else false) and
-              (db_service_check.status.ActiveState == 'active' if db_service_check.status is defined else false) and
-              (validation_http_test.status == 200 if validation_http_test.status is defined else false) and
-              ('healthy' in validation_http_test.content if validation_http_test.content is defined else false)
+              (hostvars['node1']['web_service_check'].status.ActiveState == 'active' if hostvars['node1']['web_service_check'].status is defined else false) and
+              (hostvars['node2']['db_service_check'].status.ActiveState == 'active' if hostvars['node2']['db_service_check'].status is defined else false) and
+              (hostvars['node1']['validation_http_test'].status == 200 if hostvars['node1']['validation_http_test'].status is defined else false) and
+              ('healthy' in hostvars['node1']['validation_http_test'].content if hostvars['node1']['validation_http_test'].content is defined else false)
             }}"
 
         - name: Evaluate Challenge 6 - Step 5 (Rollback Web)
