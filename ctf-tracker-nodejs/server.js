@@ -513,6 +513,53 @@ app.get('/api/stats', (req, res) => {
 });
 
 // API: Clear all data (for testing)
+// API: Reset scores and activity only (keep attendees and controllers)
+app.delete('/api/reset_scores', (req, res) => {
+    db.serialize(() => {
+        // Clear challenge results and activity
+        db.run('DELETE FROM challenge_results', function(err) {
+            if (err) {
+                console.error('Error clearing challenge results:', err);
+                return res.status(500).json({ error: 'Database error clearing results' });
+            }
+            
+            const resultsCleared = this.changes;
+            
+            // Clear connectivity tests (activity data)
+            db.run('DELETE FROM connectivity_tests', function(err) {
+                if (err) {
+                    console.error('Error clearing connectivity tests:', err);
+                    return res.status(500).json({ error: 'Database error clearing tests' });
+                }
+                
+                const testsCleared = this.changes;
+                
+                // Reset all attendee points to 0
+                db.run('UPDATE attendees SET total_points = 0', function(err) {
+                    if (err) {
+                        console.error('Error resetting attendee points:', err);
+                        return res.status(500).json({ error: 'Database error resetting points' });
+                    }
+                    
+                    const attendeesReset = this.changes;
+                    
+                    console.log(`🔄 Scores reset: ${resultsCleared} results cleared, ${testsCleared} tests cleared, ${attendeesReset} attendees reset to 0 points`);
+                    res.json({ 
+                        message: `Scores reset successfully!\n\n• ${resultsCleared} challenge results cleared\n• ${testsCleared} connectivity tests cleared\n• ${attendeesReset} attendees reset to 0 points\n\nAttendees and controllers remain registered.`,
+                        cleared: {
+                            challenge_results: resultsCleared,
+                            connectivity_tests: testsCleared,
+                            attendees_reset: attendeesReset
+                        },
+                        kept: ['attendees', 'machines']
+                    });
+                });
+            });
+        });
+    });
+});
+
+// API: Clear all data for fresh start
 app.delete('/api/clear_all', (req, res) => {
     db.serialize(() => {
         db.run('DELETE FROM challenge_results');
