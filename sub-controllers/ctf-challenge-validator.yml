@@ -179,6 +179,9 @@
           set_fact:
             challenge4_has_hostname: "{{ ansible_hostname in challenge4_content }}"
             challenge4_has_sre: "{{ 'SRE Team' in challenge4_content or 'Managed by SRE' in challenge4_content }}"
+
+        - name: Evaluate Challenge 4 completion
+          set_fact:
             challenge4_correct: "{{ challenge4_file_exists and challenge4_has_hostname and challenge4_has_sre }}"
 
         - name: Calculate Challenge 4 points
