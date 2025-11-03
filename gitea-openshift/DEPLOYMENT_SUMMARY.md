@@ -10,11 +10,16 @@ Based on the [official Gitea Kubernetes installation guide](https://docs.gitea.c
 
 ```
 gitea-openshift/
-├── deploy-gitea.sh            # Main deployment script (interactive)
-├── create-users-api.sh        # API-based bulk user creation
-├── manage-gitea.sh            # Management helper (status, backup, etc.)
-├── workshop-users.csv         # Example user list (10 users)
-└── README.md                  # Complete documentation
+├── deploy-gitea.sh              # Main deployment script (interactive)
+├── create-workshop-repos.sh     # Create users + repos + challenge content
+├── manage-gitea.sh              # Management utilities (status, backup, logs, etc.)
+├── gitea-recovery.sh            # Interactive recovery menu (backup/restore/redeploy)
+├── quick-recovery.sh            # Non-interactive deployment (automation)
+├── workshop-users.csv           # Workshop user list
+├── README.md                    # Complete documentation
+├── DEPLOYMENT_SUMMARY.md        # This file
+├── TROUBLESHOOTING.md           # Common issues and solutions
+└── DATA_LOSS_RECOVERY.md        # Disaster recovery guide
 ```
 
 **Auto-Generated (by deploy script):**
@@ -53,11 +58,23 @@ cd gitea-openshift
 ./create-gitea-users.sh workshop-users.csv
 ```
 
-**Method 2: API**
+### **2. Create Workshop Users and Repositories**
+
 ```bash
-# Get admin token from Gitea UI first
-./create-users-api.sh http://gitea-url TOKEN workshop-users.csv
+# Get admin token from Gitea UI:
+# Login → Settings → Applications → Generate Token
+
+./create-workshop-repos.sh \
+    "http://gitea-gitea.apps.YOUR-CLUSTER.com" \
+    "YOUR_ADMIN_TOKEN" \
+    "workshop-users.csv"
 ```
+
+This will:
+- Create all users from CSV
+- Create `ansible-ctf-challenges` repository for each user
+- Initialize repos with 6 challenge directories
+- Add README and playbook templates
 
 ### **3. Manage Gitea**
 ```bash

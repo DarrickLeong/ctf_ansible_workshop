@@ -19,15 +19,23 @@ The script will prompt for:
 - Admin password
 - Admin email
 
-### **2. Create Multiple Users**
+### **2. Create Workshop Users and Repositories**
 
 ```bash
-# Using the generated script (CLI method)
-./create-gitea-users.sh sample-users.csv
+# Get admin token from Gitea UI first:
+# Login → Settings → Applications → Generate Token
 
-# Or using API method
-./create-users-api.sh http://gitea-url YOUR_ADMIN_TOKEN users.csv
+./create-workshop-repos.sh \
+    "http://gitea-gitea.apps.YOUR-CLUSTER.com" \
+    "YOUR_ADMIN_TOKEN" \
+    "workshop-users.csv"
 ```
+
+This will:
+- Create all users from CSV
+- Create `ansible-ctf-challenges` repository for each user
+- Initialize repos with challenge content (6 challenges)
+- Add README and templates
 
 ---
 
@@ -41,8 +49,8 @@ The script will prompt for:
 
 ✅ **User Management**
 - Bulk user creation from CSV
-- Two methods: CLI and API
-- Sample users included
+- Automated repository setup
+- Challenge content initialization
 - Admin and regular user support
 
 ✅ **Production Ready**
@@ -53,13 +61,15 @@ The script will prompt for:
 
 ---
 
-## 📁 Files Created
+## 📁 Scripts Overview
 
-### **Deployment Files**
-- `deploy-gitea.sh` - Main deployment script
-- `create-gitea-users.sh` - CLI-based user creation (auto-generated)
-- `create-users-api.sh` - API-based user creation
-- `sample-users.csv` - Example user file (auto-generated)
+### **Core Scripts**
+- **`deploy-gitea.sh`** - Main deployment script (interactive)
+- **`create-workshop-repos.sh`** - Create users + repos + challenge content
+- **`manage-gitea.sh`** - Management utilities (status, logs, backup, etc.)
+- **`gitea-recovery.sh`** - Interactive recovery menu (backup/restore/redeploy)
+- **`quick-recovery.sh`** - Non-interactive deployment (automation-friendly)
+- **`workshop-users.csv`** - Example user list with challenge participants
 
 ### **What Gets Deployed**
 - **Deployment:** Gitea application (1 replica)
@@ -72,31 +82,45 @@ The script will prompt for:
 
 ## 🎓 Usage Examples
 
-### **Create Workshop Users**
+### **Create Workshop Users with Challenge Repositories**
 
-Edit `sample-users.csv` or create your own:
+Edit `workshop-users.csv`:
 
 ```csv
-username,email,password,is_admin
-student1,student1@workshop.local,Student123!,false
-student2,student2@workshop.local,Student123!,false
-instructor,instructor@workshop.local,Instructor123!,true
+# Workshop Participants
+Student1,Student1@ctfworkshop.com,R3dh4t1!,false
+nj8zq,nj8zq@ctfworkshop.com,R3dh4t1!,false
 ```
 
 Then run:
 ```bash
-./create-gitea-users.sh sample-users.csv
+./create-workshop-repos.sh \
+    "http://gitea-gitea.apps.YOUR-CLUSTER.com" \
+    "YOUR_ADMIN_TOKEN" \
+    "workshop-users.csv"
 ```
 
-### **Create Users via API**
+This will:
+1. Create each user account
+2. Create `ansible-ctf-challenges` repository for each user
+3. Initialize repository with:
+   - 6 challenge directories (challenge1/ to challenge6/)
+   - README with problem descriptions
+   - Playbook templates
+   - Example templates (motd.j2)
+   - .gitignore
 
-1. Get admin token from Gitea UI:
-   - Login as admin
-   - Settings → Applications → Generate New Token
+### **Check Deployment Status**
 
-2. Create users:
 ```bash
-./create-users-api.sh http://gitea-gitea.apps.cluster.com YOUR_TOKEN users.csv
+./manage-gitea.sh status
+```
+
+### **Backup Data (Before Cluster Hibernation)**
+
+```bash
+./gitea-recovery.sh
+# Select Option 2: Backup Gitea Data
 ```
 
 ---
