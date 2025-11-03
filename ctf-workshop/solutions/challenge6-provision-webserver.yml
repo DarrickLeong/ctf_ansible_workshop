@@ -36,9 +36,18 @@
       failed_when: false
       changed_when: false
     
-    - name: Configure SELinux to allow httpd on port 8080
-      ansible.builtin.command: semanage port -a -t http_port_t -p tcp 8080
+    - name: Configure SELinux to allow httpd on port 8080 (modify)
+      ansible.builtin.command: semanage port -m -t http_port_t -p tcp 8080
       when: selinux_port_check.rc != 0
+      register: selinux_modify_result
+      failed_when: false
+      changed_when: selinux_modify_result.rc == 0
+    
+    - name: Configure SELinux to allow httpd on port 8080 (add if modify failed)
+      ansible.builtin.command: semanage port -a -t http_port_t -p tcp 8080
+      when: 
+        - selinux_port_check.rc != 0
+        - selinux_modify_result.rc != 0
       register: selinux_add_result
       failed_when: 
         - selinux_add_result.rc != 0
