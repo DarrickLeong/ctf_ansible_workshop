@@ -977,12 +977,13 @@ curl http://node3
                     <summary><strong>🔍 Show me a hint</strong></summary>
                     <ul>
                         <li>Target: node1</li>
-                        <li>Deploy <strong>index.php</strong> (not index.html!)</li>
-                        <li>File must be placed in <code>/var/www/html/index.php</code></li>
-                        <li>Content must include the text "Application is healthy!" for validation</li>
-                        <li>Use <code>ansible.builtin.copy</code> with <code>content</code> parameter</li>
+                        <li><strong>Application file pre-exists at:</strong> <code>/opt/backup/phoenix-app.php</code></li>
+                        <li>Use <code>ansible.builtin.copy</code> module</li>
+                        <li>Set <code>src: /opt/backup/phoenix-app.php</code></li>
+                        <li>Set <code>dest: /var/www/html/index.php</code></li>
+                        <li><strong>CRITICAL:</strong> Use <code>remote_src: yes</code> (copying on same host!)</li>
                         <li>Set owner: apache, group: apache, mode: '0644'</li>
-                        <li>Include PHP tags and HTML with status message</li>
+                        <li><strong>Real-world scenario:</strong> Restoring application from backup in disaster recovery</li>
                     </ul>
                 </details>
 
@@ -996,8 +997,7 @@ curl http://node3
                         <li><strong>Requirement 3:</strong> Test HTTP endpoint <code>http://node1:8080/index.php</code> using <code>uri</code> module</li>
                         <li>Use <code>return_content: yes</code> and <code>failed_when</code> to check for "healthy" in response</li>
                         <li><strong>Requirement 4:</strong> Playbook fails automatically if any check doesn't pass (via <code>assert</code>)</li>
-                        <li><strong>CRITICAL:</strong> Create marker file <code>/tmp/phoenix_validated</code> on node1 for scoring!</li>
-                        <li><strong>Tip:</strong> You don't need extra verification tasks - <code>assert</code> already fails the playbook!</li>
+                        <li><strong>Tip:</strong> You don't need extra verification tasks or marker files - <code>assert</code> already fails the playbook!</li>
                     </ul>
                 </details>
 
@@ -1252,59 +1252,34 @@ curl http://node3
 
             <h4>Playbook 3: <code>challenge6-deploy-application.yml</code></h4>
             <pre><code class="language-yaml">---
-- name: Deploy Application
+# Challenge 6 Solution - Part 3: Deploy Application
+# Phoenix Protocol - Full Stack Disaster Recovery
+# 
+# This playbook deploys the pre-backed-up application to the web server
+# The application file was created during setup in /opt/backup/
+
+- name: Challenge 6 - Deploy Application
   hosts: node1
   become: yes
-  gather_facts: yes
-  
-  vars:
-    db_host: "{{ hostvars['node2']['ansible_default_ipv4']['address'] | default('node2') }}"
   
   tasks:
-    - name: Deploy application index page (PHP)
+    # Requirement 1: Deploy pre-existing application from /opt/backup/phoenix-app.php
+    # Requirement 2: Copy to /var/www/html/index.php
+    # Requirement 3: Set owner: apache, group: apache
+    # Requirement 4: Set mode: 0644
+    # Requirement 5: Use remote_src: yes (copying on same host)
+    - name: Deploy application from backup location
       ansible.builtin.copy:
-        content: |
-          &lt;?php
-          // Phoenix Protocol - Application Restored!
-          ?&gt;
-          &lt;!DOCTYPE html&gt;
-          &lt;html&gt;
-          &lt;head&gt;
-              &lt;title&gt;Phoenix Protocol - Application Restored!&lt;/title&gt;
-              &lt;style&gt;
-                  body {
-                      font-family: Arial, sans-serif;
-                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                      color: white;
-                      text-align: center;
-                      padding: 50px;
-                  }
-                  .container {
-                      background: rgba(255, 255, 255, 0.1);
-                      border-radius: 10px;
-                      padding: 30px;
-                      max-width: 600px;
-                      margin: 0 auto;
-                  }
-                  h1 { font-size: 3em; margin-bottom: 20px; }
-                  .status { font-size: 1.5em; color: #4ade80; }
-              &lt;/style&gt;
-          &lt;/head&gt;
-          &lt;body&gt;
-              &lt;div class="container"&gt;
-                  &lt;h1&gt;🔥 Phoenix Protocol 🔥&lt;/h1&gt;
-                  &lt;p class="status"&gt;✅ Application Stack Restored!&lt;/p&gt;
-                  &lt;p&gt;Web Server: {{ ansible_hostname }}&lt;/p&gt;
-                  &lt;p&gt;Database Server: {{ db_host }}&lt;/p&gt;
-                  &lt;p&gt;Status: OPERATIONAL&lt;/p&gt;
-                  &lt;p&gt;&lt;strong&gt;Application is healthy!&lt;/strong&gt;&lt;/p&gt;
-              &lt;/div&gt;
-          &lt;/body&gt;
-          &lt;/html&gt;
+        src: /opt/backup/phoenix-app.php
         dest: /var/www/html/index.php
         owner: apache
         group: apache
-        mode: '0644'</code></pre>
+        mode: '0644'
+        remote_src: yes
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: "✅ Application deployed on {{ inventory_hostname }} from backup!"</code></pre>
 
             <h4>Playbook 4: <code>challenge6-validate-service.yml</code></h4>
             <pre><code class="language-yaml">---
@@ -1350,13 +1325,6 @@ curl http://node3
       failed_when: 
         - http_test.status != 200
         - "'healthy' not in http_test.content"
-    
-    # Create marker file for CTF scoring system
-    - name: Create validation marker for Challenge 6 scoring
-      ansible.builtin.file:
-        path: /tmp/phoenix_validated
-        state: touch
-        mode: '0644'
     
     - name: Display validation success
       ansible.builtin.debug:
