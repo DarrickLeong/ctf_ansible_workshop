@@ -403,17 +403,39 @@
             challenge6_step6_db_rollback: "{{ db_rollback_marker.stat.exists if db_rollback_marker.stat is defined else false }}"
 
         # Calculate total points (5 points per step)
+        # For Challenge 6, we need to check facts across both node1 and node2
         - name: Calculate Challenge 6 points
           set_fact:
             challenge6_points: "{{
-              (challenge6_step1_db_provisioned | default(false) | bool | int * 5) +
-              (challenge6_step2_web_provisioned | default(false) | bool | int * 5) +
-              (challenge6_step3_app_deployed | default(false) | bool | int * 5) +
-              (challenge6_step4_validated | default(false) | bool | int * 5) +
-              (challenge6_step5_web_rollback | default(false) | bool | int * 5) +
-              (challenge6_step6_db_rollback | default(false) | bool | int * 5)
+              (
+                (hostvars['node2']['challenge6_step1_db_provisioned'] | default(false) | bool) or
+                (challenge6_step1_db_provisioned | default(false) | bool)
+              | int * 5) +
+              (
+                (hostvars['node1']['challenge6_step2_web_provisioned'] | default(false) | bool) or
+                (challenge6_step2_web_provisioned | default(false) | bool)
+              | int * 5) +
+              (
+                (hostvars['node1']['challenge6_step3_app_deployed'] | default(false) | bool) or
+                (challenge6_step3_app_deployed | default(false) | bool)
+              | int * 5) +
+              (
+                (hostvars['node1']['challenge6_step4_validated'] | default(false) | bool) or
+                (challenge6_step4_validated | default(false) | bool)
+              | int * 5) +
+              (
+                (hostvars['node1']['challenge6_step5_web_rollback'] | default(false) | bool) or
+                (challenge6_step5_web_rollback | default(false) | bool)
+              | int * 5) +
+              (
+                (hostvars['node2']['challenge6_step6_db_rollback'] | default(false) | bool) or
+                (challenge6_step6_db_rollback | default(false) | bool)
+              | int * 5)
             }}"
-            challenge6_completed: "{{ challenge6_step4_validated | default(false) }}"
+            challenge6_completed: "{{ 
+              (hostvars['node1']['challenge6_step4_validated'] | default(false) | bool) or
+              (challenge6_step4_validated | default(false) | bool)
+            }}"
 
         - name: Update Challenge 6 results
           set_fact:
@@ -425,12 +447,12 @@
                     'points_earned': challenge6_points | int,
                     'max_points': 30,
                     'details': {
-                      'step1_database_provisioned': challenge6_step1_db_provisioned | default(false),
-                      'step2_webserver_provisioned': challenge6_step2_web_provisioned | default(false),
-                      'step3_application_deployed': challenge6_step3_app_deployed | default(false),
-                      'step4_validation_passed': challenge6_step4_validated | default(false),
-                      'step5_web_rollback': challenge6_step5_web_rollback | default(false),
-                      'step6_db_rollback': challenge6_step6_db_rollback | default(false),
+                      'step1_database_provisioned': (hostvars['node2']['challenge6_step1_db_provisioned'] | default(false) | bool) or (challenge6_step1_db_provisioned | default(false) | bool),
+                      'step2_webserver_provisioned': (hostvars['node1']['challenge6_step2_web_provisioned'] | default(false) | bool) or (challenge6_step2_web_provisioned | default(false) | bool),
+                      'step3_application_deployed': (hostvars['node1']['challenge6_step3_app_deployed'] | default(false) | bool) or (challenge6_step3_app_deployed | default(false) | bool),
+                      'step4_validation_passed': (hostvars['node1']['challenge6_step4_validated'] | default(false) | bool) or (challenge6_step4_validated | default(false) | bool),
+                      'step5_web_rollback': (hostvars['node1']['challenge6_step5_web_rollback'] | default(false) | bool) or (challenge6_step5_web_rollback | default(false) | bool),
+                      'step6_db_rollback': (hostvars['node2']['challenge6_step6_db_rollback'] | default(false) | bool) or (challenge6_step6_db_rollback | default(false) | bool),
                       'hostname': inventory_hostname
                     }
                   }
