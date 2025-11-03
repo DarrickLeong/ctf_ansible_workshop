@@ -218,6 +218,61 @@
             state: absent
       when: inventory_hostname == 'node1'
     
+    # Create application backup for disaster recovery exercise
+    - name: Create backup directory for Phoenix Protocol
+      file:
+        path: /opt/backup
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      when: inventory_hostname == 'node1'
+    
+    - name: Create backup application file for Phoenix Protocol
+      ansible.builtin.copy:
+        content: |
+          <?php
+          // Phoenix Protocol - Application Backup
+          $db_host = getenv('DB_HOST') ?: 'node2';
+          ?>
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Phoenix Protocol - Application Restored!</title>
+              <style>
+                  body {
+                      font-family: Arial, sans-serif;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      color: white;
+                      text-align: center;
+                      padding: 50px;
+                  }
+                  .container {
+                      background: rgba(255, 255, 255, 0.1);
+                      border-radius: 10px;
+                      padding: 30px;
+                      max-width: 600px;
+                      margin: 0 auto;
+                  }
+                  h1 { font-size: 3em; margin-bottom: 20px; }
+                  .status { font-size: 1.5em; color: #4ade80; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>🔥 Phoenix Protocol 🔥</h1>
+                  <p class="status">✅ Application is healthy!</p>
+                  <p>Status: OPERATIONAL</p>
+                  <p><small>Restored from backup</small></p>
+              </div>
+          </body>
+          </html>
+        dest: /opt/backup/phoenix-app.php
+        owner: root
+        group: root
+        mode: '0644'
+      when: inventory_hostname == 'node1'
+    
     - name: Stop and remove postgresql on node2
       block:
         - name: Stop postgresql service

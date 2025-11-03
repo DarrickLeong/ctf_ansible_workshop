@@ -334,12 +334,19 @@
           ignore_errors: yes
           when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
 
-        # Step 4: Check Validation marker (5 points)
-        - name: Check for validation marker
-          stat:
-            path: /tmp/phoenix_validated
-          register: phoenix_marker
+        # Step 4: Check Validation - All services running AND app responds correctly (5 points)
+        # No marker file needed - we validate actual state!
+        - name: Test HTTP response for validation step
+          ansible.builtin.uri:
+            url: "http://{{ ansible_default_ipv4.address }}:8080/index.php"
+            method: GET
+            status_code: 200
+            return_content: yes
+            timeout: 5
+          register: validation_http_test
+          failed_when: false
           ignore_errors: yes
+          when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
 
         # Steps 5 & 6: Rollback checks (5 points each)
         # These are validated by checking if rollback was executed AND services are in clean state
@@ -380,7 +387,12 @@
 
         - name: Evaluate Challenge 6 - Step 4 (Validate Service)
           set_fact:
-            challenge6_step4_validated: "{{ phoenix_marker.stat.exists if phoenix_marker.stat is defined else false }}"
+            challenge6_step4_validated: "{{
+              (web_service_check.status.ActiveState == 'active' if web_service_check.status is defined else false) and
+              (db_service_check.status.ActiveState == 'active' if db_service_check.status is defined else false) and
+              (validation_http_test.status == 200 if validation_http_test.status is defined else false) and
+              ('healthy' in validation_http_test.content if validation_http_test.content is defined else false)
+            }}"
 
         - name: Evaluate Challenge 6 - Step 5 (Rollback Web)
           set_fact:

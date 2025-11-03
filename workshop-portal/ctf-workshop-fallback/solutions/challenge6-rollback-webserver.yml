@@ -10,6 +10,7 @@
   gather_facts: yes
   
   tasks:
+    # Requirement 1: Stop and disable httpd service
     - name: Stop httpd service
       ansible.builtin.service:
         name: httpd
@@ -17,6 +18,7 @@
         enabled: no
       ignore_errors: yes
     
+    # Requirement 2: Remove /var/www/html/index.php
     - name: Remove application files
       ansible.builtin.file:
         path: "{{ item }}"
@@ -27,6 +29,7 @@
         - /var/www/html/config.txt
       ignore_errors: yes
     
+    # Requirement 3: Remove custom httpd configurations
     - name: Restore httpd.conf to default Listen port 80
       ansible.builtin.lineinfile:
         path: /etc/httpd/conf/httpd.conf

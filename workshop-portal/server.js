@@ -887,10 +887,11 @@ curl http://node3
                 </li>
                 <li><strong>challenge6-deploy-application.yml</strong> (Target: node1)
                     <ul>
-                        <li>Create <code>/var/www/html</code> directory (owner: apache, mode: 0755)</li>
-                        <li>Deploy PHP application code to <code>/var/www/html/index.php</code></li>
-                        <li>PHP should connect to PostgreSQL on node2</li>
-                        <li>Restart httpd to load new app</li>
+                        <li>Deploy pre-existing application from backup location <code>/opt/backup/phoenix-app.php</code></li>
+                        <li>Copy to <code>/var/www/html/index.php</code></li>
+                        <li>Set owner: apache, group: apache</li>
+                        <li>Set mode: 0644</li>
+                        <li>Use <code>remote_src: yes</code> to copy from same host</li>
                     </ul>
                 </li>
                 <li><strong>challenge6-validate-service.yml</strong> (Target: node1)

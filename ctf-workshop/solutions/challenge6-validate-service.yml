@@ -52,13 +52,6 @@
         - http_test.status != 200
         - "'healthy' not in http_test.content"
     
-    # Create marker file for CTF scoring system
-    - name: Create validation marker for Challenge 6 scoring
-      ansible.builtin.file:
-        path: /tmp/phoenix_validated
-        state: touch
-        mode: '0644'
-    
     - name: Display validation success
       ansible.builtin.debug:
         msg: "✅ All validation checks passed! Application stack is operational."

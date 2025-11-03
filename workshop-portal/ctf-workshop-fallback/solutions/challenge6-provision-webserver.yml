@@ -18,6 +18,7 @@
         group: apache
         mode: '0755'
     
+    # Requirement 1: Install httpd, php, php-pgsql, and policycoreutils-python-utils
     - name: Install Apache (httpd), PHP, and SELinux tools
       ansible.builtin.dnf:
         name:
@@ -28,6 +29,7 @@
         state: present
       register: web_install
     
+    # Requirement 2: Check if port 8080 configured in SELinux, add if not present
     - name: Check if port 8080 is already configured in SELinux
       ansible.builtin.shell: semanage port -l | grep "http_port_t" | grep -w "8080"
       register: selinux_port_check
@@ -42,6 +44,7 @@
         - selinux_add_result.rc != 0
         - "'already defined' not in selinux_add_result.stderr"
     
+    # Requirement 3: Configure httpd to listen on port 8080
     - name: Configure httpd to listen on port 8080
       ansible.builtin.lineinfile:
         path: /etc/httpd/conf/httpd.conf
@@ -49,6 +52,7 @@
         line: 'Listen 8080'
         backup: yes
     
+    # Requirement 4: Start and enable httpd service
     - name: Start and enable httpd service
       ansible.builtin.service:
         name: httpd
@@ -56,6 +60,7 @@
         enabled: yes
       register: web_service
     
+    # Requirement 5: Allow port 8080/tcp in firewalld
     - name: Check if firewalld is installed
       ansible.builtin.command: which firewall-cmd
       register: firewalld_check

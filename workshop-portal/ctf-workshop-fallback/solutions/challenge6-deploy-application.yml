@@ -2,63 +2,29 @@
 # Challenge 6 Solution - Part 3: Deploy Application
 # Phoenix Protocol - Full Stack Disaster Recovery
 # 
-# This playbook deploys the application to web server
+# This playbook deploys the pre-backed-up application to the web server
+# The application file was created during setup in /opt/backup/
 
 - name: Challenge 6 - Deploy Application
   hosts: node1
   become: yes
-  gather_facts: yes
-  
-  vars:
-    db_host: "{{ hostvars['node2']['ansible_default_ipv4']['address'] | default('node2') }}"
   
   tasks:
-    - name: Deploy application index page (PHP)
+    # Requirement 1: Deploy pre-existing application from /opt/backup/phoenix-app.php
+    # Requirement 2: Copy to /var/www/html/index.php
+    # Requirement 3: Set owner: apache, group: apache
+    # Requirement 4: Set mode: 0644
+    # Requirement 5: Use remote_src: yes (copying on same host)
+    - name: Deploy application from backup location
       ansible.builtin.copy:
-        content: |
-          <?php
-          // Phoenix Protocol - Application Restored!
-          ?>
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <title>Phoenix Protocol - Application Restored!</title>
-              <style>
-                  body {
-                      font-family: Arial, sans-serif;
-                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                      color: white;
-                      text-align: center;
-                      padding: 50px;
-                  }
-                  .container {
-                      background: rgba(255, 255, 255, 0.1);
-                      border-radius: 10px;
-                      padding: 30px;
-                      max-width: 600px;
-                      margin: 0 auto;
-                  }
-                  h1 { font-size: 3em; margin-bottom: 20px; }
-                  .status { font-size: 1.5em; color: #4ade80; }
-              </style>
-          </head>
-          <body>
-              <div class="container">
-                  <h1>🔥 Phoenix Protocol 🔥</h1>
-                  <p class="status">✅ Application Stack Restored!</p>
-                  <p>Web Server: {{ ansible_hostname }}</p>
-                  <p>Database Server: {{ db_host }}</p>
-                  <p>Status: OPERATIONAL</p>
-                  <p><strong>Application is healthy!</strong></p>
-              </div>
-          </body>
-          </html>
+        src: /opt/backup/phoenix-app.php
         dest: /var/www/html/index.php
         owner: apache
         group: apache
         mode: '0644'
+        remote_src: yes
     
     - name: Display result
       ansible.builtin.debug:
-        msg: "✅ Application deployed on {{ inventory_hostname }}!"
+        msg: "✅ Application deployed on {{ inventory_hostname }} from backup!"
 
