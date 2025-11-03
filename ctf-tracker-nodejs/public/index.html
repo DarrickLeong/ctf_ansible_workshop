@@ -667,13 +667,26 @@
                     return;
                 }
 
-                const activityHTML = results.slice(0, 5).map(result => `
-                    <div class="activity-item">
-                        <div class="activity-time">${new Date(result.timestamp).toLocaleString()}</div>
-                        <div><strong>${result.attendee_name}</strong> completed <em>${result.challenge_type}</em> on <strong>${result.hostname}</strong></div>
-                        <div class="success">+${result.points_earned} points</div>
-                    </div>
-                `).join('');
+                // Map challenge types to friendly names
+                const challengeNames = {
+                    'challenge1_chronyd': 'Challenge 1: Out of Sync',
+                    'challenge2_package_removal': 'Challenge 2: Malicious Package',
+                    'challenge3_rogue_user': 'Challenge 3: Rogue User Account',
+                    'challenge4_motd': 'Challenge 4: Inconsistent Messaging',
+                    'challenge5_firewall': 'Challenge 5: Firewall Anomaly',
+                    'challenge6_phoenix': 'Challenge 6: Phoenix Protocol'
+                };
+                
+                const activityHTML = results.slice(0, 5).map(result => {
+                    const challengeName = challengeNames[result.challenge_type] || result.challenge_type;
+                    return `
+                        <div class="activity-item">
+                            <div class="activity-time">${new Date(result.timestamp).toLocaleString()}</div>
+                            <div><strong>${result.attendee_name}</strong> completed <em>${challengeName}</em></div>
+                            <div class="success">+${result.points_earned} points</div>
+                        </div>
+                    `;
+                }).join('');
 
                 activityEl.innerHTML = activityHTML;
                 
