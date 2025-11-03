@@ -1639,6 +1639,15 @@ app.get('/', (req, res) => {
                     <p><strong>Access your personal Git repository:</strong></p>
                     <p>🌐 <strong>Gitea URL:</strong> <a href="https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com" target="_blank" style="color: #34d399; text-decoration: underline;">https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com</a></p>
                     
+                    <h5 style="margin-top: 15px;">🔐 Login Credentials:</h5>
+                    <div style="background: #1f1f23; padding: 15px; border-radius: 6px; border-left: 4px solid #34d399; margin-bottom: 15px;">
+                        <p><strong>Username:</strong> Your Ansible controller hostname prefix</p>
+                        <p style="margin-top: 8px;"><strong>Example:</strong> If your controller URL is <code>https://controller.zwq8x.sandbox2116.opentlc.com/</code></p>
+                        <p style="margin-left: 20px; margin-top: 5px;">→ Username: <code>zwq8x</code></p>
+                        <p style="margin-left: 20px;">→ Password: <strong>Same as your Ansible Controller password</strong></p>
+                        <p style="margin-top: 10px; color: #fbbf24;"><strong>💡 Tip:</strong> Your username is the unique identifier from your controller hostname!</p>
+                    </div>
+                    
                     <h5 style="margin-top: 15px;">📦 What's in Your Repository:</h5>
                     <ul style="margin-left: 20px;">
                         <li><strong>Repository Name:</strong> <code>ansible-ctf-challenges</code></li>
