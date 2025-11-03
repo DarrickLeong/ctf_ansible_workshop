@@ -1263,14 +1263,14 @@ curl http://node3
     - name: Deploy application index page (PHP)
       ansible.builtin.copy:
         content: |
-          <?php
+          &lt;?php
           // Phoenix Protocol - Application Restored!
-          ?>
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <title>Phoenix Protocol - Application Restored!</title>
-              <style>
+          ?&gt;
+          &lt;!DOCTYPE html&gt;
+          &lt;html&gt;
+          &lt;head&gt;
+              &lt;title&gt;Phoenix Protocol - Application Restored!&lt;/title&gt;
+              &lt;style&gt;
                   body {
                       font-family: Arial, sans-serif;
                       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -1287,24 +1287,23 @@ curl http://node3
                   }
                   h1 { font-size: 3em; margin-bottom: 20px; }
                   .status { font-size: 1.5em; color: #4ade80; }
-              </style>
-          </head>
-          <body>
-              <div class="container">
-                  <h1>🔥 Phoenix Protocol 🔥</h1>
-                  <p class="status">✅ Application Stack Restored!</p>
-                  <p>Web Server: {{ ansible_hostname }}</p>
-                  <p>Database Server: {{ db_host }}</p>
-                  <p>Status: OPERATIONAL</p>
-                  <p><strong>Application is healthy!</strong></p>
-              </div>
-          </body>
-          </html>
+              &lt;/style&gt;
+          &lt;/head&gt;
+          &lt;body&gt;
+              &lt;div class="container"&gt;
+                  &lt;h1&gt;🔥 Phoenix Protocol 🔥&lt;/h1&gt;
+                  &lt;p class="status"&gt;✅ Application Stack Restored!&lt;/p&gt;
+                  &lt;p&gt;Web Server: {{ ansible_hostname }}&lt;/p&gt;
+                  &lt;p&gt;Database Server: {{ db_host }}&lt;/p&gt;
+                  &lt;p&gt;Status: OPERATIONAL&lt;/p&gt;
+                  &lt;p&gt;&lt;strong&gt;Application is healthy!&lt;/strong&gt;&lt;/p&gt;
+              &lt;/div&gt;
+          &lt;/body&gt;
+          &lt;/html&gt;
         dest: /var/www/html/index.php
         owner: apache
         group: apache
-        mode: '0644'
-      register: app_deploy</code></pre>
+        mode: '0644'</code></pre>
 
             <h4>Playbook 4: <code>challenge6-validate-service.yml</code></h4>
             <pre><code class="language-yaml">---
