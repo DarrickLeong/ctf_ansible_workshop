@@ -29,29 +29,20 @@
         state: present
       register: web_install
     
-    # Requirement 2: Check if port 8080 configured in SELinux, add if not present
-    - name: Check if port 8080 is already configured in SELinux
-      ansible.builtin.shell: semanage port -l | grep "http_port_t" | grep -w "8080"
-      register: selinux_port_check
-      failed_when: false
-      changed_when: false
-    
-    - name: Configure SELinux to allow httpd on port 8080 (modify)
-      ansible.builtin.command: semanage port -m -t http_port_t -p tcp 8080
-      when: selinux_port_check.rc != 0
-      register: selinux_modify_result
-      failed_when: false
-      changed_when: selinux_modify_result.rc == 0
-    
-    - name: Configure SELinux to allow httpd on port 8080 (add if modify failed)
-      ansible.builtin.command: semanage port -a -t http_port_t -p tcp 8080
-      when: 
-        - selinux_port_check.rc != 0
-        - selinux_modify_result.rc != 0
-      register: selinux_add_result
-      failed_when: 
-        - selinux_add_result.rc != 0
-        - "'already defined' not in selinux_add_result.stderr"
+    # Requirement 2: Configure SELinux to allow httpd on port 8080
+    - name: Configure SELinux to allow httpd on port 8080
+      ansible.builtin.shell: |
+        if semanage port -l | grep "http_port_t" | grep -wq "8080"; then
+          echo "Port 8080 already configured for http_port_t"
+          exit 0
+        elif semanage port -m -t http_port_t -p tcp 8080 2>/dev/null; then
+          echo "Modified port 8080 to http_port_t"
+        else
+          semanage port -a -t http_port_t -p tcp 8080
+          echo "Added port 8080 to http_port_t"
+        fi
+      register: selinux_result
+      changed_when: "'already configured' not in selinux_result.stdout"
     
     # Requirement 3: Configure httpd to listen on port 8080
     - name: Configure httpd to listen on port 8080
