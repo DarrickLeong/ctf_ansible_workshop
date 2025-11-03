@@ -175,6 +175,7 @@
           loop:
             - /etc/httpd/conf.d/custom.conf
             - /var/www/html/index.php
+            - /tmp/phoenix_web_rollback
           ignore_errors: yes
         
         - name: Reset httpd Listen port to 80
@@ -182,6 +183,38 @@
             path: /etc/httpd/conf/httpd.conf
             regexp: '^Listen '
             line: 'Listen 80'
+          ignore_errors: yes
+        
+        # Clean up Challenge 6 SELinux configuration
+        - name: Check if SELinux port 8080 is configured
+          shell: semanage port -l | grep "http_port_t" | grep -w "8080"
+          register: selinux_8080_check
+          failed_when: false
+          changed_when: false
+          ignore_errors: yes
+        
+        - name: Remove SELinux port 8080 configuration
+          command: semanage port -d -t http_port_t -p tcp 8080
+          when: selinux_8080_check.rc == 0
+          register: selinux_remove
+          failed_when:
+            - selinux_remove.rc != 0
+            - "'not defined' not in selinux_remove.stderr"
+          ignore_errors: yes
+        
+        # Clean up Challenge 6 firewall configuration
+        - name: Remove firewall port 8080 if configured
+          command: firewall-cmd --permanent --remove-port=8080/tcp
+          register: firewall_remove_8080
+          changed_when: "'NOT_ENABLED' not in firewall_remove_8080.stderr"
+          failed_when:
+            - firewall_remove_8080.rc != 0
+            - "'NOT_ENABLED' not in firewall_remove_8080.stderr"
+          ignore_errors: yes
+        
+        - name: Reload firewall after removing port 8080
+          command: firewall-cmd --reload
+          when: firewall_remove_8080.changed
           ignore_errors: yes
         
         - name: Create default index.html
@@ -228,6 +261,12 @@
           command: postgresql-setup --initdb
           args:
             creates: /var/lib/pgsql/data/postgresql.conf
+          ignore_errors: yes
+        
+        - name: Remove Challenge 6 database marker
+          file:
+            path: /tmp/phoenix_db_rollback
+            state: absent
           ignore_errors: yes
         
         - name: Start postgresql service
