@@ -100,7 +100,7 @@
     - name: Create defaced MOTD on node1
       copy:
         content: |
-          HACKED BY DISRUPTIVE DEZIGN!
+          HACKED BY A BAD ACTOR!
           Your server belongs to us now!
         dest: /etc/motd
         mode: '0644'

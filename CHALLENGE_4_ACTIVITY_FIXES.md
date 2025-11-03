@@ -8,14 +8,14 @@
 
 **Before:**
 ```
-node1: /etc/motd = "HACKED BY DISRUPTIVE DEZIGN!" → 5 points ❌
+node1: /etc/motd = "HACKED BY A BAD ACTOR!" → 5 points ❌
 node2: /etc/motd = "Welcome to the old server"  → 5 points ❌  
 node3: /etc/motd = missing                      → 0 points ✅
 ```
 
 **After:**
 ```
-node1: /etc/motd = "HACKED BY DISRUPTIVE DEZIGN!" → 0 points ✅
+node1: /etc/motd = "HACKED BY A BAD ACTOR!" → 0 points ✅
 node2: /etc/motd = "Welcome to the old server"  → 0 points ✅
 node3: /etc/motd = missing                      → 0 points ✅
 

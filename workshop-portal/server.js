@@ -117,6 +117,10 @@ const challengeContent = {
             </ul>
         `,
         guide: `
+            <details open>
+                <summary><strong>📖 Click to Show/Hide Step-by-Step Guide</strong></summary>
+                <div style="margin-top: 20px;">
+            
             <h3>Step-by-Step Guide</h3>
             
             <div class="step">
@@ -175,6 +179,9 @@ const challengeContent = {
                 <h4>Step 5: Submit Your Solution</h4>
                 <p>Once your playbook succeeds, update the CTF Tracker to earn your 5 points!</p>
             </div>
+            
+                </div>
+            </details>
         `,
         solution: `
             <details>
@@ -238,6 +245,10 @@ ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
             </ul>
         `,
         guide: `
+            <details open>
+                <summary><strong>📖 Click to Show/Hide Step-by-Step Guide</strong></summary>
+                <div style="margin-top: 20px;">
+            
             <h3>Step-by-Step Guide</h3>
             
             <div class="step">
@@ -281,6 +292,9 @@ ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
                     <strong>📚 Learning Point:</strong> Always target the correct hosts using the <code>hosts:</code> parameter. Use patterns like <code>all</code>, specific host names, or groups.
                 </div>
             </div>
+            
+                </div>
+            </details>
         `,
         solution: `
             <details style="margin-top: 40px;">
@@ -345,6 +359,10 @@ ansible node2 -m shell -a "rpm -qa | grep bind-utils" -i inventory
             </ul>
         `,
         guide: `
+            <details open>
+                <summary><strong>📖 Click to Show/Hide Step-by-Step Guide</strong></summary>
+                <div style="margin-top: 20px;">
+            
             <h3>Step-by-Step Guide</h3>
             
             <div class="step">
@@ -391,6 +409,9 @@ ansible node2 -m shell -a "rpm -qa | grep bind-utils" -i inventory
                 <p>Run your playbook, then verify removal:</p>
                 <pre><code class="language-bash">ansible all -m shell -a "id rogue_user || echo 'User not found'" -i inventory</code></pre>
             </div>
+            
+                </div>
+            </details>
         `,
         solution: `
             <details style="margin-top: 40px;">
@@ -437,11 +458,11 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
         `
     },
     challenge4: {
-        objective: "Learn to use the ansible.builtin.template module and Ansible facts to deploy custom configuration files.",
+        objective: "Learn to use the ansible.builtin.template module and Ansible facts to deploy custom configuration files with dynamic content.",
         scenario: `
             <div class="alert alert-danger">
                 <h4>🚨 The Problem</h4>
-                <p>The "Message of the Day" (<code>/etc/motd</code>) is inconsistent across servers, causing confusion. Some were even defaced by "Disruptive Dezign".</p>
+                <p>The "Message of the Day" (<code>/etc/motd</code>) is inconsistent across servers, causing confusion. Some were even defaced by a bad actor.</p>
             </div>
             <div class="alert alert-primary" style="margin-top: 10px;">
                 <h4>🎯 Target Nodes</h4>
@@ -450,47 +471,60 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
         `,
         requirements: `
             <h3>Your Mission</h3>
-            <p>Create a standardized MOTD using a Jinja2 template. The message should be "Welcome to {{ ansible_hostname }} - Managed by SRE Team". Deploy this template to <strong>all three servers</strong>.</p>
+            <p>Create a standardized MOTD using a Jinja2 template. The message must:</p>
+            <ul>
+                <li>✅ Include the text "Welcome to" followed by the server's <strong>actual hostname</strong></li>
+                <li>✅ Include the text "Managed by SRE Team" or "SRE Team"</li>
+                <li>✅ Be deployed to <code>/etc/motd</code> on <strong>all three servers</strong></li>
+                <li>✅ Each server must display its <strong>own unique hostname</strong> (node1, node2, node3)</li>
+            </ul>
             <h4>Success Criteria:</h4>
             <ul>
-                <li>✅ Template file created with variables</li>
-                <li>✅ Each server shows its own hostname (<strong>node1, node2, node3</strong>)</li>
-                <li>✅ Consistent message across <strong>all servers</strong></li>
+                <li>✅ Template file created in a <code>templates/</code> directory</li>
+                <li>✅ Template uses Ansible facts to display the hostname dynamically</li>
+                <li>✅ MOTD file deployed to <code>/etc/motd</code> on all three nodes</li>
+                <li>✅ Message includes "SRE Team" text</li>
+                <li>✅ File permissions are preserved (0644)</li>
             </ul>
         `,
         guide: `
-            <h3>Step-by-Step Guide</h3>
+            <details open>
+                <summary><strong>📖 Click to Show/Hide Step-by-Step Guide</strong></summary>
+                <div style="margin-top: 20px;">
             
             <div class="step">
-                <h4>Step 1: Understand Jinja2 Templates</h4>
-                <p>Jinja2 templates allow you to create dynamic files using variables and facts.</p>
+                <h4>Step 1: Understand Jinja2 Templates and Ansible Facts</h4>
+                <p>Jinja2 templates allow you to create dynamic files using variables. Ansible automatically collects "facts" about each server - these are variables containing system information.</p>
                 <div class="hint-box">
                     <strong>💡 Key Concepts:</strong>
                     <ul>
-                        <li>Templates use <code>{{ variable }}</code> syntax</li>
-                        <li>Ansible facts like <code>ansible_hostname</code> are automatically available</li>
-                        <li>Templates files typically have <code>.j2</code> extension</li>
+                        <li>Templates use <code>{{ variable_name }}</code> syntax for variable substitution</li>
+                        <li>Ansible facts contain information like hostname, IP address, OS version, etc.</li>
+                        <li>Template files typically have <code>.j2</code> extension</li>
+                        <li>The hostname is available as an Ansible fact</li>
                     </ul>
                 </div>
             </div>
 
             <div class="step">
                 <h4>Step 2: Create the Template File</h4>
-                <p>Create a new file <code>templates/motd.j2</code> in your playbook directory:</p>
+                <p>Create a new file <code>templates/motd.j2</code> in your playbook directory. The template should include:</p>
+                <ul>
+                    <li>The text "Welcome to" followed by the hostname</li>
+                    <li>The text "Managed by SRE Team"</li>
+                </ul>
+                <div class="hint-box">
+                    <strong>💡 Helpful Tips:</strong>
+                    <ul>
+                        <li>Use Ansible's documentation to find the fact variable for hostname</li>
+                        <li>The hostname fact starts with "ansible_"</li>
+                        <li>Variables are inserted using double curly braces: <code>{{ variable_name }}</code></li>
+                    </ul>
+                </div>
                 <details>
-                    <summary><strong>🔍 Show me the template content</strong></summary>
-                    <pre><code>Welcome to {{ ansible_hostname }} - Managed by SRE Team
-
-===============================================
-System Information:
-- Hostname: {{ ansible_hostname }}
-- OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
-- IP Address: {{ ansible_default_ipv4.address }}
-===============================================
-
-This system is managed by Ansible Automation Platform.
-Unauthorized access is prohibited.
-</code></pre>
+                    <summary><strong>🔍 Show me an example template structure</strong></summary>
+                    <pre><code>Welcome to {{ some_variable_here }} - Managed by SRE Team</code></pre>
+                    <p><em>Replace <code>some_variable_here</code> with the correct Ansible fact for hostname.</em></p>
                 </details>
             </div>
 
@@ -500,7 +534,7 @@ Unauthorized access is prohibited.
                 <div class="hint-box">
                     <strong>💡 Module Parameters:</strong>
                     <ul>
-                        <li><code>src</code>: Path to template file (templates/motd.j2)</li>
+                        <li><code>src</code>: Path to template file (relative to playbook)</li>
                         <li><code>dest</code>: Destination on remote server (/etc/motd)</li>
                         <li><code>owner/group</code>: File ownership (root/root)</li>
                         <li><code>mode</code>: File permissions ('0644')</li>
@@ -508,7 +542,7 @@ Unauthorized access is prohibited.
                 </div>
                 <details>
                     <summary><strong>🔍 Show me the module syntax</strong></summary>
-                    <pre><code class="language-yaml">- name: Deploy template
+                    <pre><code class="language-yaml">- name: Deploy MOTD template
   ansible.builtin.template:
     src: templates/motd.j2
     dest: /etc/motd
@@ -520,13 +554,16 @@ Unauthorized access is prohibited.
 
             <div class="step">
                 <h4>Step 4: Test Your Template</h4>
-                <p>After running the playbook, SSH to each server and check the MOTD:</p>
-                <pre><code class="language-bash">ansible all -m shell -a "cat /etc/motd" -i inventory</code></pre>
-                <p>Each server should show its own hostname!</p>
+                <p>After running the playbook, verify the MOTD on each server:</p>
+                <pre><code class="language-bash">ansible all -m shell -a "cat /etc/motd"</code></pre>
+                <p>Each server should show <strong>its own unique hostname</strong>!</p>
                 <div class="alert alert-info">
-                    <strong>📚 Learning Point:</strong> Ansible facts are gathered automatically at the start of each playbook run. You can see all facts with: <code>ansible hostname -m setup</code>
+                    <strong>📚 Learning Point:</strong> Ansible facts are gathered automatically at the start of each playbook run. You can see all available facts with: <code>ansible hostname -m setup</code>
                 </div>
             </div>
+            
+                </div>
+            </details>
         `,
         solution: `
             <details style="margin-top: 40px;">
@@ -538,19 +575,9 @@ Unauthorized access is prohibited.
             
                     <h4>Template File: <code>templates/motd.j2</code></h4>
             <pre><code>Welcome to {{ ansible_hostname }} - Managed by SRE Team
-
-===============================================
-System Information:
-- Hostname: {{ ansible_hostname }}
-- OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
-- IP Address: {{ ansible_default_ipv4.address }}
-===============================================
-
-This system is managed by Ansible Automation Platform.
-Unauthorized access is prohibited.
 </code></pre>
 
-            <h4>Playbook: <code>challenge4-deploy-motd.yml</code></h4>
+            <h4>Playbook: <code>challenge4-solution.yml</code></h4>
             <pre><code class="language-yaml">---
 - name: Challenge 4 - Deploy Standardized MOTD
   hosts: all
@@ -612,6 +639,10 @@ ssh node1</code></pre>
             </ul>
         `,
         guide: `
+            <details open>
+                <summary><strong>📖 Click to Show/Hide Step-by-Step Guide</strong></summary>
+                <div style="margin-top: 20px;">
+            
             <h3>Step-by-Step Guide</h3>
             
             <div class="step">
@@ -671,6 +702,9 @@ ansible node3 -m shell -a "firewall-cmd --list-services --permanent" -i inventor
 # Test HTTP access
 curl http://node3</code></pre>
             </div>
+            
+                </div>
+            </details>
         `,
         solution: `
             <details>
@@ -775,6 +809,10 @@ curl http://node3
             </ul>
         `,
         guide: `
+            <details open>
+                <summary><strong>📖 Click to Show/Hide Step-by-Step Guide</strong></summary>
+                <div style="margin-top: 20px;">
+            
             <h3>Step-by-Step Guide</h3>
             
             <div class="step">
@@ -949,6 +987,9 @@ curl http://node3
                     <strong>🎉 Extra Credit Goal:</strong> Learn how to use Workflow Approvals to create manual gates and human decision points in your automation—a key part of safely managing critical infrastructure.
                 </div>
             </div>
+            
+                </div>
+            </details>
         `,
         solution: `
             <details style="margin-top: 40px;">
@@ -1746,3 +1787,4 @@ app.listen(PORT, () => {
     console.log(`📁 Workshop directory: ${WORKSHOP_DIR}`);
     console.log('==========================================');
 });
+

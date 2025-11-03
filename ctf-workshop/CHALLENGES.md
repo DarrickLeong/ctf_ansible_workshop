@@ -42,6 +42,8 @@ System clocks are drifting because the time synchronization service (`chronyd`) 
 **The Mission**: 
 Write a single playbook to ensure the `chronyd` service is running and enabled on all servers.
 
+**Suggested Playbook Name**: `challenge1-solution.yml`
+
 **Learning Goal**: 
 Learn to use the `ansible.builtin.service` module to manage system services.
 
@@ -69,6 +71,8 @@ A compliance scan has detected an unauthorized package, `bind-utils`, installed 
 **The Mission**: 
 Create a playbook that removes the `bind-utils` package from **node2 only**.
 
+**Suggested Playbook Name**: `challenge2-solution.yml`
+
 **Learning Goal**: 
 Understand how to manage software packages using the `ansible.builtin.dnf` module and target specific hosts.
 
@@ -94,6 +98,8 @@ A rogue user account, `rogue_user`, was found on `node1` and `node3`. This is a 
 **The Mission**: 
 Write a playbook that ensures the `rogue_user` user is completely removed from any server where it exists.
 
+**Suggested Playbook Name**: `challenge3-solution.yml`
+
 **Learning Goal**: 
 Master user account management with the `ansible.builtin.user` module and learn how to handle tasks that may not apply to every host in a play.
 
@@ -116,31 +122,40 @@ Master user account management with the `ansible.builtin.user` module and learn 
 **Difficulty**: ⭐⭐⭐ Intermediate+
 
 **The Problem**: 
-The "Message of the Day" (`/etc/motd`) is inconsistent across servers, causing confusion. Some were even defaced by "Disruptive Dezign".
+The "Message of the Day" (`/etc/motd`) is inconsistent across servers, causing confusion. Some were even defaced by a bad actor.
 
 **The Mission**: 
-Create a standardized MOTD using a template. The message should be:
-```
-Welcome to {{ ansible_hostname }} - Managed by SRE Team
-```
+Create a standardized MOTD using a Jinja2 template. The message must:
+- Include the text "Welcome to" followed by the server's actual hostname
+- Include the text "Managed by SRE Team" or "SRE Team"
+- Be deployed to `/etc/motd` on all three servers
+
 Deploy this template to all three servers.
 
+**Suggested Playbook Name**: `challenge4-solution.yml`
+
 **Learning Goal**: 
-Learn to use the `ansible.builtin.template` module and Ansible facts (`ansible_hostname`) to deploy custom configuration files.
+Learn to use the `ansible.builtin.template` module and Ansible facts to deploy custom configuration files with dynamic content.
 
 **Required Skills**:
-- Template creation
-- Ansible facts/variables
+- Template creation with Jinja2
+- Using Ansible facts (variables that contain host information)
 - File deployment
-- Jinja2 templating basics
+- Understanding variable substitution
 
 **Success Criteria**:
-- ✅ Template file created with proper Jinja2 syntax
-- ✅ MOTD deployed to all three nodes
-- ✅ Each server shows its own hostname in the message
+- ✅ Template file created in a `templates/` directory
+- ✅ Template uses Ansible facts to display the hostname dynamically
+- ✅ MOTD file deployed to `/etc/motd` on all three nodes
+- ✅ Each server displays its **own unique hostname** (node1, node2, node3)
+- ✅ Message includes "SRE Team" text
 - ✅ File permissions are preserved (0644)
 
-**Hint**: Create a `templates/motd.j2` file in your playbook directory.
+**Hints**: 
+- Ansible collects "facts" about each server automatically - these are variables containing system information
+- The hostname is available as an Ansible fact
+- Template files use Jinja2 syntax with double curly braces `{{ variable_name }}`
+- Create your template in a `templates/motd.j2` file relative to your playbook
 
 ---
 
@@ -153,6 +168,8 @@ A backup web service is running on `node3`, but it's inaccessible because the fi
 
 **The Mission**: 
 Write a playbook that adds a permanent rule to the firewall on `node3` to allow traffic for the `http` service.
+
+**Suggested Playbook Name**: `challenge5-solution.yml`
 
 **Learning Goal**: 
 Practice managing firewall rules with the `ansible.posix.firewalld` module, a critical skill for securing servers.

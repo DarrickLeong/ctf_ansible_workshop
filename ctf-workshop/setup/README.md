@@ -47,7 +47,7 @@ ansible-playbook reset-environment.yml -i inventory --tags challenge1
 - Sets up home directory and shell
 
 ### Challenge 4: Inconsistent Messaging
-- Creates defaced MOTD on node1 ("HACKED BY DISRUPTIVE DEZIGN!")
+- Creates defaced MOTD on node1 ("HACKED BY A BAD ACTOR!")
 - Creates outdated MOTD on node2
 - Removes MOTD file on node3
 

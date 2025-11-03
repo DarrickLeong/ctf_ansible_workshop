@@ -114,31 +114,40 @@ Master user account management with the `ansible.builtin.user` module and learn 
 **Difficulty**: ⭐⭐⭐ Intermediate+
 
 **The Problem**: 
-The "Message of the Day" (`/etc/motd`) is inconsistent across servers, causing confusion. Some were even defaced by "Disruptive Dezign".
+The "Message of the Day" (`/etc/motd`) is inconsistent across servers, causing confusion. Some were even defaced by a bad actor.
 
 **The Mission**: 
-Create a standardized MOTD using a template. The message should be:
-```
-Welcome to {{ ansible_hostname }} - Managed by SRE Team
-```
+Create a standardized MOTD using a Jinja2 template. The message must:
+- Include the text "Welcome to" followed by the server's actual hostname
+- Include the text "Managed by SRE Team" or "SRE Team"
+- Be deployed to `/etc/motd` on all three servers
+
 Deploy this template to all three servers.
 
+**Suggested Playbook Name**: `challenge4-solution.yml`
+
 **Learning Goal**: 
-Learn to use the `ansible.builtin.template` module and Ansible facts (`ansible_hostname`) to deploy custom configuration files.
+Learn to use the `ansible.builtin.template` module and Ansible facts to deploy custom configuration files with dynamic content.
 
 **Required Skills**:
-- Template creation
-- Ansible facts/variables
+- Template creation with Jinja2
+- Using Ansible facts (variables that contain host information)
 - File deployment
-- Jinja2 templating basics
+- Understanding variable substitution
 
 **Success Criteria**:
-- ✅ Template file created with proper Jinja2 syntax
-- ✅ MOTD deployed to all three nodes
-- ✅ Each server shows its own hostname in the message
+- ✅ Template file created in a `templates/` directory
+- ✅ Template uses Ansible facts to display the hostname dynamically
+- ✅ MOTD file deployed to `/etc/motd` on all three nodes
+- ✅ Each server displays its **own unique hostname** (node1, node2, node3)
+- ✅ Message includes "SRE Team" text
 - ✅ File permissions are preserved (0644)
 
-**Hint**: Create a `templates/motd.j2` file in your playbook directory.
+**Hints**: 
+- Ansible collects "facts" about each server automatically - these are variables containing system information
+- The hostname is available as an Ansible fact
+- Template files use Jinja2 syntax with double curly braces `{{ variable_name }}`
+- Create your template in a `templates/motd.j2` file relative to your playbook
 
 ---
 
