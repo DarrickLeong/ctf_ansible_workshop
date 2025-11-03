@@ -1220,6 +1220,7 @@ curl http://node3
       register: web_install
     
     # Requirement 2: Configure SELinux to allow httpd on port 8080
+    # Note: Using shell instead of community.general.seport module due to EE constraints
     - name: Configure SELinux to allow httpd on port 8080
       ansible.builtin.shell: |
         if semanage port -l | grep "http_port_t" | grep -wq "8080"; then
