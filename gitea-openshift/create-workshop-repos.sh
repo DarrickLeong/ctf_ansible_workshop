@@ -142,14 +142,33 @@ initialize_repo_structure() {
     REPO_URL="${GITEA_URL}/${username}/${REPO_NAME}.git"
     REPO_DIR="${TEMP_DIR}/${username}-${REPO_NAME}"
     
-    # Extract host from GITEA_URL and embed credentials
+    # Extract protocol and host from GITEA_URL
+    GITEA_PROTOCOL=$(echo $GITEA_URL | sed -e 's|://.*||')
     GITEA_HOST=$(echo $GITEA_URL | sed -e 's|^http://||' -e 's|^https://||')
-    AUTH_URL="http://${username}:${password}@${GITEA_HOST}/${username}/${REPO_NAME}.git"
     
-    git clone "$AUTH_URL" "$REPO_DIR" &>/dev/null || {
-        echo -e "  ${RED}✗ Failed to clone repository${NC}"
-        return 1
-    }
+    # Build authenticated URL (password will be used as-is)
+    AUTH_URL="${GITEA_PROTOCOL}://${username}:${password}@${GITEA_HOST}/${username}/${REPO_NAME}.git"
+    
+    # Try to clone with better error handling
+    echo -e "  ${BLUE}Cloning repository...${NC}"
+    if git clone "$AUTH_URL" "$REPO_DIR" 2>&1 | tee /tmp/git_clone_$$.log | grep -v "password"; then
+        echo -e "  ${GREEN}✓ Repository cloned${NC}"
+    else
+        if grep -q "already exists and is not an empty directory" /tmp/git_clone_$$.log; then
+            echo -e "  ${YELLOW}⚠ Directory exists, cleaning...${NC}"
+            rm -rf "$REPO_DIR"
+            git clone "$AUTH_URL" "$REPO_DIR" &>/dev/null || {
+                echo -e "  ${RED}✗ Failed to clone repository${NC}"
+                rm -f /tmp/git_clone_$$.log
+                return 1
+            }
+        else
+            echo -e "  ${RED}✗ Failed to clone repository${NC}"
+            rm -f /tmp/git_clone_$$.log
+            return 1
+        fi
+    fi
+    rm -f /tmp/git_clone_$$.log
     
     cd "$REPO_DIR"
     
@@ -158,13 +177,13 @@ initialize_repo_structure() {
     
     # Create main README.md
     cat > README.md <<'EOF'
-# Ansible CTF Workshop - Challenge Playbooks
+# Ansible CTF Workshop - My Challenge Workspace
 
-Welcome to the Ansible CTF Workshop! This repository contains directories for each challenge where you'll create your Ansible playbooks.
+This is your personal workspace for creating Ansible playbook solutions for each challenge.
 
 ## Challenge Structure
 
-Each challenge has its own directory:
+Each challenge has its own directory with detailed instructions:
 - `challenge1/` - Out of Sync (5 points)
 - `challenge2/` - Malicious Package (10 points)
 - `challenge3/` - Rogue User Account (15 points)
@@ -175,10 +194,34 @@ Each challenge has its own directory:
 ## Getting Started
 
 1. Navigate to each challenge directory
-2. Read the README.md for challenge details
+2. Read the README.md for detailed challenge requirements
 3. Create your playbook solution
 4. Test your playbook
-5. Submit via AAP for scoring
+5. Commit and push your solution
+6. Submit via AAP for scoring
+
+## Workflow
+
+```bash
+# Navigate to a challenge
+cd challenge1
+
+# Read the instructions
+cat README.md
+
+# Create your solution
+vim solution.yml
+
+# Test it (if possible)
+ansible-playbook --syntax-check solution.yml
+
+# Commit and push
+git add solution.yml
+git commit -m "Complete challenge 1"
+git push
+
+# Submit via AAP for scoring
+```
 
 ## Tips
 
@@ -186,12 +229,13 @@ Each challenge has its own directory:
 - Use `ansible-playbook --check` for dry runs
 - Check the syntax with `ansible-playbook --syntax-check`
 - Use verbose mode `-v` for debugging
+- Commit frequently with clear messages
 
 ## Resources
 
 - [Ansible Documentation](https://docs.ansible.com/)
 - [Ansible Modules Index](https://docs.ansible.com/ansible/latest/collections/index_module.html)
-- Workshop Portal: [Link provided by instructor]
+- Workshop Portal: Check with your instructor
 
 Good luck! 🚀
 EOF
