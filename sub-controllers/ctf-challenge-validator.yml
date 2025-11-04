@@ -350,13 +350,13 @@
 
         # Steps 5 & 6: Workflow Template and Approval Gate checks (5 points each)
         # These are validated by checking AAP for workflow template and approval node
-        # Note: These checks require access to AAP API, so we delegate to localhost
+        # Note: These checks use AAP built-in variables (tower_host, tower_username, tower_password)
         - name: Get AAP API token (for workflow checks)
           uri:
-            url: "{{ lookup('env', 'CONTROLLER_HOST') | default('https://' + ansible_host, true) }}/api/v2/tokens/"
+            url: "https://{{ lookup('env', 'CONTROLLER_HOST') | default(tower_host | default(ansible_host)) }}/api/v2/tokens/"
             method: POST
-            user: "{{ lookup('env', 'CONTROLLER_USERNAME') | default(omit) }}"
-            password: "{{ lookup('env', 'CONTROLLER_PASSWORD') | default(omit) }}"
+            user: "{{ lookup('env', 'CONTROLLER_USERNAME') | default(tower_username | default('admin')) }}"
+            password: "{{ lookup('env', 'CONTROLLER_PASSWORD') | default(tower_password | default('')) }}"
             force_basic_auth: yes
             validate_certs: no
             status_code: [200, 201]
@@ -368,7 +368,7 @@
 
         - name: Check for Phoenix Protocol Workflow Template
           uri:
-            url: "{{ lookup('env', 'CONTROLLER_HOST') | default('https://' + ansible_host, true) }}/api/v2/workflow_job_templates/?name__icontains=phoenix"
+            url: "https://{{ lookup('env', 'CONTROLLER_HOST') | default(tower_host | default(ansible_host)) }}/api/v2/workflow_job_templates/?name__icontains=phoenix"
             method: GET
             headers:
               Authorization: "Bearer {{ aap_token.json.token }}"
