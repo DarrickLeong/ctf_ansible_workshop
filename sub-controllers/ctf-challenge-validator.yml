@@ -351,55 +351,29 @@
         # Steps 5 & 6: Workflow Template and Approval Gate checks (5 points each)
         # These are validated by checking AAP for workflow template and approval node
         # Note: Uses sub_controller_* variables from central AAP inventory
+        # Uses basic auth directly (compatible with all AAP/AWX versions)
         
-        - name: Debug - Show variables for AAP API check
-          debug:
-            msg: |
-              AAP API Variables:
-              - sub_controller_host: {{ sub_controller_host | default('NOT SET') }}
-              - sub_controller_username: {{ sub_controller_username | default('NOT SET') }}
-              - sub_controller_password: {{ 'SET' if sub_controller_password is defined else 'NOT SET' }}
-              - sub_controller_validate_certs: {{ sub_controller_validate_certs | default('NOT SET') }}
-              - tower_host: {{ tower_host | default('NOT SET') }}
-              - ansible_host: {{ ansible_host | default('NOT SET') }}
-              - Final URL will be: https://{{ sub_controller_host | default(tower_host | default(ansible_host)) }}/api/v2/tokens/
-          run_once: true
-        
-        - name: Get AAP API token (for workflow checks)
-          uri:
-            url: "https://{{ sub_controller_host | default(tower_host | default(ansible_host)) }}/api/v2/tokens/"
-            method: POST
-            user: "{{ sub_controller_username | default(tower_username | default('admin')) }}"
-            password: "{{ sub_controller_password | default(tower_password | default('')) }}"
-            force_basic_auth: yes
-            validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
-            status_code: [200, 201]
-          register: aap_token
-          delegate_to: localhost
-          run_once: true
-          ignore_errors: yes
-          no_log: false  # Temporarily show errors for debugging
-
         - name: Check for Phoenix Protocol Workflow Template
           uri:
             url: "https://{{ sub_controller_host | default(tower_host | default(ansible_host)) }}/api/v2/workflow_job_templates/?name__icontains=phoenix"
             method: GET
-            headers:
-              Authorization: "Bearer {{ aap_token.json.token }}"
+            user: "{{ sub_controller_username | default(tower_username | default('admin')) }}"
+            password: "{{ sub_controller_password | default(tower_password | default('')) }}"
+            force_basic_auth: yes
             validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
             status_code: [200]
           register: workflow_check
           delegate_to: localhost
           run_once: true
           ignore_errors: yes
-          when: aap_token is succeeded
 
         - name: Get workflow template details (if exists)
           uri:
             url: "{{ workflow_check.json.results[0].url }}"
             method: GET
-            headers:
-              Authorization: "Bearer {{ aap_token.json.token }}"
+            user: "{{ sub_controller_username | default(tower_username | default('admin')) }}"
+            password: "{{ sub_controller_password | default(tower_password | default('')) }}"
+            force_basic_auth: yes
             validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
             status_code: [200]
           register: workflow_details
@@ -407,7 +381,6 @@
           run_once: true
           ignore_errors: yes
           when: 
-            - aap_token is succeeded
             - workflow_check is succeeded
             - workflow_check.json.count | default(0) > 0
 
@@ -415,8 +388,9 @@
           uri:
             url: "{{ workflow_check.json.results[0].related.workflow_nodes }}"
             method: GET
-            headers:
-              Authorization: "Bearer {{ aap_token.json.token }}"
+            user: "{{ sub_controller_username | default(tower_username | default('admin')) }}"
+            password: "{{ sub_controller_password | default(tower_password | default('')) }}"
+            force_basic_auth: yes
             validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
             status_code: [200]
           register: workflow_nodes
@@ -424,7 +398,6 @@
           run_once: true
           ignore_errors: yes
           when:
-            - aap_token is succeeded
             - workflow_check is succeeded
             - workflow_check.json.count | default(0) > 0
 
