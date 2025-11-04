@@ -355,7 +355,7 @@
         
         - name: Check for Phoenix Protocol Workflow Template
           uri:
-            url: "https://{{ sub_controller_host | default(tower_host | default(ansible_host)) }}/api/v2/workflow_job_templates/?name__icontains=phoenix"
+            url: "https://{{ sub_controller_host | default(tower_host | default(ansible_host)) }}/api/controller/v2/workflow_job_templates/?name__icontains=phoenix"
             method: GET
             user: "{{ sub_controller_username | default(tower_username | default('admin')) }}"
             password: "{{ sub_controller_password | default(tower_password | default('')) }}"
@@ -369,7 +369,7 @@
 
         - name: Get workflow template details (if exists)
           uri:
-            url: "{{ workflow_check.json.results[0].url }}"
+            url: "https://{{ sub_controller_host | default(tower_host | default(ansible_host)) }}/api/controller/v2/workflow_job_templates/{{ workflow_check.json.results[0].id }}/"
             method: GET
             user: "{{ sub_controller_username | default(tower_username | default('admin')) }}"
             password: "{{ sub_controller_password | default(tower_password | default('')) }}"
@@ -386,7 +386,7 @@
 
         - name: Check for workflow nodes
           uri:
-            url: "{{ workflow_check.json.results[0].related.workflow_nodes }}"
+            url: "https://{{ sub_controller_host | default(tower_host | default(ansible_host)) }}/api/controller/v2/workflow_job_templates/{{ workflow_check.json.results[0].id }}/workflow_nodes/"
             method: GET
             user: "{{ sub_controller_username | default(tower_username | default('admin')) }}"
             password: "{{ sub_controller_password | default(tower_password | default('')) }}"
