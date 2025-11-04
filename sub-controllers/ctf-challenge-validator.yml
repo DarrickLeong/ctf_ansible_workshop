@@ -350,15 +350,15 @@
 
         # Steps 5 & 6: Workflow Template and Approval Gate checks (5 points each)
         # These are validated by checking AAP for workflow template and approval node
-        # Note: These checks use AAP built-in variables (tower_host, tower_username, tower_password)
+        # Note: Uses sub_controller_* variables from central AAP inventory
         - name: Get AAP API token (for workflow checks)
           uri:
-            url: "https://{{ lookup('env', 'CONTROLLER_HOST') | default(tower_host | default(ansible_host)) }}/api/v2/tokens/"
+            url: "https://{{ sub_controller_host | default(tower_host | default(ansible_host)) }}/api/v2/tokens/"
             method: POST
-            user: "{{ lookup('env', 'CONTROLLER_USERNAME') | default(tower_username | default('admin')) }}"
-            password: "{{ lookup('env', 'CONTROLLER_PASSWORD') | default(tower_password | default('')) }}"
+            user: "{{ sub_controller_username | default(tower_username | default('admin')) }}"
+            password: "{{ sub_controller_password | default(tower_password | default('')) }}"
             force_basic_auth: yes
-            validate_certs: no
+            validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
             status_code: [200, 201]
           register: aap_token
           delegate_to: localhost
@@ -368,11 +368,11 @@
 
         - name: Check for Phoenix Protocol Workflow Template
           uri:
-            url: "https://{{ lookup('env', 'CONTROLLER_HOST') | default(tower_host | default(ansible_host)) }}/api/v2/workflow_job_templates/?name__icontains=phoenix"
+            url: "https://{{ sub_controller_host | default(tower_host | default(ansible_host)) }}/api/v2/workflow_job_templates/?name__icontains=phoenix"
             method: GET
             headers:
               Authorization: "Bearer {{ aap_token.json.token }}"
-            validate_certs: no
+            validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
             status_code: [200]
           register: workflow_check
           delegate_to: localhost
@@ -386,7 +386,7 @@
             method: GET
             headers:
               Authorization: "Bearer {{ aap_token.json.token }}"
-            validate_certs: no
+            validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
             status_code: [200]
           register: workflow_details
           delegate_to: localhost
@@ -403,7 +403,7 @@
             method: GET
             headers:
               Authorization: "Bearer {{ aap_token.json.token }}"
-            validate_certs: no
+            validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
             status_code: [200]
           register: workflow_nodes
           delegate_to: localhost
