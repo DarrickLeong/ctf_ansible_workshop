@@ -222,33 +222,51 @@ app.post('/api/challenge_results', (req, res) => {
 
                 // Only record results with points > 0 to avoid cluttering activity feed
                 if (points > 0) {
-                    // Check if this challenge already has an equal or higher score
+                    // Check if this challenge already exists for this attendee
                     insertPromises.push(new Promise((resolve, reject) => {
-                        db.get(`SELECT MAX(points_earned) as max_points 
+                        db.get(`SELECT id, points_earned 
                                 FROM challenge_results 
-                                WHERE attendee_id = ? AND challenge_type = ?`,
-                               [attendee_id, challenge_type], (err, existing) => {
+                                WHERE attendee_id = ? AND challenge_type = ? AND hostname = ?
+                                ORDER BY timestamp DESC LIMIT 1`,
+                               [attendee_id, challenge_type, hostname], (err, existing) => {
                             if (err) {
                                 reject(err);
                                 return;
                             }
                             
-                            const existingPoints = existing?.max_points || 0;
+                            const existingPoints = existing?.points_earned || 0;
                             
-                            // Only insert if this is a NEW achievement or HIGHER score
+                            // Only update/insert if this is a NEW achievement or HIGHER score
                             if (points > existingPoints) {
-                                db.run(`INSERT INTO challenge_results 
-                                        (attendee_id, hostname, challenge_type, points_earned, max_points, completed, details, aap_cluster_id) 
-                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                                       [attendee_id, hostname, challenge_type, points, result.max_points || 0, 
-                                        result.completed ? 1 : 0, result.details || '', aap_cluster_id || ''],
-                                       function(err) {
-                                           if (err) reject(err);
-                                           else {
-                                               console.log(`🎯 NEW/IMPROVED: ${attendee_name} earned ${points} pts for ${challenge_type} on ${hostname} (previous: ${existingPoints})`);
-                                               resolve(this.lastID);
-                                           }
-                                       });
+                                if (existing) {
+                                    // Update existing record
+                                    db.run(`UPDATE challenge_results 
+                                            SET points_earned = ?, max_points = ?, completed = ?, details = ?, timestamp = CURRENT_TIMESTAMP
+                                            WHERE id = ?`,
+                                           [points, result.max_points || 0, result.completed ? 1 : 0, 
+                                            result.details || '', existing.id],
+                                           function(err) {
+                                               if (err) reject(err);
+                                               else {
+                                                   console.log(`🎯 UPDATED: ${attendee_name} earned ${points} pts for ${challenge_type} on ${hostname} (previous: ${existingPoints})`);
+                                                   resolve(existing.id);
+                                               }
+                                           });
+                                } else {
+                                    // Insert new record
+                                    db.run(`INSERT INTO challenge_results 
+                                            (attendee_id, hostname, challenge_type, points_earned, max_points, completed, details, aap_cluster_id) 
+                                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                                           [attendee_id, hostname, challenge_type, points, result.max_points || 0, 
+                                            result.completed ? 1 : 0, result.details || '', aap_cluster_id || ''],
+                                           function(err) {
+                                               if (err) reject(err);
+                                               else {
+                                                   console.log(`🎯 NEW: ${attendee_name} earned ${points} pts for ${challenge_type} on ${hostname}`);
+                                                   resolve(this.lastID);
+                                               }
+                                           });
+                                }
                             } else {
                                 // Challenge already completed with same or higher score - skip duplicate activity
                                 console.log(`⏭️  SKIP: ${attendee_name} already has ${existingPoints} pts for ${challenge_type} (${hostname} reporting ${points})`);
