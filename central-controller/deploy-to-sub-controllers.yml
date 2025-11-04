@@ -221,7 +221,16 @@
             ask_variables_on_launch: "{{ item.ask_variables_on_launch | default(true) }}"
             ask_inventory_on_launch: "{{ item.ask_inventory_on_launch | default(true) }}"
             ask_credential_on_launch: "{{ item.ask_credential_on_launch | default(true) }}"
-            extra_vars: "{{ item.variables | default({}) | combine({'sub_controller_name': inventory_hostname}) }}"
+            extra_vars: >-
+              {{
+                item.variables | default({}) | combine({
+                  'sub_controller_name': inventory_hostname,
+                  'sub_controller_host': sub_controller_host,
+                  'sub_controller_username': sub_controller_username,
+                  'sub_controller_password': sub_controller_password,
+                  'sub_controller_validate_certs': sub_controller_validate_certs | default(false)
+                })
+              }}
             execution_environment: "{{ execution_environment if execution_environment != 'Default execution environment' else omit }}"
             state: present
           loop: "{{ job_templates }}"
