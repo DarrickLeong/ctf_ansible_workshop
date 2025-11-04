@@ -230,11 +230,13 @@ echo -e "${GREEN}✓ Gitea PVC created${NC}"
 echo ""
 echo -e "${GREEN}➜ Step 5: Creating Gitea configuration${NC}"
 
-# Generate secrets outside the heredoc
-SECRET_KEY=$(openssl rand -base64 32)
-INTERNAL_TOKEN=$(openssl rand -base64 106)
+# Generate secrets outside the heredoc (remove newlines from base64 output)
+SECRET_KEY=$(openssl rand -base64 32 | tr -d '\n')
+INTERNAL_TOKEN=$(openssl rand -base64 106 | tr -d '\n')
 
-cat <<EOF | oc apply -f -
+# Create temporary file for configmap
+TMPFILE=$(mktemp)
+cat <<EOF > "$TMPFILE"
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -299,6 +301,9 @@ data:
     [lfs]
     PATH = /gitea-data/lfs
 EOF
+
+oc apply -f "$TMPFILE"
+rm -f "$TMPFILE"
 echo -e "${GREEN}✓ Gitea configuration created${NC}"
 
 ##############################################################################
