@@ -407,30 +407,30 @@
         - name: Calculate Challenge 6 points
           set_fact:
             challenge6_points: "{{
-              ((
+              (((
                 (hostvars['node2']['challenge6_step1_db_provisioned'] | default(false) | bool) or
                 (challenge6_step1_db_provisioned | default(false) | bool)
-              ) | int * 5) +
-              ((
+              ) | int) * 5) +
+              (((
                 (hostvars['node1']['challenge6_step2_web_provisioned'] | default(false) | bool) or
                 (challenge6_step2_web_provisioned | default(false) | bool)
-              ) | int * 5) +
-              ((
+              ) | int) * 5) +
+              (((
                 (hostvars['node1']['challenge6_step3_app_deployed'] | default(false) | bool) or
                 (challenge6_step3_app_deployed | default(false) | bool)
-              ) | int * 5) +
-              ((
+              ) | int) * 5) +
+              (((
                 (hostvars['node1']['challenge6_step4_validated'] | default(false) | bool) or
                 (challenge6_step4_validated | default(false) | bool)
-              ) | int * 5) +
-              ((
+              ) | int) * 5) +
+              (((
                 (hostvars['node1']['challenge6_step5_web_rollback'] | default(false) | bool) or
                 (challenge6_step5_web_rollback | default(false) | bool)
-              ) | int * 5) +
-              ((
+              ) | int) * 5) +
+              (((
                 (hostvars['node2']['challenge6_step6_db_rollback'] | default(false) | bool) or
                 (challenge6_step6_db_rollback | default(false) | bool)
-              ) | int * 5)
+              ) | int) * 5)
             }}"
             challenge6_completed: "{{ 
               (hostvars['node1']['challenge6_step4_validated'] | default(false) | bool) or
