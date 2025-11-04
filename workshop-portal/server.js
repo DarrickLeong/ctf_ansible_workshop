@@ -904,7 +904,8 @@ curl http://node3
                 </li>
                 <li><strong>Create Workflow Template</strong>
                     <ul>
-                        <li>Name: "Phoenix Protocol" or similar</li>
+                        <li><strong>⚠️ Name Requirement:</strong> Must contain "phoenix" OR "challenge6" (case-insensitive)</li>
+                        <li><strong>Recommended Name:</strong> <code>challenge6-workflow</code></li>
                         <li>Link job templates in correct order:
                             <ol>
                                 <li>Provision Database</li>
@@ -1011,7 +1012,8 @@ curl http://node3
                     <summary><strong>🔍 Show me a hint</strong></summary>
                     <ul>
                         <li>Navigate to <strong>Templates → Add → Workflow Template</strong></li>
-                        <li>Name must contain "Phoenix" (e.g., "Phoenix Protocol")</li>
+                        <li><strong>⚠️ CRITICAL:</strong> Name must contain "phoenix" OR "challenge6" (case-insensitive)</li>
+                        <li><strong>Recommended:</strong> Use <code>challenge6-workflow</code></li>
                         <li>Click <strong>Workflow Visualizer</strong></li>
                         <li>Link the 4 job templates in correct order:
                             <ol>
@@ -1406,8 +1408,14 @@ curl http://node3
 
             <h4>Step 5: Create Workflow Template in AAP</h4>
             <p>Create a Workflow Template in AAP that links all 4 playbooks:</p>
-            <div class="alert alert-info">
-                <strong>Workflow Name:</strong> Must contain "Phoenix" (e.g., "Phoenix Protocol")
+            <div class="alert alert-warning">
+                <strong>⚠️ IMPORTANT - Workflow Naming Requirement:</strong>
+                <p style="margin: 10px 0;">The workflow template name MUST contain one of these keywords (case-insensitive):</p>
+                <ul style="margin-left: 20px;">
+                    <li>✅ <strong>"phoenix"</strong> - Example: "Phoenix Protocol", "My Phoenix Workflow"</li>
+                    <li>✅ <strong>"challenge6"</strong> - Example: "challenge6-workflow", "Challenge 6 Deploy"</li>
+                </ul>
+                <p style="margin-top: 10px; color: #fbbf24;"><strong>💡 Recommended:</strong> Use <code>challenge6-workflow</code> for consistency</p>
             </div>
             <h5>Workflow Structure:</h5>
             <pre>
@@ -1431,7 +1439,7 @@ START
             <ol>
                 <li><strong>Create all 4 playbooks</strong> (Database, Web Server, Application, Validation)</li>
                 <li><strong>Create 4 Job Templates</strong> in AAP for each playbook</li>
-                <li><strong>Create Workflow Template</strong> named "Phoenix Protocol" linking all 4 in order</li>
+                <li><strong>Create Workflow Template</strong> named "challenge6-workflow" (or anything with "phoenix" or "challenge6") linking all 4 in order</li>
                 <li><strong>Add Approval Node</strong> at the START of the workflow</li>
                 <li><strong>Launch the Workflow</strong>:
                     <ul>

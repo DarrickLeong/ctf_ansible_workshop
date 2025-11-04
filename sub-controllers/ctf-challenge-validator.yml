@@ -352,8 +352,9 @@
         # These are validated by checking AAP for workflow template and approval node
         # Note: Uses sub_controller_* variables from central AAP inventory
         # Uses basic auth directly (compatible with all AAP/AWX versions)
+        # Workflow name must contain "phoenix" OR "challenge6" (case-insensitive)
         
-        - name: Check for Phoenix Protocol Workflow Template
+        - name: Check for Phoenix Protocol Workflow Template (search for 'phoenix')
           uri:
             url: "https://{{ sub_controller_host | default(tower_host | default(ansible_host)) }}/api/controller/v2/workflow_job_templates/?name__icontains=phoenix"
             method: GET
@@ -362,10 +363,29 @@
             force_basic_auth: yes
             validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
             status_code: [200]
-          register: workflow_check
+          register: workflow_check_phoenix
           delegate_to: localhost
           run_once: true
           ignore_errors: yes
+
+        - name: Check for Phoenix Protocol Workflow Template (search for 'challenge6')
+          uri:
+            url: "https://{{ sub_controller_host | default(tower_host | default(ansible_host)) }}/api/controller/v2/workflow_job_templates/?name__icontains=challenge6"
+            method: GET
+            user: "{{ sub_controller_username | default(tower_username | default('admin')) }}"
+            password: "{{ sub_controller_password | default(tower_password | default('')) }}"
+            force_basic_auth: yes
+            validate_certs: "{{ sub_controller_validate_certs | default(false) }}"
+            status_code: [200]
+          register: workflow_check_challenge6
+          delegate_to: localhost
+          run_once: true
+          ignore_errors: yes
+
+        - name: Set workflow_check to whichever search found results
+          set_fact:
+            workflow_check: "{{ workflow_check_phoenix if (workflow_check_phoenix.json.count | default(0) > 0) else workflow_check_challenge6 }}"
+          run_once: true
 
         - name: Get workflow template details (if exists)
           uri:
