@@ -468,7 +468,7 @@
               (workflow_check is succeeded and workflow_check.json.count | default(0) > 0 and
                workflow_details is succeeded and 
                workflow_details.json.name is defined and
-               'phoenix' in workflow_details.json.name | lower and
+               ('phoenix' in workflow_details.json.name | lower or 'challenge6' in workflow_details.json.name | lower) and
                workflow_playbooks_ordered is defined and
                workflow_playbooks_ordered | length >= 4 and
                ('provision-database' in (workflow_playbooks_ordered | join(' ') | lower) or 'provision_database' in (workflow_playbooks_ordered | join(' ') | lower) or 'database' in (workflow_playbooks_ordered | join(' ') | lower)) and
