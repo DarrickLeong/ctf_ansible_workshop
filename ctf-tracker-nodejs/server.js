@@ -222,13 +222,18 @@ app.post('/api/challenge_results', (req, res) => {
 
                 // Only record results with points > 0 to avoid cluttering activity feed
                 if (points > 0) {
+                    // For multi-host challenges like challenge6_phoenix, use a normalized hostname
+                    // to prevent duplicate scoring across node1, node2, node3
+                    const normalizedHostname = challenge_type === 'challenge6_phoenix' ? 
+                        'controller' : hostname;
+                    
                     // Check if this challenge already exists for this attendee
                     insertPromises.push(new Promise((resolve, reject) => {
                         db.get(`SELECT id, points_earned 
                                 FROM challenge_results 
                                 WHERE attendee_id = ? AND challenge_type = ? AND hostname = ?
                                 ORDER BY timestamp DESC LIMIT 1`,
-                               [attendee_id, challenge_type, hostname], (err, existing) => {
+                               [attendee_id, challenge_type, normalizedHostname], (err, existing) => {
                             if (err) {
                                 reject(err);
                                 return;
@@ -248,7 +253,7 @@ app.post('/api/challenge_results', (req, res) => {
                                            function(err) {
                                                if (err) reject(err);
                                                else {
-                                                   console.log(`🎯 UPDATED: ${attendee_name} earned ${points} pts for ${challenge_type} on ${hostname} (previous: ${existingPoints})`);
+                                                   console.log(`🎯 UPDATED: ${attendee_name} earned ${points} pts for ${challenge_type} (previous: ${existingPoints}, reported by ${hostname})`);
                                                    resolve(existing.id);
                                                }
                                            });
@@ -257,12 +262,12 @@ app.post('/api/challenge_results', (req, res) => {
                                     db.run(`INSERT INTO challenge_results 
                                             (attendee_id, hostname, challenge_type, points_earned, max_points, completed, details, aap_cluster_id) 
                                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                                           [attendee_id, hostname, challenge_type, points, result.max_points || 0, 
+                                           [attendee_id, normalizedHostname, challenge_type, points, result.max_points || 0, 
                                             result.completed ? 1 : 0, result.details || '', aap_cluster_id || ''],
                                            function(err) {
                                                if (err) reject(err);
                                                else {
-                                                   console.log(`🎯 NEW: ${attendee_name} earned ${points} pts for ${challenge_type} on ${hostname}`);
+                                                   console.log(`🎯 NEW: ${attendee_name} earned ${points} pts for ${challenge_type} (reported by ${hostname})`);
                                                    resolve(this.lastID);
                                                }
                                            });
