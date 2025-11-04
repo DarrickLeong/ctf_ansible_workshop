@@ -348,21 +348,82 @@
           ignore_errors: yes
           when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
 
-        # Steps 5 & 6: Rollback checks (5 points each)
-        # These are validated by checking if rollback was executed AND services are in clean state
-        - name: Check for web rollback marker (node1)
-          stat:
-            path: /tmp/phoenix_web_rollback
-          register: web_rollback_marker
+        # Steps 5 & 6: Workflow Template and Approval Gate checks (5 points each)
+        # These are validated by checking AAP for workflow template and approval node
+        # Note: These checks require access to AAP API, so we delegate to localhost
+        - name: Get AAP API token (for workflow checks)
+          uri:
+            url: "{{ lookup('env', 'CONTROLLER_HOST') | default('https://' + ansible_host, true) }}/api/v2/tokens/"
+            method: POST
+            user: "{{ lookup('env', 'CONTROLLER_USERNAME') | default(omit) }}"
+            password: "{{ lookup('env', 'CONTROLLER_PASSWORD') | default(omit) }}"
+            force_basic_auth: yes
+            validate_certs: no
+            status_code: [200, 201]
+          register: aap_token
+          delegate_to: localhost
+          run_once: true
           ignore_errors: yes
-          when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
+          no_log: true
 
-        - name: Check for db rollback marker (node2)
-          stat:
-            path: /tmp/phoenix_db_rollback
-          register: db_rollback_marker
+        - name: Check for Phoenix Protocol Workflow Template
+          uri:
+            url: "{{ lookup('env', 'CONTROLLER_HOST') | default('https://' + ansible_host, true) }}/api/v2/workflow_job_templates/?name__icontains=phoenix"
+            method: GET
+            headers:
+              Authorization: "Bearer {{ aap_token.json.token }}"
+            validate_certs: no
+            status_code: [200]
+          register: workflow_check
+          delegate_to: localhost
+          run_once: true
           ignore_errors: yes
-          when: inventory_hostname == 'node2' or 'node2' in inventory_hostname
+          when: aap_token is succeeded
+
+        - name: Get workflow template details (if exists)
+          uri:
+            url: "{{ workflow_check.json.results[0].url }}"
+            method: GET
+            headers:
+              Authorization: "Bearer {{ aap_token.json.token }}"
+            validate_certs: no
+            status_code: [200]
+          register: workflow_details
+          delegate_to: localhost
+          run_once: true
+          ignore_errors: yes
+          when: 
+            - aap_token is succeeded
+            - workflow_check is succeeded
+            - workflow_check.json.count | default(0) > 0
+
+        - name: Check for workflow nodes
+          uri:
+            url: "{{ workflow_check.json.results[0].related.workflow_nodes }}"
+            method: GET
+            headers:
+              Authorization: "Bearer {{ aap_token.json.token }}"
+            validate_certs: no
+            status_code: [200]
+          register: workflow_nodes
+          delegate_to: localhost
+          run_once: true
+          ignore_errors: yes
+          when:
+            - aap_token is succeeded
+            - workflow_check is succeeded
+            - workflow_check.json.count | default(0) > 0
+
+        - name: Verify workflow has correct playbooks in order
+          set_fact:
+            workflow_playbooks_ordered: "{{
+              workflow_nodes.json.results | default([]) |
+              selectattr('summary_fields.unified_job_template.unified_job_type', 'equalto', 'job') |
+              map(attribute='summary_fields.unified_job_template.name') | list
+            }}"
+          when:
+            - workflow_nodes is succeeded
+            - workflow_nodes.json.results is defined
 
         # Evaluate each step
         - name: Evaluate Challenge 6 - Step 1 (Provision Database)
@@ -394,13 +455,27 @@
               ('healthy' in hostvars['node1']['validation_http_test'].content if hostvars['node1']['validation_http_test'].content is defined else false)
             }}"
 
-        - name: Evaluate Challenge 6 - Step 5 (Rollback Web)
+        - name: Evaluate Challenge 6 - Step 5 (Workflow Template)
           set_fact:
-            challenge6_step5_web_rollback: "{{ web_rollback_marker.stat.exists if web_rollback_marker.stat is defined else false }}"
+            challenge6_step5_workflow_created: "{{
+              (workflow_check is succeeded and workflow_check.json.count | default(0) > 0 and
+               workflow_details is succeeded and 
+               workflow_details.json.name is defined and
+               'phoenix' in workflow_details.json.name | lower and
+               workflow_playbooks_ordered is defined and
+               workflow_playbooks_ordered | length >= 4 and
+               ('provision-database' in (workflow_playbooks_ordered | join(' ') | lower) or 'provision_database' in (workflow_playbooks_ordered | join(' ') | lower) or 'database' in (workflow_playbooks_ordered | join(' ') | lower)) and
+               ('provision-webserver' in (workflow_playbooks_ordered | join(' ') | lower) or 'provision_webserver' in (workflow_playbooks_ordered | join(' ') | lower) or 'webserver' in (workflow_playbooks_ordered | join(' ') | lower) or 'web-server' in (workflow_playbooks_ordered | join(' ') | lower)) and
+               ('deploy-application' in (workflow_playbooks_ordered | join(' ') | lower) or 'deploy_application' in (workflow_playbooks_ordered | join(' ') | lower) or 'application' in (workflow_playbooks_ordered | join(' ') | lower)) and
+               ('validate-service' in (workflow_playbooks_ordered | join(' ') | lower) or 'validate_service' in (workflow_playbooks_ordered | join(' ') | lower) or 'validation' in (workflow_playbooks_ordered | join(' ') | lower)))
+            }}"
 
-        - name: Evaluate Challenge 6 - Step 6 (Rollback DB)
+        - name: Evaluate Challenge 6 - Step 6 (Approval Node)
           set_fact:
-            challenge6_step6_db_rollback: "{{ db_rollback_marker.stat.exists if db_rollback_marker.stat is defined else false }}"
+            challenge6_step6_approval_node: "{{
+              (workflow_nodes is succeeded and 
+               workflow_nodes.json.results | default([]) | selectattr('summary_fields.unified_job_template.unified_job_type', 'equalto', 'workflow_approval') | list | length > 0)
+            }}"
 
         # Calculate total points (5 points per step)
         # For Challenge 6, we need to check facts across both node1 and node2
@@ -424,12 +499,10 @@
                 (challenge6_step4_validated | default(false) | bool)
               ) | int) * 5) +
               (((
-                (hostvars['node1']['challenge6_step5_web_rollback'] | default(false) | bool) or
-                (challenge6_step5_web_rollback | default(false) | bool)
+                (challenge6_step5_workflow_created | default(false) | bool)
               ) | int) * 5) +
               (((
-                (hostvars['node2']['challenge6_step6_db_rollback'] | default(false) | bool) or
-                (challenge6_step6_db_rollback | default(false) | bool)
+                (challenge6_step6_approval_node | default(false) | bool)
               ) | int) * 5)
             }}"
             challenge6_completed: "{{ 
@@ -451,8 +524,8 @@
                       'step2_webserver_provisioned': (hostvars['node1']['challenge6_step2_web_provisioned'] | default(false) | bool) or (challenge6_step2_web_provisioned | default(false) | bool),
                       'step3_application_deployed': (hostvars['node1']['challenge6_step3_app_deployed'] | default(false) | bool) or (challenge6_step3_app_deployed | default(false) | bool),
                       'step4_validation_passed': (hostvars['node1']['challenge6_step4_validated'] | default(false) | bool) or (challenge6_step4_validated | default(false) | bool),
-                      'step5_web_rollback': (hostvars['node1']['challenge6_step5_web_rollback'] | default(false) | bool) or (challenge6_step5_web_rollback | default(false) | bool),
-                      'step6_db_rollback': (hostvars['node2']['challenge6_step6_db_rollback'] | default(false) | bool) or (challenge6_step6_db_rollback | default(false) | bool),
+                      'step5_workflow_created': challenge6_step5_workflow_created | default(false) | bool,
+                      'step6_approval_node': challenge6_step6_approval_node | default(false) | bool,
                       'hostname': inventory_hostname
                     }
                   }
@@ -519,8 +592,8 @@
             ├─ Step 2 (Provision Web Server): {{ '+5' if challenge_results.challenge6_phoenix.details.step2_webserver_provisioned else '0' }} pts
             ├─ Step 3 (Deploy Application): {{ '+5' if challenge_results.challenge6_phoenix.details.step3_application_deployed else '0' }} pts
             ├─ Step 4 (Validate Service): {{ '+5' if challenge_results.challenge6_phoenix.details.step4_validation_passed else '0' }} pts
-            ├─ Step 5 (Rollback Web Server): {{ '+5' if challenge_results.challenge6_phoenix.details.step5_web_rollback else '0' }} pts
-            └─ Step 6 (Rollback Database): {{ '+5' if challenge_results.challenge6_phoenix.details.step6_db_rollback else '0' }} pts
+            ├─ Step 5 (Create Workflow Template): {{ '+5' if challenge_results.challenge6_phoenix.details.step5_workflow_created else '0' }} pts
+            └─ Step 6 (Add Approval Node): {{ '+5' if challenge_results.challenge6_phoenix.details.step6_approval_node else '0' }} pts
           
           Tracker: {{ 'SUCCESS' if tracker_response is defined and tracker_response is succeeded else 'SKIPPED' }}
           ==========================================

@@ -902,32 +902,37 @@ curl http://node3
                         <li><strong>Fail the playbook if checks don't pass</strong></li>
                     </ul>
                 </li>
-                <li><strong>challenge6-rollback-webserver.yml</strong> (Target: node1)
+                <li><strong>Create Workflow Template</strong>
                     <ul>
-                        <li>Stop and disable <code>httpd</code> service</li>
-                        <li>Remove <code>/var/www/html/index.php</code></li>
-                        <li>Remove custom httpd configurations</li>
+                        <li>Name: "Phoenix Protocol" or similar</li>
+                        <li>Link job templates in correct order:
+                            <ol>
+                                <li>Provision Database</li>
+                                <li>Provision Web Server</li>
+                                <li>Deploy Application</li>
+                                <li>Validate Service</li>
+                            </ol>
+                        </li>
+                        <li>All steps must be on the <strong>success path</strong> (On Success links)</li>
                     </ul>
                 </li>
-                <li><strong>challenge6-rollback-database.yml</strong> (Target: node2)
+                <li><strong>Add Approval Node</strong>
                     <ul>
-                        <li>Stop and disable <code>postgresql</code> service</li>
-                        <li>Remove PostgreSQL data directory <code>/var/lib/pgsql/data</code></li>
+                        <li>Add an Approval node at the START of the workflow</li>
+                        <li>The approval must be BEFORE "Provision Database" starts</li>
+                        <li>This creates a Go/No-Go decision point for disaster recovery</li>
                     </ul>
                 </li>
             </ol>
 
             <h4>Success Criteria:</h4>
             <ul>
-                <li>✅ All 6 playbooks created and working</li>
-                <li>✅ All 6 Job Templates created in AAP</li>
-                <li>✅ Workflow Template created with proper flow</li>
-                <li>✅ <strong>Success path:</strong> Database provisions before web server</li>
-                <li>✅ <strong>Success path:</strong> Web server provisions before app deployment</li>
-                <li>✅ <strong>Success path:</strong> App deploys before validation</li>
-                <li>✅ <strong>Failure path:</strong> Validation failures trigger rollbacks</li>
-                <li>✅ <strong>Failure path:</strong> Rollbacks execute in reverse order (Web → DB)</li>
-                <li>✅ <strong>Extra Credit:</strong> Approval gate implemented (+10 points)</li>
+                <li>✅ All 4 playbooks created and working</li>
+                <li>✅ All 4 Job Templates created in AAP</li>
+                <li>✅ Workflow Template created with name containing "Phoenix"</li>
+                <li>✅ <strong>Correct order:</strong> Database → Web Server → Application → Validation</li>
+                <li>✅ <strong>Approval Gate:</strong> Manual approval required before execution starts</li>
+                <li>✅ Complete workflow runs successfully from approval to validation</li>
             </ul>
         `,
         guide: `
@@ -1001,30 +1006,52 @@ curl http://node3
                     </ul>
                 </details>
 
-                <h5>5. Rollback Web Server (<code>challenge6-rollback-webserver.yml</code>)</h5>
+                <h5>5. Create Workflow Template (<strong>Step 5 - 5 Points</strong>)</h5>
                 <details>
                     <summary><strong>🔍 Show me a hint</strong></summary>
                     <ul>
-                        <li>Stop httpd service</li>
-                        <li>Remove application code</li>
-                        <li>Clean up configurations</li>
+                        <li>Navigate to <strong>Templates → Add → Workflow Template</strong></li>
+                        <li>Name must contain "Phoenix" (e.g., "Phoenix Protocol")</li>
+                        <li>Click <strong>Workflow Visualizer</strong></li>
+                        <li>Link the 4 job templates in correct order:
+                            <ol>
+                                <li>START → Provision Database</li>
+                                <li>Provision Database → (On Success) → Provision Web Server</li>
+                                <li>Provision Web Server → (On Success) → Deploy Application</li>
+                                <li>Deploy Application → (On Success) → Validate Service</li>
+                            </ol>
+                        </li>
+                        <li>All links must be "On Success" (green)</li>
+                        <li>Save the workflow</li>
                     </ul>
                 </details>
 
-                <h5>6. Rollback Database (<code>challenge6-rollback-database.yml</code>)</h5>
+                <h5>6. Add Approval Node (<strong>Step 6 - 5 Points</strong>)</h5>
                 <details>
                     <summary><strong>🔍 Show me a hint</strong></summary>
                     <ul>
-                        <li>Drop database and user</li>
-                        <li>Stop database service</li>
-                        <li>Clean up data files</li>
+                        <li>Edit your Phoenix Protocol workflow</li>
+                        <li>In Workflow Visualizer, click <strong>START</strong></li>
+                        <li>Add node → Select <strong>Approval</strong></li>
+                        <li>Name: "Go/No-Go Decision" or similar</li>
+                        <li>Description: "Approve disaster recovery execution"</li>
+                        <li>Timeout: 1 hour (default is fine)</li>
+                        <li>Update the workflow structure:
+                            <ol>
+                                <li>START → Approval Node</li>
+                                <li>Approval Node → (On Success) → Provision Database</li>
+                                <li>(Rest of workflow stays the same)</li>
+                            </ol>
+                        </li>
+                        <li>Save the workflow</li>
+                        <li><strong>Real-world:</strong> Approval gates are critical for production changes requiring human sign-off</li>
                     </ul>
                 </details>
             </div>
 
             <div class="step">
                 <h4>Step 2: Create Job Templates in AAP</h4>
-                <p>For each playbook, create a Job Template in AAP:</p>
+                <p>For each of the 4 playbooks, create a Job Template in AAP:</p>
                 <ol>
                     <li>Navigate to <strong>Templates</strong> in AAP</li>
                     <li>Click <strong>Add</strong> → <strong>Job Template</strong></li>
@@ -1037,7 +1064,7 @@ curl http://node3
                         <li><strong>Credentials:</strong> Your SSH credentials</li>
                     </ul>
                     <li>Click <strong>Save</strong></li>
-                    <li>Repeat for all six playbooks</li>
+                    <li>Repeat for all four playbooks (Database, Web Server, Application, Validation)</li>
                 </ol>
                 
                 <div class="alert alert-info">
@@ -1046,28 +1073,23 @@ curl http://node3
             </div>
 
             <div class="step">
-                <h4>Step 3: Create the Workflow Template</h4>
-                <p>Now comes the orchestration magic!</p>
+                <h4>Step 3: Build the Phoenix Protocol Workflow (<strong>Step 5 - 5 Points</strong>)</h4>
+                <p>Create a workflow template that orchestrates disaster recovery!</p>
                 
                 <ol>
                     <li>Navigate to <strong>Templates</strong> → Click <strong>Add</strong> → <strong>Workflow Template</strong></li>
-                    <li>Name it "Challenge 6 - Phoenix Protocol"</li>
+                    <li>Name it "Phoenix Protocol" (must contain "Phoenix")</li>
                     <li>Click <strong>Save</strong></li>
                     <li>Click <strong>Workflow Visualizer</strong></li>
                 </ol>
 
-                <h5>Build the Success Path:</h5>
+                <h5>Build the Workflow:</h5>
                 <ol>
                     <li>Click <strong>START</strong> → Add "Provision Database"</li>
                     <li>Click "Provision Database" → Select <strong>On Success</strong> → Add "Provision Web Server"</li>
                     <li>Click "Provision Web Server" → Select <strong>On Success</strong> → Add "Deploy Application"</li>
                     <li>Click "Deploy Application" → Select <strong>On Success</strong> → Add "Validate Service"</li>
-                </ol>
-
-                <h5>Build the Failure Path:</h5>
-                <ol>
-                    <li>Click "Validate Service" → Select <strong>On Failure</strong> → Add "Rollback Web Server"</li>
-                    <li>Click "Rollback Web Server" → Select <strong>On Success</strong> → Add "Rollback Database"</li>
+                    <li>Click <strong>Save</strong></li>
                 </ol>
 
                 <div class="hint-box">
@@ -1078,53 +1100,59 @@ curl http://node3
                         <li><strong>Always:</strong> Next step runs regardless of result</li>
                     </ul>
                 </div>
+                
+                <div class="alert alert-warning">
+                    <strong>⚠️ Important:</strong> All links must be "On Success" (green arrows). The validator checks for all 4 playbooks in the correct order!
+                </div>
             </div>
 
             <div class="step">
-                <h4>Step 4: Test the Workflow</h4>
-                <p>Launch the workflow and watch it execute:</p>
-                <ol>
-                    <li>Click <strong>Launch</strong> on your workflow template</li>
-                    <li>Watch the workflow visualizer animate</li>
-                    <li>Green nodes = success, Red nodes = failure</li>
-                    <li>Follow the execution path</li>
-                </ol>
-
-                <p><strong>To test the rollback path:</strong></p>
-                <ul>
-                    <li>Intentionally break the validation step</li>
-                    <li>Watch the workflow automatically trigger rollbacks</li>
-                    <li>Verify rollbacks execute in reverse order</li>
-                </ul>
-            </div>
-
-            <div class="step">
-                <h4>Step 5: Extra Credit - Add Approval Gate (10 points)</h4>
-                <p>Add a manual approval step before the workflow starts modifying servers.</p>
+                <h4>Step 4: Add Approval Gate (<strong>Step 6 - 5 Points</strong>)</h4>
+                <p>Add a manual approval step BEFORE the workflow starts!</p>
                 
                 <h5>Implementation:</h5>
                 <ol>
+                    <li>Edit your "Phoenix Protocol" workflow</li>
                     <li>In Workflow Visualizer, click <strong>START</strong></li>
                     <li>Add a new node → Select <strong>Approval</strong></li>
-                    <li>Name it "Go/No-Go Decision"</li>
+                    <li>Name it "Go/No-Go Decision" or similar</li>
                     <li>Description: "Approve disaster recovery execution"</li>
-                    <li>Timeout: 1 hour</li>
+                    <li>Timeout: 1 hour (default is fine)</li>
                     <li>Click <strong>Save</strong></li>
-                    <li>Link <strong>START</strong> → <strong>Approval</strong> → <strong>Provision Database</strong></li>
-                </ol>
-
-                <p>When you launch the workflow:</p>
-                <ol>
-                    <li>It will pause at the approval gate</li>
-                    <li>Go to <strong>Jobs</strong> → Find your workflow</li>
-                    <li>You'll see "Pending Approval" status</li>
-                    <li>Click <strong>Approve</strong> or <strong>Deny</strong></li>
-                    <li>Workflow continues or stops based on your decision</li>
+                    <li>Now rearrange the flow:
+                        <ul>
+                            <li>Remove the link from START → Provision Database</li>
+                            <li>Add link: START → Approval Node (On Success)</li>
+                            <li>Add link: Approval Node → Provision Database (On Success)</li>
+                        </ul>
+                    </li>
+                    <li>Final flow: START → Approval → Database → Web → App → Validate</li>
+                    <li>Click <strong>Save</strong></li>
                 </ol>
 
                 <div class="alert alert-success">
-                    <strong>🎉 Extra Credit Goal:</strong> Learn how to use Workflow Approvals to create manual gates and human decision points in your automation—a key part of safely managing critical infrastructure.
+                    <strong>🎉 Real-World Value:</strong> Approval gates are critical for production changes requiring human sign-off. This is how you safely manage critical infrastructure!
                 </div>
+            </div>
+
+            <div class="step">
+                <h4>Step 5: Test the Complete Workflow</h4>
+                <p>Launch the workflow and watch it execute:</p>
+                <ol>
+                    <li>Click <strong>Launch</strong> on your workflow template</li>
+                    <li>It will pause at the approval gate</li>
+                    <li>Go to <strong>Jobs</strong> → Find your workflow</li>
+                    <li>You'll see "Pending Approval" status</li>
+                    <li>Click <strong>Approve</strong></li>
+                    <li>Watch the workflow visualizer animate through all steps</li>
+                    <li>Green nodes = success!</li>
+                </ol>
+
+                <p><strong>After successful run:</strong></p>
+                <ul>
+                    <li>Run CTF Challenge Validation to get your points!</li>
+                    <li>You should earn 30/30 points (5 points per step × 6 steps)</li>
+                </ul>
             </div>
             
                 </div>
@@ -1376,157 +1404,53 @@ curl http://node3
       ansible.builtin.debug:
         msg: "✅ All validation checks passed! Application stack is operational."</code></pre>
 
-            <h4>Playbook 5: <code>challenge6-rollback-webserver.yml</code></h4>
-            <pre><code class="language-yaml">---
-# Challenge 6 Solution - Part 5: Rollback Web Server
-# Phoenix Protocol - Full Stack Disaster Recovery
-# 
-# This playbook rolls back the web server changes if validation fails
-
-- name: Challenge 6 - Rollback Web Server
-  hosts: node1
-  become: yes
-  gather_facts: yes
-  
-  tasks:
-    # Requirement 1: Stop and disable httpd service
-    - name: Stop httpd service
-      ansible.builtin.service:
-        name: httpd
-        state: stopped
-        enabled: no
-      ignore_errors: yes
-    
-    # Requirement 2: Remove /var/www/html/index.php
-    - name: Remove application files
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: absent
-      loop:
-        - /var/www/html/index.html
-        - /var/www/html/index.php
-        - /var/www/html/config.txt
-      ignore_errors: yes
-    
-    # Requirement 3: Remove custom httpd configurations
-    - name: Restore httpd.conf to default Listen port 80
-      ansible.builtin.lineinfile:
-        path: /etc/httpd/conf/httpd.conf
-        regexp: '^Listen '
-        line: 'Listen 80'
-      ignore_errors: yes
-    
-    - name: Check if port 8080 is configured in SELinux
-      ansible.builtin.shell: semanage port -l | grep "http_port_t" | grep -w "8080"
-      register: selinux_port_check
-      failed_when: false
-      changed_when: false
-      ignore_errors: yes
-    
-    - name: Remove SELinux port 8080 permission
-      ansible.builtin.command: semanage port -d -t http_port_t -p tcp 8080
-      when: selinux_port_check.rc == 0
-      register: selinux_remove_result
-      failed_when:
-        - selinux_remove_result.rc != 0
-        - "'not defined' not in selinux_remove_result.stderr"
-      ignore_errors: yes
-    
-    - name: Remove firewall rule for port 8080
-      ansible.builtin.command: firewall-cmd --permanent --remove-port=8080/tcp
-      register: firewall_remove
-      changed_when: "'NOT_ENABLED' not in firewall_remove.stderr"
-      failed_when:
-        - firewall_remove.rc != 0
-        - "'NOT_ENABLED' not in firewall_remove.stderr"
-      ignore_errors: yes
-    
-    - name: Reload firewall
-      ansible.builtin.command: firewall-cmd --reload
-      when: firewall_remove.changed
-      ignore_errors: yes
-    
-    - name: Create rollback marker for validation
-      ansible.builtin.file:
-        path: /tmp/phoenix_web_rollback
-        state: touch
-        mode: '0644'
-    
-    - name: Display rollback result
-      ansible.builtin.debug:
-        msg: "⚠️ Web server rolled back on {{ inventory_hostname }}"</code></pre>
-
-            <h4>Playbook 6: <code>challenge6-rollback-database.yml</code></h4>
-            <pre><code class="language-yaml">---
-# Challenge 6 Solution - Part 6: Rollback Database
-# Phoenix Protocol - Full Stack Disaster Recovery
-# 
-# This playbook rolls back the database changes if validation fails
-
-- name: Challenge 6 - Rollback Database
-  hosts: node2
-  become: yes
-  gather_facts: yes
-  
-  tasks:
-    # Requirement 1: Stop and disable postgresql service
-    - name: Stop postgresql service
-      ansible.builtin.service:
-        name: postgresql
-        state: stopped
-        enabled: no
-      ignore_errors: yes
-    
-    # Requirement 2: Remove PostgreSQL data directory /var/lib/pgsql/data
-    - name: Remove PostgreSQL data directory
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: absent
-      loop:
-        - /var/lib/pgsql/data
-      ignore_errors: yes
-    
-    - name: Create rollback marker for validation
-      ansible.builtin.file:
-        path: /tmp/phoenix_db_rollback
-        state: touch
-        mode: '0644'
-    
-    - name: Display rollback result
-      ansible.builtin.debug:
-        msg: "⚠️ Database rolled back on {{ inventory_hostname }} - Phoenix Protocol rollback complete"</code></pre>
-
-            <h4>Workflow Structure (AAP):</h4>
+            <h4>Step 5: Create Workflow Template in AAP</h4>
+            <p>Create a Workflow Template in AAP that links all 4 playbooks:</p>
+            <div class="alert alert-info">
+                <strong>Workflow Name:</strong> Must contain "Phoenix" (e.g., "Phoenix Protocol")
+            </div>
+            <h5>Workflow Structure:</h5>
             <pre>
 START
   │
   ▼
-[Provision Database] ──Success──▶ [Provision Web Server] ──Success──▶ [Deploy Application] ──Success──▶ [Validate Service]
-                                                                                                              │
-                                                                                                              Failure
-                                                                                                              │
-                                                                                                              ▼
-                                                                                             [Rollback Web Server] ──Success──▶ [Rollback Database]
+[Provision Database] ──On Success──▶ [Provision Web Server] ──On Success──▶ [Deploy Application] ──On Success──▶ [Validate Service]
             </pre>
 
-            <h4>Extra Credit - With Approval Gate:</h4>
+            <h4>Step 6: Add Approval Node</h4>
+            <p>Add an Approval node at the START of the workflow:</p>
+            <h5>Complete Workflow with Approval:</h5>
             <pre>
 START
   │
   ▼
-[Go/No-Go Approval] ──Approved──▶ [Provision Database] ──Success──▶ ...
-  │
-  Denied
-  │
-  ▼
-END
+[Go/No-Go Approval] ──On Success (Approved)──▶ [Provision Database] ──On Success──▶ [Provision Web Server] ──On Success──▶ [Deploy Application] ──On Success──▶ [Validate Service]
             </pre>
 
             <h4>Testing the Solution:</h4>
             <ol>
-                <li><strong>Test Success Path:</strong> Launch workflow with clean servers → Should provision everything</li>
-                <li><strong>Test Failure Path:</strong> Break validation (stop node2) → Should trigger rollbacks</li>
-                <li><strong>Test Approval:</strong> Launch with approval gate → Approve/Deny to control execution</li>
+                <li><strong>Create all 4 playbooks</strong> (Database, Web Server, Application, Validation)</li>
+                <li><strong>Create 4 Job Templates</strong> in AAP for each playbook</li>
+                <li><strong>Create Workflow Template</strong> named "Phoenix Protocol" linking all 4 in order</li>
+                <li><strong>Add Approval Node</strong> at the START of the workflow</li>
+                <li><strong>Launch the Workflow</strong>:
+                    <ul>
+                        <li>It will pause at the approval gate</li>
+                        <li>Click "Approve" to start execution</li>
+                        <li>Watch all 4 steps complete successfully</li>
+                    </ul>
+                </li>
+                <li><strong>Run CTF Validation</strong> to earn points:
+                    <ul>
+                        <li>Step 1: Provision Database (5 pts)</li>
+                        <li>Step 2: Provision Web Server (5 pts)</li>
+                        <li>Step 3: Deploy Application (5 pts)</li>
+                        <li>Step 4: Validate Service (5 pts)</li>
+                        <li>Step 5: Workflow Template with correct playbooks (5 pts)</li>
+                        <li>Step 6: Approval Node at workflow start (5 pts)</li>
+                        <li><strong>Total: 30/30 points!</strong></li>
+                    </ul>
+                </li>
             </ol>
 
             <div class="alert alert-success">

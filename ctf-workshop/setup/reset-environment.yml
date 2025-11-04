@@ -175,7 +175,6 @@
           loop:
             - /etc/httpd/conf.d/custom.conf
             - /var/www/html/index.php
-            - /tmp/phoenix_web_rollback
           ignore_errors: yes
         
         - name: Reset httpd Listen port to 80
@@ -261,12 +260,6 @@
           command: postgresql-setup --initdb
           args:
             creates: /var/lib/pgsql/data/postgresql.conf
-          ignore_errors: yes
-        
-        - name: Remove Challenge 6 database marker
-          file:
-            path: /tmp/phoenix_db_rollback
-            state: absent
           ignore_errors: yes
         
         - name: Start postgresql service

@@ -343,6 +343,7 @@ spec:
           mkdir -p /gitea-data/log
           mkdir -p /gitea-data/sessions
           mkdir -p /gitea-data/lfs
+          mkdir -p /home/gitea/conf
           chmod -R 777 /gitea-data
           echo "Directories created and permissions set"
         volumeMounts:
@@ -382,7 +383,8 @@ spec:
         - name: gitea-data
           mountPath: /gitea-data
         - name: gitea-config
-          mountPath: /etc/gitea
+          mountPath: /home/gitea/conf/app.ini
+          subPath: app.ini
         livenessProbe:
           httpGet:
             path: /api/healthz

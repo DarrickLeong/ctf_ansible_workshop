@@ -189,7 +189,7 @@ Each challenge has its own directory with detailed instructions:
 - `challenge3/` - Rogue User Account (15 points)
 - `challenge4/` - Inconsistent Messaging (20 points)
 - `challenge5/` - Firewall Anomaly (20 points)
-- `challenge6/` - The Phoenix Protocol (30 points + 10 extra credit)
+- `challenge6/` - The Phoenix Protocol (30 points)
 
 ## Getting Started
 
@@ -453,7 +453,7 @@ EOF
 
     # Challenge 6: The Phoenix Protocol
     cat > challenge6/README.md <<'EOF'
-# Challenge 6: The Phoenix Protocol (30 Points + 10 Extra Credit)
+# Challenge 6: The Phoenix Protocol (30 Points)
 
 ## 🎯 Target Nodes
 **node1 (web server) and node2 (database server)**
@@ -463,35 +463,39 @@ The application stack is completely offline:
 - **node1**: Web server (httpd) is stopped, package removed, files missing
 - **node2**: Database server (PostgreSQL) is stopped, packages removed
 
-Both services must be restored in the correct order with proper validation and rollback capabilities.
+Both services must be restored in the correct order with proper validation.
 
 ## Your Mission
 Orchestrate a full, multi-tier server recovery using an Ansible Automation Platform Workflow.
 
 ## Requirements
 
-### Create 6 Separate Playbooks:
-1. `provision-database.yml` - Set up database server
-2. `provision-webserver.yml` - Set up web server
-3. `deploy-application.yml` - Deploy the application
-4. `validate-service.yml` - Validate everything works
-5. `rollback-webserver.yml` - Rollback web server if validation fails
-6. `rollback-database.yml` - Rollback database if validation fails
+### Create 4 Separate Playbooks:
+1. `challenge6-provision-database.yml` - Set up database server (node2)
+2. `challenge6-provision-webserver.yml` - Set up web server (node1) on port 8080
+3. `challenge6-deploy-application.yml` - Deploy the application to node1
+4. `challenge6-validate-service.yml` - Validate everything works
 
 ### In AAP:
-1. Create 6 Job Templates (one for each playbook)
-2. Create a Workflow Template with:
+1. Create 4 Job Templates (one for each playbook)
+2. Create a Workflow Template with name containing "Phoenix":
    - **Success Path**: Provision DB → Provision Web → Deploy App → Validate
-   - **Failure Path**: From Validate, if fails → Rollback Web → Rollback DB
+   - All links must be "On Success" (green arrows)
+3. Add an Approval Node at the START of the workflow:
+   - START → Approval Gate → Provision DB → ...
+   - Requires manual approval before making changes
 
-### Extra Credit (10 Points):
-Add a Workflow Approval node before starting the recovery:
-- START → Approval Gate → Provision DB → ...
-- Requires manual approval before making changes
+## Scoring Breakdown (30 Points Total)
+- **Step 1**: Provision Database (5 pts)
+- **Step 2**: Provision Web Server on port 8080 (5 pts)
+- **Step 3**: Deploy Application (5 pts)
+- **Step 4**: Validate Service (5 pts)
+- **Step 5**: Create Workflow Template with all 4 playbooks in order (5 pts)
+- **Step 6**: Add Approval Node at workflow start (5 pts)
 
 ## Sample Playbook Structure
 
-### provision-database.yml
+### challenge6-provision-database.yml
 ```yaml
 ---
 - name: Provision Database Server
@@ -517,17 +521,30 @@ Add a Workflow Approval node before starting the recovery:
         enabled: yes
 ```
 
-### validate-service.yml
+### challenge6-validate-service.yml
 ```yaml
 ---
 - name: Validate Application Stack
-  hosts: localhost
+  hosts: node1
   tasks:
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+    
+    - name: Check httpd is running
+      ansible.builtin.assert:
+        that:
+          - "'httpd.service' in services"
+          - "services['httpd.service'].state == 'running'"
+    
     - name: Check web server response
       ansible.builtin.uri:
-        url: "http://node1"
+        url: "http://node1:8080/index.php"
         status_code: 200
-        timeout: 10
+        return_content: yes
+      register: http_test
+      failed_when:
+        - http_test.status != 200
+        - "'healthy' not in http_test.content"
 ```
 
 ## Testing Your Solution
