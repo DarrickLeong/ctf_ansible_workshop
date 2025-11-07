@@ -521,10 +521,10 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
                         <li>System architecture (e.g., "Architecture: x86_64")</li>
                         <li>Use Jinja2 variables:
                             <ul>
-                                <li><code>{{ ansible_hostname }}</code> for hostname</li>
-                                <li><code>{{ ansible_distribution }}</code> for OS name</li>
-                                <li><code>{{ ansible_distribution_version }}</code> for OS version</li>
-                                <li><code>{{ ansible_architecture }}</code> for architecture</li>
+                                <li>For hostname</li>
+                                <li>For OS name</li>
+                                <li>For OS version</li>
+                                <li>For architecture</li>
                             </ul>
                         </li>
                     </ul>
@@ -541,9 +541,9 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
             <h4>Success Criteria:</h4>
             <ul>
                 <li>✅ Template file <code>templates/motd.j2</code> created</li>
-                <li>✅ Template uses <code>{{ ansible_hostname }}</code> variable</li>
-                <li>✅ Template includes OS information using <code>{{ ansible_distribution }}</code> and <code>{{ ansible_distribution_version }}</code></li>
-                <li>✅ Template includes architecture using <code>{{ ansible_architecture }}</code></li>
+                <li>✅ Template uses hostname variable</li>
+                <li>✅ Template includes OS information</li>
+                <li>✅ Template includes architecture</li>
                 <li>✅ <code>/etc/motd</code> deployed on all three nodes</li>
                 <li>✅ Each node shows its <strong>own unique hostname</strong> (node1, node2, node3)</li>
                 <li>✅ Message includes "SRE Team" text</li>
