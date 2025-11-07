@@ -5,6 +5,11 @@
 # Points: 20
 #
 # This playbook demonstrates template usage and Ansible facts
+#
+# Requirements:
+# 1. Create templates/motd.j2 with required content
+# 2. Deploy to /etc/motd on all nodes
+# 3. Must include: hostname, OS, version, architecture, "SRE Team"
 
 - name: Challenge 4 - Standardize Message of the Day
   hosts: all
@@ -12,6 +17,7 @@
   gather_facts: yes
   
   tasks:
+    # Requirement 1: Deploy MOTD template with hostname, OS info, and SRE Team
     - name: Deploy standardized MOTD template
       ansible.builtin.template:
         src: templates/motd.j2
@@ -30,9 +36,16 @@
       ansible.builtin.set_fact:
         motd_text: "{{ motd_content.content | b64decode }}"
     
-    - name: Verify MOTD contains hostname
+    # Requirement 2: Verify MOTD contains all required elements
+    - name: Verify MOTD contains required content
       ansible.builtin.set_fact:
-        motd_valid: "{{ ansible_hostname in motd_text and 'SRE Team' in motd_text }}"
+        motd_valid: "{{ 
+          ansible_hostname in motd_text and 
+          'SRE Team' in motd_text and
+          ansible_distribution in motd_text and
+          ansible_distribution_version in motd_text and
+          ansible_architecture in motd_text
+        }}"
     
     - name: Display result
       ansible.builtin.debug:
@@ -61,6 +74,9 @@
                 template_deployed: "{{ motd_result.changed }}"
                 contains_hostname: "{{ ansible_hostname in motd_text }}"
                 contains_sre_team: "{{ 'SRE Team' in motd_text }}"
+                contains_os: "{{ ansible_distribution in motd_text }}"
+                contains_version: "{{ ansible_distribution_version in motd_text }}"
+                contains_architecture: "{{ ansible_architecture in motd_text }}"
                 permissions_correct: "{{ motd_result.mode == '0644' }}"
           aap_cluster_id: "{{ aap_cluster_id | default('') }}"
         validate_certs: no

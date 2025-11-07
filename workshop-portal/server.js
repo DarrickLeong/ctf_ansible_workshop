@@ -508,7 +508,7 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
         `,
         requirements: `
             <h3>Your Mission</h3>
-            <p>Create a standardized MOTD using a Jinja2 template that displays each server's unique hostname.</p>
+            <p>Create a standardized MOTD using a Jinja2 template that displays each server's unique hostname and system information.</p>
             
             <h4>Tasks:</h4>
             <ol>
@@ -517,7 +517,16 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
                     <ul>
                         <li>Text "Welcome to" followed by the server's hostname</li>
                         <li>Text "Managed by SRE Team" or "SRE Team"</li>
-                        <li>Use Jinja2 variable: <code>{{ ansible_hostname }}</code> for dynamic hostname</li>
+                        <li>Operating system name and version (e.g., "OS: RedHat 8.5")</li>
+                        <li>System architecture (e.g., "Architecture: x86_64")</li>
+                        <li>Use Jinja2 variables:
+                            <ul>
+                                <li><code>{{ ansible_hostname }}</code> for hostname</li>
+                                <li><code>{{ ansible_distribution }}</code> for OS name</li>
+                                <li><code>{{ ansible_distribution_version }}</code> for OS version</li>
+                                <li><code>{{ ansible_architecture }}</code> for architecture</li>
+                            </ul>
+                        </li>
                     </ul>
                 </li>
                 <li><strong>Create playbook:</strong> <code>challenge4-deploy-motd.yml</code></li>
@@ -533,6 +542,8 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
             <ul>
                 <li>✅ Template file <code>templates/motd.j2</code> created</li>
                 <li>✅ Template uses <code>{{ ansible_hostname }}</code> variable</li>
+                <li>✅ Template includes OS information using <code>{{ ansible_distribution }}</code> and <code>{{ ansible_distribution_version }}</code></li>
+                <li>✅ Template includes architecture using <code>{{ ansible_architecture }}</code></li>
                 <li>✅ <code>/etc/motd</code> deployed on all three nodes</li>
                 <li>✅ Each node shows its <strong>own unique hostname</strong> (node1, node2, node3)</li>
                 <li>✅ Message includes "SRE Team" text</li>
@@ -564,19 +575,25 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
                 <ul>
                     <li>The text "Welcome to" followed by the hostname</li>
                     <li>The text "Managed by SRE Team"</li>
+                    <li>The operating system and version (e.g., "OS: RedHat 8.5")</li>
+                    <li>The system architecture (e.g., "Architecture: x86_64")</li>
                 </ul>
                 <div class="hint-box">
-                    <strong>💡 Helpful Tips:</strong>
+                    <strong>💡 Helpful Ansible Facts:</strong>
                     <ul>
-                        <li>Use Ansible's documentation to find the fact variable for hostname</li>
-                        <li>The hostname fact starts with "ansible_"</li>
+                        <li><code>ansible_hostname</code> - The server's hostname</li>
+                        <li><code>ansible_distribution</code> - OS name (RedHat, Ubuntu, etc.)</li>
+                        <li><code>ansible_distribution_version</code> - OS version (8.5, 20.04, etc.)</li>
+                        <li><code>ansible_architecture</code> - CPU architecture (x86_64, aarch64, etc.)</li>
                         <li>Variables are inserted using double curly braces: <code>{{ variable_name }}</code></li>
                     </ul>
                 </div>
                 <details>
                     <summary><strong>🔍 Show me an example template structure</strong></summary>
-                    <pre><code>Welcome to {{ some_variable_here }} - Managed by SRE Team</code></pre>
-                    <p><em>Replace <code>some_variable_here</code> with the correct Ansible fact for hostname.</em></p>
+                    <pre><code>Welcome to {{ ansible_hostname }} - Managed by SRE Team
+OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+Architecture: {{ ansible_architecture }}</code></pre>
+                    <p><em>This is the expected format for full credit.</em></p>
                 </details>
             </div>
 
@@ -627,6 +644,8 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
             
                     <h4>Template File: <code>templates/motd.j2</code></h4>
             <pre><code>Welcome to {{ ansible_hostname }} - Managed by SRE Team
+OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+Architecture: {{ ansible_architecture }}
 </code></pre>
 
             <h4>Playbook: <code>challenge4-solution.yml</code></h4>

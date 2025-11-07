@@ -179,10 +179,20 @@
           set_fact:
             challenge4_has_hostname: "{{ ansible_hostname in challenge4_content }}"
             challenge4_has_sre: "{{ 'SRE Team' in challenge4_content or 'Managed by SRE' in challenge4_content }}"
+            challenge4_has_os: "{{ ansible_distribution in challenge4_content }}"
+            challenge4_has_version: "{{ ansible_distribution_version in challenge4_content }}"
+            challenge4_has_architecture: "{{ ansible_architecture in challenge4_content }}"
 
         - name: Evaluate Challenge 4 completion
           set_fact:
-            challenge4_correct: "{{ challenge4_file_exists and challenge4_has_hostname and challenge4_has_sre }}"
+            challenge4_correct: "{{ 
+              challenge4_file_exists and 
+              challenge4_has_hostname and 
+              challenge4_has_sre and
+              challenge4_has_os and
+              challenge4_has_version and
+              challenge4_has_architecture
+            }}"
 
         - name: Calculate Challenge 4 points
           set_fact:
@@ -202,6 +212,9 @@
                       'file_exists': challenge4_file_exists,
                       'contains_hostname': challenge4_has_hostname,
                       'contains_sre_team': challenge4_has_sre,
+                      'contains_os': challenge4_has_os,
+                      'contains_version': challenge4_has_version,
+                      'contains_architecture': challenge4_has_architecture,
                       'hostname': ansible_hostname
                     }
                   }
