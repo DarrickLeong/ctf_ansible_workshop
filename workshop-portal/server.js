@@ -542,12 +542,13 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
             <ul>
                 <li>✅ Template file <code>templates/motd.j2</code> created</li>
                 <li>✅ Template uses hostname variable</li>
-                <li>✅ Template includes OS information</li>
-                <li>✅ Template includes architecture</li>
+                <li>✅ Template includes OS information variable</li>
+                <li>✅ Template includes architecture variable</li>
                 <li>✅ <code>/etc/motd</code> deployed on all three nodes</li>
                 <li>✅ Each node shows its <strong>own unique hostname</strong> (node1, node2, node3)</li>
                 <li>✅ Message includes "SRE Team" text</li>
                 <li>✅ File permissions are <code>0644</code></li>
+                <li><strong>⚠️ Take Note</strong> Do not hardcode the hostname, OS, or architecture in the template. Use the Ansible or Special variables instead.</li>
             </ul>
         `,
         guide: `
