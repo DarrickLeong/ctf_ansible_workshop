@@ -129,7 +129,7 @@ const challengeContent = {
             </ul>
         `,
         guide: `
-            <details open>
+            <details>
                 <summary><strong>📖 Click to Show/Hide Step-by-Step Guide</strong></summary>
                 <div style="margin-top: 20px;">
             
@@ -269,7 +269,7 @@ ansible all -m shell -a "systemctl status chronyd" -i inventory</code></pre>
             </ul>
         `,
         guide: `
-            <details open>
+            <details>
                 <summary><strong>📖 Click to Show/Hide Step-by-Step Guide</strong></summary>
                 <div style="margin-top: 20px;">
             
@@ -396,7 +396,7 @@ ansible node2 -m shell -a "rpm -qa | grep bind-utils" -i inventory
             </ul>
         `,
         guide: `
-            <details open>
+            <details>
                 <summary><strong>📖 Click to Show/Hide Step-by-Step Guide</strong></summary>
                 <div style="margin-top: 20px;">
             
@@ -551,7 +551,7 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
             </ul>
         `,
         guide: `
-            <details open>
+            <details>
                 <summary><strong>📖 Click to Show/Hide Step-by-Step Guide</strong></summary>
                 <div style="margin-top: 20px;">
             
@@ -725,7 +725,7 @@ ssh node1</code></pre>
             </ul>
         `,
         guide: `
-            <details open>
+            <details>
                 <summary><strong>📖 Click to Show/Hide Step-by-Step Guide</strong></summary>
                 <div style="margin-top: 20px;">
             
