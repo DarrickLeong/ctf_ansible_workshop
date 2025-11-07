@@ -1,4 +1,17 @@
+# Ansible
+*.retry
+*.log
 
-# Deployment configuration files (contain sensitive data)
-ctf-app/config.env
-ctf-app/openshift-*.yaml
+# Sensitive files
+vault.yml
+*_vault.yml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
