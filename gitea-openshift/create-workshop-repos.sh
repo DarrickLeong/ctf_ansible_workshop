@@ -567,7 +567,7 @@ EOF
     # Create a templates directory with a sample for challenge 4
     mkdir -p challenge4/templates
     cat > challenge4/templates/motd.j2 <<'EOF'
-Welcome to {{ ansible_hostname }} - Managed by SRE Team
+Create your message here!
 EOF
 
 
