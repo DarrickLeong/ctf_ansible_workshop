@@ -1531,15 +1531,16 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
-            color: #e4e4e7;
-            background: #0a0a0b;
+            color: #1f2937;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #dbeafe 100%);
+            min-height: 100vh;
         }
 
         .workshop-header {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
             color: white;
             padding: 20px 0;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
 
         .workshop-header .container {
@@ -1571,30 +1572,31 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .breadcrumb a {
-            color: #818cf8;
+            color: #2563eb;
             text-decoration: none;
+            font-weight: 500;
         }
 
         .breadcrumb a:hover {
-            color: #a5b4fc;
+            color: #1d4ed8;
             text-decoration: underline;
         }
 
         .main-content {
-            background: #18181b;
+            background: white;
             border-radius: 12px;
             padding: 40px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            border: 1px solid #27272a;
+            border: 1px solid #e5e7eb;
         }
 
         .content h1 {
-            color: #a5b4fc;
+            color: #1e40af;
             font-size: 32px;
             margin-bottom: 10px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #6366f1;
+            border-bottom: 3px solid #3b82f6;
         }
 
         .exercise-meta-bar {
@@ -1602,10 +1604,10 @@ function generateHTML(title, content, currentPath = '/', section = null) {
             gap: 20px;
             margin: 20px 0;
             padding: 15px;
-            background: #27272a;
+            background: #f3f4f6;
             border-radius: 8px;
             font-size: 14px;
-            border: 1px solid #3f3f46;
+            border: 1px solid #d1d5db;
         }
 
         .exercise-meta-bar .meta-item {
@@ -1615,23 +1617,23 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .content h2 {
-            color: #c4b5fd;
+            color: #3730a3;
             font-size: 24px;
             margin-top: 30px;
             margin-bottom: 15px;
             padding-bottom: 8px;
-            border-bottom: 1px solid #3f3f46;
+            border-bottom: 2px solid #818cf8;
         }
 
         .content h3 {
-            color: #d8b4fe;
+            color: #5b21b6;
             font-size: 20px;
             margin-top: 25px;
             margin-bottom: 12px;
         }
 
         .content h4 {
-            color: #e4e4e7;
+            color: #374151;
             font-size: 16px;
             margin-top: 20px;
             margin-bottom: 10px;
@@ -1652,28 +1654,28 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .content pre {
-            background: #0f172a;
+            background: #1e293b;
             padding: 16px;
             border-radius: 8px;
             overflow-x: auto;
             margin-bottom: 20px;
-            border: 1px solid #1e293b;
+            border: 1px solid #334155;
         }
 
         .content code {
-            background: #27272a;
+            background: #f1f5f9;
             padding: 3px 8px;
             border-radius: 4px;
             font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
             font-size: 14px;
-            color: #f0abfc;
-            border: 1px solid #3f3f46;
+            color: #7c3aed;
+            border: 1px solid #e2e8f0;
         }
 
         .content pre code {
             background: transparent;
             padding: 0;
-            color: #e4e4e7;
+            color: #e2e8f0;
             border: none;
         }
 
@@ -1685,51 +1687,52 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .alert-danger {
-            background: #2d1315;
-            border-color: #f87171;
-            color: #fecaca;
+            background: #fee2e2;
+            border-color: #dc2626;
+            color: #7f1d1d;
         }
 
         .alert-warning {
-            background: #2d2512;
-            border-color: #fbbf24;
-            color: #fef3c7;
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #78350f;
         }
 
         .alert-info {
-            background: #171e2d;
-            border-color: #818cf8;
-            color: #c7d2fe;
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1e3a8a;
         }
 
         .alert-success {
-            background: #14261f;
-            border-color: #34d399;
-            color: #d1fae5;
+            background: #d1fae5;
+            border-color: #10b981;
+            color: #065f46;
         }
 
         .hint-box {
-            background: #2d2512;
-            border: 1px solid #facc15;
-            border-left: 4px solid #facc15;
+            background: #fef9c3;
+            border: 1px solid #fbbf24;
+            border-left: 4px solid #f59e0b;
             padding: 15px;
             margin: 15px 0;
             border-radius: 6px;
+            color: #78350f;
         }
 
         .step {
             margin: 30px 0;
             padding: 20px;
-            background: #1f1f23;
+            background: #f8fafc;
             border-radius: 8px;
-            border-left: 4px solid #6366f1;
-            border: 1px solid #3f3f46;
+            border-left: 4px solid #3b82f6;
+            border: 1px solid #cbd5e1;
         }
 
         .badge {
             display: inline-block;
             padding: 4px 10px;
-            background: #6366f1;
+            background: #3b82f6;
             color: white;
             border-radius: 12px;
             font-size: 12px;
@@ -1739,20 +1742,20 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         details {
             margin: 15px 0;
             padding: 15px;
-            background: #27272a;
+            background: #f9fafb;
             border-radius: 6px;
-            border: 1px solid #3f3f46;
+            border: 1px solid #d1d5db;
         }
 
         details summary {
             cursor: pointer;
             font-weight: 600;
-            color: #a5b4fc;
+            color: #2563eb;
             padding: 5px;
         }
 
         details summary:hover {
-            color: #c7d2fe;
+            color: #1d4ed8;
         }
 
         details[open] summary {
@@ -1764,13 +1767,13 @@ function generateHTML(title, content, currentPath = '/', section = null) {
             justify-content: space-between;
             margin-top: 40px;
             padding-top: 20px;
-            border-top: 1px solid #3f3f46;
+            border-top: 1px solid #cbd5e1;
         }
 
         .nav-buttons a {
             display: inline-block;
             padding: 10px 20px;
-            background: #6366f1;
+            background: #3b82f6;
             color: white;
             text-decoration: none;
             border-radius: 8px;
@@ -1778,28 +1781,28 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .nav-buttons a:hover {
-            background: #4f46e5;
+            background: #2563eb;
         }
 
         .nav-buttons a.secondary {
-            background: #3f3f46;
+            background: #6b7280;
         }
 
         .nav-buttons a.secondary:hover {
-            background: #52525b;
+            background: #4b5563;
         }
 
         .section-nav {
-            background: #18181b;
+            background: white;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            border: 1px solid #27272a;
+            border: 1px solid #e5e7eb;
         }
 
         .section-nav h3 {
-            color: #a5b4fc;
+            color: #1e40af;
             margin-bottom: 15px;
         }
 
@@ -1809,7 +1812,7 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .exercise-item {
-            border-bottom: 1px solid #3f3f46;
+            border-bottom: 1px solid #e5e7eb;
         }
 
         .exercise-item:last-child {
@@ -1819,18 +1822,18 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         .exercise-item a {
             display: block;
             padding: 12px 10px;
-            color: #e4e4e7;
+            color: #374151;
             text-decoration: none;
             transition: background 0.2s;
         }
 
         .exercise-item a:hover {
-            background: #27272a;
+            background: #f3f4f6;
         }
 
         .exercise-item.active a {
-            background: #1e1b4b;
-            color: #c7d2fe;
+            background: #dbeafe;
+            color: #1e40af;
             font-weight: 600;
         }
 
@@ -1912,15 +1915,15 @@ app.get('/', (req, res) => {
                 <div class="alert alert-success">
                     <h4>🔗 Workshop Materials & Git Repository</h4>
                     <p><strong>Access your personal Git repository:</strong></p>
-                    <p>🌐 <strong>Gitea URL:</strong> <a href="https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com" target="_blank" style="color: #34d399; text-decoration: underline;">https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com</a></p>
+                    <p>🌐 <strong>Gitea URL:</strong> <a href="https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com" target="_blank" style="color: #2563eb; text-decoration: underline;">https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com</a></p>
                     
                     <h5 style="margin-top: 15px;">🔐 Login Credentials:</h5>
-                    <div style="background: #1f1f23; padding: 15px; border-radius: 6px; border-left: 4px solid #34d399; margin-bottom: 15px;">
+                    <div style="background: #d1fae5; padding: 15px; border-radius: 6px; border-left: 4px solid #10b981; margin-bottom: 15px; color: #065f46;">
                         <p><strong>Username:</strong> Your Ansible controller hostname prefix</p>
                         <p style="margin-top: 8px;"><strong>Example:</strong> If your controller URL is <code>https://controller.zwq8x.sandbox2116.opentlc.com/</code></p>
                         <p style="margin-left: 20px; margin-top: 5px;">→ Username: <code>zwq8x</code></p>
                         <p style="margin-left: 20px;">→ Password: <strong>Same as your Ansible Controller password</strong></p>
-                        <p style="margin-top: 10px; color: #fbbf24;"><strong>💡 Tip:</strong> Your username is the unique identifier from your controller hostname!</p>
+                        <p style="margin-top: 10px; color: #b45309;"><strong>💡 Tip:</strong> Your username is the unique identifier from your controller hostname!</p>
                     </div>
                     
                     <h5 style="margin-top: 15px;">📦 What's in Your Repository:</h5>
@@ -1936,7 +1939,7 @@ app.get('/', (req, res) => {
                         <li><strong>Login to Gitea</strong> with your provided credentials</li>
                         <li><strong>Find your repository:</strong> <code>your-username/ansible-ctf-challenges</code></li>
                         <li><strong>Clone it:</strong>
-                            <pre style="background: #1f1f23; padding: 10px; border-radius: 4px; margin-top: 5px;"><code>git clone https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com/your-username/ansible-ctf-challenges.git</code></pre>
+                            <pre style="background: #1e293b; padding: 10px; border-radius: 4px; margin-top: 5px; color: #e2e8f0;"><code>git clone https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com/your-username/ansible-ctf-challenges.git</code></pre>
                         </li>
                         <li><strong>Navigate to challenge folders</strong> (challenge1/ through challenge6/)</li>
                         <li><strong>Write your playbooks</strong> and commit your solutions</li>
@@ -1981,7 +1984,7 @@ app.get('/', (req, res) => {
                                 <span class="exercise-title">${ex.title}</span>
                                 <span class="exercise-meta">
                                     <span class="badge">${ex.points} points</span>
-                                    ${ex.extra_credit ? `<span class="badge" style="background: #28a745;">+${ex.extra_credit} EC</span>` : ''}
+                                    ${ex.extra_credit ? `<span class="badge" style="background: #10b981;">+${ex.extra_credit} EC</span>` : ''}
                                     <span class="badge">${ex.difficulty}</span>
                                     <span class="badge">⏱️ ${ex.time}</span>
                                 </span>
