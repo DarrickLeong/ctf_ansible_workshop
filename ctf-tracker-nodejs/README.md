@@ -1,4 +1,4 @@
-# CTF Tracker - Node.js Edition
+# CTF Tracker
 
 A clean, simple CTF (Capture The Flag) tracking application built with Node.js and Express.
 
