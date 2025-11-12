@@ -1532,15 +1532,15 @@ function generateHTML(title, content, currentPath = '/', section = null) {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
             color: #1f2937;
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #dbeafe 100%);
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fde68a 100%);
             min-height: 100vh;
         }
 
         .workshop-header {
-            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-            color: white;
+            background: linear-gradient(135deg, #eab308 0%, #f59e0b 100%);
+            color: #000;
             padding: 20px 0;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
         }
 
         .workshop-header .container {
@@ -1572,13 +1572,13 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .breadcrumb a {
-            color: #2563eb;
+            color: #d97706;
             text-decoration: none;
             font-weight: 500;
         }
 
         .breadcrumb a:hover {
-            color: #1d4ed8;
+            color: #b45309;
             text-decoration: underline;
         }
 
@@ -1592,11 +1592,11 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .content h1 {
-            color: #1e40af;
+            color: #92400e;
             font-size: 32px;
             margin-bottom: 10px;
             padding-bottom: 10px;
-            border-bottom: 3px solid #3b82f6;
+            border-bottom: 3px solid #f59e0b;
         }
 
         .exercise-meta-bar {
@@ -1617,16 +1617,16 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .content h2 {
-            color: #3730a3;
+            color: #b45309;
             font-size: 24px;
             margin-top: 30px;
             margin-bottom: 15px;
             padding-bottom: 8px;
-            border-bottom: 2px solid #818cf8;
+            border-bottom: 2px solid #fbbf24;
         }
 
         .content h3 {
-            color: #5b21b6;
+            color: #d97706;
             font-size: 20px;
             margin-top: 25px;
             margin-bottom: 12px;
@@ -1663,13 +1663,13 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .content code {
-            background: #f1f5f9;
+            background: #fef3c7;
             padding: 3px 8px;
             border-radius: 4px;
             font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
             font-size: 14px;
-            color: #7c3aed;
-            border: 1px solid #e2e8f0;
+            color: #d97706;
+            border: 1px solid #fde68a;
         }
 
         .content pre code {
@@ -1723,17 +1723,17 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         .step {
             margin: 30px 0;
             padding: 20px;
-            background: #f8fafc;
+            background: #fffbeb;
             border-radius: 8px;
-            border-left: 4px solid #3b82f6;
-            border: 1px solid #cbd5e1;
+            border-left: 4px solid #f59e0b;
+            border: 1px solid #fde68a;
         }
 
         .badge {
             display: inline-block;
             padding: 4px 10px;
-            background: #3b82f6;
-            color: white;
+            background: #f59e0b;
+            color: #000;
             border-radius: 12px;
             font-size: 12px;
             font-weight: 500;
@@ -1742,20 +1742,20 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         details {
             margin: 15px 0;
             padding: 15px;
-            background: #f9fafb;
+            background: #fffbeb;
             border-radius: 6px;
-            border: 1px solid #d1d5db;
+            border: 1px solid #fde68a;
         }
 
         details summary {
             cursor: pointer;
             font-weight: 600;
-            color: #2563eb;
+            color: #d97706;
             padding: 5px;
         }
 
         details summary:hover {
-            color: #1d4ed8;
+            color: #b45309;
         }
 
         details[open] summary {
@@ -1773,23 +1773,24 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         .nav-buttons a {
             display: inline-block;
             padding: 10px 20px;
-            background: #3b82f6;
-            color: white;
+            background: #f59e0b;
+            color: #000;
             text-decoration: none;
             border-radius: 8px;
             transition: background 0.3s;
+            font-weight: 600;
         }
 
         .nav-buttons a:hover {
-            background: #2563eb;
+            background: #d97706;
         }
 
         .nav-buttons a.secondary {
-            background: #6b7280;
+            background: #fbbf24;
         }
 
         .nav-buttons a.secondary:hover {
-            background: #4b5563;
+            background: #f59e0b;
         }
 
         .section-nav {
@@ -1798,11 +1799,11 @@ function generateHTML(title, content, currentPath = '/', section = null) {
             padding: 20px;
             box-shadow: 0 4px 16px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            border: 1px solid #e5e7eb;
+            border: 1px solid #fde68a;
         }
 
         .section-nav h3 {
-            color: #1e40af;
+            color: #92400e;
             margin-bottom: 15px;
         }
 
@@ -1832,8 +1833,8 @@ function generateHTML(title, content, currentPath = '/', section = null) {
         }
 
         .exercise-item.active a {
-            background: #dbeafe;
-            color: #1e40af;
+            background: #fef3c7;
+            color: #92400e;
             font-weight: 600;
         }
 
@@ -1915,7 +1916,7 @@ app.get('/', (req, res) => {
                 <div class="alert alert-success">
                     <h4>🔗 Workshop Materials & Git Repository</h4>
                     <p><strong>Access your personal Git repository:</strong></p>
-                    <p>🌐 <strong>Gitea URL:</strong> <a href="https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com" target="_blank" style="color: #2563eb; text-decoration: underline;">https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com</a></p>
+                    <p>🌐 <strong>Gitea URL:</strong> <a href="https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com" target="_blank" style="color: #d97706; text-decoration: underline;">https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com</a></p>
                     
                     <h5 style="margin-top: 15px;">🔐 Login Credentials:</h5>
                     <div style="background: #d1fae5; padding: 15px; border-radius: 6px; border-left: 4px solid #10b981; margin-bottom: 15px; color: #065f46;">
