@@ -1,0 +1,250 @@
+---
+# Baseline Capture Playbook
+# Run this on a FRESH instance to capture the baseline state
+# This will document what the environment looks like BEFORE any challenges are set up
+# The reset-environment.yml should restore to this exact state
+
+- name: Capture Baseline Configuration for All Nodes
+  hosts: web
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: "=== BASELINE CAPTURE FOR: {{ inventory_hostname }} ==="
+      debug:
+        msg: |
+          ==========================================
+          CAPTURING BASELINE FOR: {{ inventory_hostname }}
+          ==========================================
+          This will document the fresh state to ensure
+          reset-environment.yml restores correctly.
+          ==========================================
+
+    # System Information
+    - name: Capture OS Information
+      command: cat /etc/redhat-release
+      register: os_info
+      changed_when: false
+    
+    - name: Display OS Information
+      debug:
+        msg: "OS: {{ os_info.stdout }}"
+    
+    # Package Installation Status
+    - name: Check if httpd is installed
+      command: rpm -q httpd
+      register: httpd_baseline
+      failed_when: false
+      changed_when: false
+    
+    - name: Check if bind-utils is installed
+      command: rpm -q bind-utils
+      register: bindutils_baseline
+      failed_when: false
+      changed_when: false
+    
+    - name: Check if postgresql is installed
+      command: rpm -q postgresql postgresql-server
+      register: postgresql_baseline
+      failed_when: false
+      changed_when: false
+    
+    - name: Check if firewalld is installed
+      command: rpm -q firewalld
+      register: firewalld_baseline
+      failed_when: false
+      changed_when: false
+    
+    - name: Display Package Baseline
+      debug:
+        msg: |
+          Package Status on {{ inventory_hostname }}:
+          - httpd: {{ 'INSTALLED' if httpd_baseline.rc == 0 else 'NOT INSTALLED' }}
+          - bind-utils: {{ 'INSTALLED' if bindutils_baseline.rc == 0 else 'NOT INSTALLED' }}
+          - postgresql: {{ 'INSTALLED' if postgresql_baseline.rc == 0 else 'NOT INSTALLED' }}
+          - firewalld: {{ 'INSTALLED' if firewalld_baseline.rc == 0 else 'NOT INSTALLED' }}
+    
+    # Service Status
+    - name: Gather service facts
+      service_facts:
+    
+    - name: Check chronyd status
+      debug:
+        msg: |
+          chronyd service on {{ inventory_hostname }}:
+          - Status: {{ ansible_facts.services['chronyd.service'].state | default('not found') }}
+          - Enabled: {{ ansible_facts.services['chronyd.service'].status | default('unknown') }}
+      when: "'chronyd.service' in ansible_facts.services"
+    
+    - name: Check httpd status (if installed)
+      debug:
+        msg: |
+          httpd service on {{ inventory_hostname }}:
+          - Status: {{ ansible_facts.services['httpd.service'].state | default('not found') }}
+          - Enabled: {{ ansible_facts.services['httpd.service'].status | default('unknown') }}
+      when: "'httpd.service' in ansible_facts.services"
+    
+    - name: Check postgresql status (if installed)
+      debug:
+        msg: |
+          postgresql service on {{ inventory_hostname }}:
+          - Status: {{ ansible_facts.services['postgresql.service'].state | default('not found') }}
+          - Enabled: {{ ansible_facts.services['postgresql.service'].status | default('unknown') }}
+      when: "'postgresql.service' in ansible_facts.services"
+    
+    - name: Check firewalld status (if installed)
+      debug:
+        msg: |
+          firewalld service on {{ inventory_hostname }}:
+          - Status: {{ ansible_facts.services['firewalld.service'].state | default('not found') }}
+          - Enabled: {{ ansible_facts.services['firewalld.service'].status | default('unknown') }}
+      when: "'firewalld.service' in ansible_facts.services"
+    
+    # User Accounts
+    - name: Check for rogue_user
+      command: id rogue_user
+      register: rogue_user_check
+      failed_when: false
+      changed_when: false
+    
+    - name: Display user account status
+      debug:
+        msg: "rogue_user on {{ inventory_hostname }}: {{ 'EXISTS' if rogue_user_check.rc == 0 else 'DOES NOT EXIST' }}"
+    
+    # MOTD File
+    - name: Check MOTD file
+      stat:
+        path: /etc/motd
+      register: motd_stat
+    
+    - name: Read MOTD content (if exists)
+      command: cat /etc/motd
+      register: motd_content
+      when: motd_stat.stat.exists
+      changed_when: false
+      failed_when: false
+    
+    - name: Display MOTD status
+      debug:
+        msg: |
+          MOTD on {{ inventory_hostname }}:
+          - Exists: {{ motd_stat.stat.exists }}
+          - Content: {{ motd_content.stdout_lines | default(['File does not exist']) | join('\n          ') }}
+    
+    # Web Server Configuration (if httpd installed)
+    - name: Check if /var/www/html exists
+      stat:
+        path: /var/www/html
+      register: webroot_stat
+    
+    - name: List web content (if exists)
+      find:
+        paths: /var/www/html
+        file_type: file
+      register: web_files
+      when: webroot_stat.stat.exists
+    
+    - name: Display web content
+      debug:
+        msg: |
+          Web content on {{ inventory_hostname }}:
+          - Directory exists: {{ webroot_stat.stat.exists }}
+          - Files: {{ web_files.files | map(attribute='path') | list if webroot_stat.stat.exists else ['N/A'] }}
+      when: httpd_baseline.rc == 0
+    
+    # Firewall Configuration (if firewalld installed and running)
+    - name: Check firewall rules (if firewalld running)
+      block:
+        - name: List enabled firewall services
+          command: firewall-cmd --list-services
+          register: firewall_services
+          changed_when: false
+          failed_when: false
+        
+        - name: List enabled firewall ports
+          command: firewall-cmd --list-ports
+          register: firewall_ports
+          changed_when: false
+          failed_when: false
+        
+        - name: Display firewall configuration
+          debug:
+            msg: |
+              Firewall on {{ inventory_hostname }}:
+              - Enabled services: {{ firewall_services.stdout | default('N/A') }}
+              - Enabled ports: {{ firewall_ports.stdout | default('N/A') }}
+      when:
+        - firewalld_baseline.rc == 0
+        - "'firewalld.service' in ansible_facts.services"
+        - ansible_facts.services['firewalld.service'].state == 'running'
+    
+    # SELinux Status
+    - name: Check SELinux status
+      command: getenforce
+      register: selinux_status
+      changed_when: false
+      failed_when: false
+    
+    - name: Display SELinux status
+      debug:
+        msg: "SELinux on {{ inventory_hostname }}: {{ selinux_status.stdout | default('Unknown') }}"
+    
+    # Directory Existence Checks
+    - name: Check for backup directory
+      stat:
+        path: /opt/backup
+      register: backup_dir
+    
+    - name: Display backup directory status
+      debug:
+        msg: "/opt/backup on {{ inventory_hostname }}: {{ 'EXISTS' if backup_dir.stat.exists else 'DOES NOT EXIST' }}"
+    
+    # PostgreSQL Data Directory (if postgresql installed)
+    - name: Check PostgreSQL data directory
+      stat:
+        path: /var/lib/pgsql/data/postgresql.conf
+      register: pgsql_data
+      when: postgresql_baseline.rc == 0
+    
+    - name: Display PostgreSQL initialization status
+      debug:
+        msg: "PostgreSQL initialized on {{ inventory_hostname }}: {{ 'YES' if pgsql_data.stat.exists else 'NO' }}"
+      when: postgresql_baseline.rc == 0
+
+- name: Generate Baseline Summary Report
+  hosts: localhost
+  gather_facts: no
+  
+  tasks:
+    - name: Baseline Capture Complete
+      debug:
+        msg: |
+          ==========================================
+          BASELINE CAPTURE COMPLETE!
+          ==========================================
+          
+          Review the output above for each node (node1, node2, node3).
+          
+          Key Information Captured:
+          ✅ OS version
+          ✅ Package installation status (httpd, postgresql, etc.)
+          ✅ Service status (chronyd, httpd, postgresql, firewalld)
+          ✅ User accounts (rogue_user)
+          ✅ MOTD file content
+          ✅ Web server content
+          ✅ Firewall configuration
+          ✅ SELinux status
+          ✅ Directory structure
+          
+          Next Steps:
+          1. Review the baseline state for each node
+          2. Document any differences between nodes
+          3. Ensure reset-environment.yml restores to THIS state
+          4. Run setup-all-challenges.yml to create problems
+          5. Run reset-environment.yml to verify it restores baseline
+          
+          ==========================================
+          
+          Save this output as your BASELINE REFERENCE!
+          ==========================================
+
