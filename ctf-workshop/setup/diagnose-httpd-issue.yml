@@ -1,0 +1,181 @@
+---
+# Diagnostic Playbook - Identify httpd Package Availability Issues
+# Run this on a FRESH instance BEFORE running setup-all-challenges.yml
+# This will tell us exactly what's wrong and how to fix it
+
+- name: Diagnose httpd Package Availability
+  hosts: web
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: "=== SYSTEM INFORMATION ==="
+      debug:
+        msg: |
+          ==========================================
+          SYSTEM DIAGNOSTICS FOR: {{ inventory_hostname }}
+          ==========================================
+    
+    - name: Check OS version
+      command: cat /etc/redhat-release
+      register: os_version
+      changed_when: false
+    
+    - name: Display OS version
+      debug:
+        msg: "OS: {{ os_version.stdout }}"
+    
+    - name: Check if httpd is already installed
+      command: rpm -q httpd
+      register: httpd_installed
+      failed_when: false
+      changed_when: false
+    
+    - name: Display httpd installation status
+      debug:
+        msg: "httpd installed: {{ 'YES' if httpd_installed.rc == 0 else 'NO' }}"
+    
+    - name: "=== REPOSITORY CONFIGURATION ==="
+      debug:
+        msg: "Checking enabled repositories..."
+    
+    - name: List all enabled repositories
+      command: dnf repolist enabled
+      register: enabled_repos
+      changed_when: false
+    
+    - name: Display enabled repositories
+      debug:
+        msg: "{{ enabled_repos.stdout_lines }}"
+    
+    - name: List all available repositories (including disabled)
+      command: dnf repolist all
+      register: all_repos
+      changed_when: false
+    
+    - name: Display all repositories
+      debug:
+        msg: "{{ all_repos.stdout_lines }}"
+    
+    - name: "=== HTTPD PACKAGE SEARCH ==="
+      debug:
+        msg: "Searching for httpd package..."
+    
+    - name: Search for httpd package
+      command: dnf search httpd --showduplicates
+      register: httpd_search
+      changed_when: false
+      failed_when: false
+    
+    - name: Display httpd search results
+      debug:
+        msg: "{{ httpd_search.stdout_lines }}"
+    
+    - name: Check httpd package availability details
+      command: dnf info httpd
+      register: httpd_info
+      changed_when: false
+      failed_when: false
+    
+    - name: Display httpd package info
+      debug:
+        msg: "{{ httpd_info.stdout_lines if httpd_info.rc == 0 else 'httpd package NOT FOUND' }}"
+    
+    - name: "=== PACKAGE GROUPS ==="
+      debug:
+        msg: "Checking for web server package groups..."
+    
+    - name: List package groups
+      command: dnf group list
+      register: package_groups
+      changed_when: false
+      failed_when: false
+    
+    - name: Display package groups
+      debug:
+        msg: "{{ package_groups.stdout_lines }}"
+    
+    - name: "=== SUBSCRIPTION MANAGER STATUS ==="
+      debug:
+        msg: "Checking subscription status..."
+    
+    - name: Check subscription-manager status
+      command: subscription-manager status
+      register: sub_status
+      changed_when: false
+      failed_when: false
+    
+    - name: Display subscription status
+      debug:
+        msg: "{{ sub_status.stdout_lines if sub_status.rc == 0 else 'Subscription manager not available or not registered' }}"
+    
+    - name: Check available subscriptions
+      command: subscription-manager list --available
+      register: sub_list
+      changed_when: false
+      failed_when: false
+    
+    - name: Display available subscriptions
+      debug:
+        msg: "{{ sub_list.stdout_lines if sub_list.rc == 0 else 'No subscription info available' }}"
+    
+    - name: "=== DNF MODULE INFORMATION ==="
+      debug:
+        msg: "Checking DNF modules..."
+    
+    - name: List DNF modules
+      command: dnf module list
+      register: dnf_modules
+      changed_when: false
+      failed_when: false
+    
+    - name: Display DNF modules
+      debug:
+        msg: "{{ dnf_modules.stdout_lines }}"
+    
+    - name: "=== SUMMARY ==="
+      debug:
+        msg: |
+          ==========================================
+          DIAGNOSTIC SUMMARY FOR: {{ inventory_hostname }}
+          ==========================================
+          OS: {{ os_version.stdout }}
+          httpd installed: {{ 'YES' if httpd_installed.rc == 0 else 'NO' }}
+          Enabled repos: {{ enabled_repos.stdout_lines | length }} repos
+          httpd available: {{ 'YES' if httpd_info.rc == 0 else 'NO' }}
+          ==========================================
+          
+          Next: Review the output above to determine:
+          1. Which repos are enabled
+          2. Whether httpd is available in any repo
+          3. If subscription or module enablement is needed
+          ==========================================
+
+- name: Final Summary
+  hosts: localhost
+  gather_facts: no
+  
+  tasks:
+    - name: Diagnostic Complete
+      debug:
+        msg: |
+          ==========================================
+          DIAGNOSTICS COMPLETE!
+          ==========================================
+          
+          Review the output above for each node.
+          
+          Look for:
+          ✅ Enabled repositories (should include AppStream or BaseOS)
+          ✅ httpd package availability
+          ✅ Subscription status
+          ✅ DNF modules
+          
+          Common Issues:
+          1. AppStream repo not enabled
+          2. System not subscribed/registered
+          3. httpd in wrong repo
+          4. DNF module needs enabling
+          
+          ==========================================
+
