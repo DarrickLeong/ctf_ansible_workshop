@@ -136,36 +136,10 @@
     - setup
   
   tasks:
-    - name: Check if httpd is already installed
-      command: rpm -q httpd
-      register: httpd_check
-      failed_when: false
-      changed_when: false
-    
-    - name: Install httpd for testing (if not already installed)
+    - name: Install httpd for testing
       dnf:
         name: httpd
         state: present
-      when: httpd_check.rc != 0
-      ignore_errors: yes
-      register: httpd_install
-    
-    - name: Try alternative httpd installation if first attempt failed
-      block:
-        - name: Enable AppStream repository
-          command: dnf config-manager --set-enabled rhel-*-appstream-rpms
-          ignore_errors: yes
-        
-        - name: Install httpd from AppStream
-          dnf:
-            name: httpd
-            state: present
-            enablerepo: appstream
-      when: 
-        - httpd_check.rc != 0
-        - httpd_install is defined
-        - httpd_install.failed | default(false)
-      ignore_errors: yes
     
     - name: Create test web page
       copy:
