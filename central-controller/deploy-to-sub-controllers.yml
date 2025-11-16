@@ -32,6 +32,13 @@
     target_inventory_name: "{{ environment_inventory | default('') }}"
     target_credential_name: "{{ environment_credential | default('') }}"
 
+    # Custom Execution Environment Configuration
+    # This EE includes community.general 5.8.3 for Python 3.6 compatibility
+    custom_ee_name: "ansible-common-ee"
+    custom_ee_image: "{{ custom_ee_image_url | default('quay.io/dleong/ansible-common-ee:2.0') }}"
+    custom_ee_description: "Custom EE with community.general 5.8.3 for Challenge 6 SELinux management"
+    custom_ee_pull: "missing"  # missing, always, or never
+
     # Job Template Configuration
     job_templates:
       - name: "CTF Environment Reset"
@@ -43,6 +50,7 @@
         ask_inventory_on_launch: true
         ask_credential_on_launch: true
         variables: {}
+        execution_environment: "Default execution environment"
       - name: "CTF Environment Setup"
         playbook: "ctf-workshop/setup/setup-all-challenges.yml"
         description: "Setup all CTF challenge scenarios (break things)"
@@ -52,6 +60,7 @@
         ask_inventory_on_launch: true
         ask_credential_on_launch: true
         variables: {}
+        execution_environment: "Default execution environment"
       - name: "CTF Challenge Validation"
         playbook: "sub-controllers/ctf-challenge-validator.yml"
         description: "Validate CTF challenge solutions and report results"
@@ -63,6 +72,7 @@
         variables:
           ctf_tracker_url: "{{ ctf_tracker_url | default('https://ctf-tracker.apps.your-cluster.com') }}"
           attendee_name: "{{ sub_controller_team_name | default(inventory_hostname + ' Team') }}"
+        execution_environment: "Default execution environment"
       - name: "CTF Connectivity Test"
         playbook: "sub-controllers/connectivity-test-playbook.yml"
         description: "Test RHEL host connectivity and system health"
@@ -74,8 +84,50 @@
         variables:
           ctf_tracker_url: "{{ ctf_tracker_url | default('https://ctf-tracker.apps.your-cluster.com') }}"
           attendee_name: "{{ sub_controller_team_name | default(inventory_hostname + ' Team') }}"
+        execution_environment: "Default execution environment"
+      # Challenge 6 specific job templates using custom EE
+      - name: "challenge6-provision-database"
+        playbook: "ctf-workshop/solutions/challenge6-provision-database.yml"
+        description: "Challenge 6 Step 1: Provision PostgreSQL database on node2"
+        job_type: "run"
+        verbosity: 1
+        ask_variables_on_launch: false
+        ask_inventory_on_launch: true
+        ask_credential_on_launch: true
+        variables: {}
+        execution_environment: "{{ custom_ee_name }}"
+      - name: "challenge6-provision-webserver"
+        playbook: "ctf-workshop/solutions/challenge6-provision-webserver.yml"
+        description: "Challenge 6 Step 2: Provision Apache webserver on node1"
+        job_type: "run"
+        verbosity: 1
+        ask_variables_on_launch: false
+        ask_inventory_on_launch: true
+        ask_credential_on_launch: true
+        variables: {}
+        execution_environment: "{{ custom_ee_name }}"
+      - name: "challenge6-deploy-application"
+        playbook: "ctf-workshop/solutions/challenge6-deploy-application.yml"
+        description: "Challenge 6 Step 3: Deploy PHP application on node1"
+        job_type: "run"
+        verbosity: 1
+        ask_variables_on_launch: false
+        ask_inventory_on_launch: true
+        ask_credential_on_launch: true
+        variables: {}
+        execution_environment: "{{ custom_ee_name }}"
+      - name: "challenge6-validate-service"
+        playbook: "ctf-workshop/solutions/challenge6-validate-service.yml"
+        description: "Challenge 6 Step 4: Validate application deployment"
+        job_type: "run"
+        verbosity: 1
+        ask_variables_on_launch: false
+        ask_inventory_on_launch: true
+        ask_credential_on_launch: true
+        variables: {}
+        execution_environment: "{{ custom_ee_name }}"
 
-    # Default execution environment (optional)
+    # Default execution environment (optional - overridden by template-specific EE)
     execution_environment: "{{ default_execution_environment | default('Default execution environment') }}"
 
   # Only run on hosts that have sub controller configuration
@@ -205,6 +257,30 @@
           register: sync_result
           delegate_to: localhost
 
+        # CREATE CUSTOM EXECUTION ENVIRONMENT
+        - name: Create custom execution environment for Challenge 6
+          ansible.controller.execution_environment:
+            controller_host: "{{ awx_host }}"
+            controller_username: "{{ awx_username }}"
+            controller_password: "{{ awx_password }}"
+            validate_certs: "{{ awx_validate_certs }}"
+            name: "{{ custom_ee_name }}"
+            description: "{{ custom_ee_description }}"
+            image: "{{ custom_ee_image }}"
+            pull: "{{ custom_ee_pull }}"
+            state: present
+          register: ee_result
+          delegate_to: localhost
+
+        - name: Report custom EE creation
+          debug:
+            msg: |
+              ✅ Custom Execution Environment created/updated:
+              - Name: {{ custom_ee_name }}
+              - Image: {{ custom_ee_image }}
+              - Description: {{ custom_ee_description }}
+              - Pull Policy: {{ custom_ee_pull }}
+
         # CREATE JOB TEMPLATES ON SUB CONTROLLER
         - name: Create CTF Job Templates on sub controller
           ansible.controller.job_template:
@@ -231,7 +307,7 @@
                   'sub_controller_validate_certs': sub_controller_validate_certs | default(false)
                 })
               }}
-            execution_environment: "{{ execution_environment if execution_environment != 'Default execution environment' else omit }}"
+            execution_environment: "{{ item.execution_environment | default(execution_environment) }}"
             state: present
           loop: "{{ job_templates }}"
           register: job_template_results
@@ -533,6 +609,15 @@
           - CTF Environment Setup
           - CTF Challenge Validation
           - CTF Connectivity Test
+          - challenge6-provision-database (with custom EE)
+          - challenge6-provision-webserver (with custom EE)
+          - challenge6-deploy-application (with custom EE)
+          - challenge6-validate-service (with custom EE)
+          
+          Custom Execution Environment:
+          - Name: {{ hostvars[successful_deployments[0]]['custom_ee_name'] | default('ansible-common-ee') }}
+          - Image: {{ hostvars[successful_deployments[0]]['custom_ee_image'] | default('quay.io/dleong/ansible-common-ee:2.0') }}
+          - Includes: community.general 5.8.3 (Python 3.6 compatible)
           
           {% if auto_run_reset or auto_run_setup %}
           AUTOMATIC EXECUTION:
