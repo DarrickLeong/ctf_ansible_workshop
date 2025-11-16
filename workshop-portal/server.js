@@ -532,7 +532,8 @@ ansible all -m shell -a "ls -la /home | grep rogue_user || echo 'Not found'" -i 
                 <li><strong>Create playbook:</strong> <code>challenge4-deploy-motd.yml</code></li>
                 <li><strong>Target hosts:</strong> All nodes (node1, node2, node3)</li>
                 <li><strong>Use module:</strong> <code>ansible.builtin.template</code></li>
-                <li><strong>Source:</strong> <code>templates/motd.j2</code></li>
+                <li><strong>Template file location:</strong> <code>templates/motd.j2</code> (create this directory and file)</li>
+                <li><strong>In playbook, use:</strong> <code>src: motd.j2</code> (Ansible automatically looks in templates/ directory)</li>
                 <li><strong>Destination:</strong> <code>/etc/motd</code></li>
                 <li><strong>File permissions:</strong> Set <code>mode: '0644'</code></li>
                 <li><strong>Privilege escalation:</strong> Use <code>become: yes</code></li>
