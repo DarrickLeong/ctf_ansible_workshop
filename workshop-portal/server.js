@@ -992,10 +992,10 @@ curl http://node3
                         <li>Add <code>failed_when</code> to handle "already defined" error</li>
                         <li>Configure httpd: Use <code>lineinfile</code> to set Listen 8080</li>
                         <li>Start and enable httpd service</li>
-                        <li><strong>Firewall:</strong> Check if firewalld installed, install if needed</li>
-                        <li>Ensure firewalld is started and enabled</li>
-                        <li>Add port: <code>firewall-cmd --permanent --add-port=8080/tcp</code></li>
-                        <li>Reload firewall: <code>firewall-cmd --reload</code></li>
+                        <li><strong>Firewall:</strong> Ensure firewalld is started and enabled</li>
+                        <li>Use <code>ansible.posix.firewalld</code> module with <code>port: 8080/tcp</code></li>
+                        <li>Set <code>permanent: yes</code>, <code>state: enabled</code>, <code>immediate: yes</code></li>
+                        <li><strong>Best practice:</strong> Use modules over raw commands for idempotency</li>
                     </ul>
                 </details>
 
@@ -1303,18 +1303,6 @@ curl http://node3
       register: web_service
     
     # Requirement 5: Allow port 8080/tcp in firewalld
-    - name: Check if firewalld is installed
-      ansible.builtin.command: which firewall-cmd
-      register: firewalld_check
-      failed_when: false
-      changed_when: false
-    
-    - name: Install firewalld if not present
-      ansible.builtin.dnf:
-        name: firewalld
-        state: present
-      when: firewalld_check.rc != 0
-    
     - name: Ensure firewalld is started and enabled
       ansible.builtin.service:
         name: firewalld
@@ -1322,16 +1310,11 @@ curl http://node3
         enabled: yes
     
     - name: Allow port 8080 through firewall
-      ansible.builtin.command: firewall-cmd --permanent --add-port=8080/tcp
-      register: firewall_add
-      changed_when: "'ALREADY_ENABLED' not in firewall_add.stderr"
-      failed_when:
-        - firewall_add.rc != 0
-        - "'ALREADY_ENABLED' not in firewall_add.stderr"
-    
-    - name: Reload firewall to apply changes
-      ansible.builtin.command: firewall-cmd --reload
-      when: firewall_add.changed
+      ansible.posix.firewalld:
+        port: 8080/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes
     
     - name: Display result
       ansible.builtin.debug:
