@@ -20,7 +20,7 @@
     # Requirement 1: Deploy MOTD template with hostname, OS info, and SRE Team
     - name: Deploy standardized MOTD template
       ansible.builtin.template:
-        src: templates/motd.j2
+        src: motd.j2
         dest: /etc/motd
         owner: root
         group: root
