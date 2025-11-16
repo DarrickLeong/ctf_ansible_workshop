@@ -30,20 +30,13 @@
       register: web_install
     
     # Requirement 2: Configure SELinux to allow httpd on port 8080
-    # Note: Using shell instead of community.general.seport module due to EE constraints
+    # Using community.general.seport module (available in ansible-common-ee execution environment)
     - name: Configure SELinux to allow httpd on port 8080
-      ansible.builtin.shell: |
-        if semanage port -l | grep "http_port_t" | grep -wq "8080"; then
-          echo "Port 8080 already configured for http_port_t"
-          exit 0
-        elif semanage port -m -t http_port_t -p tcp 8080 2>/dev/null; then
-          echo "Modified port 8080 to http_port_t"
-        else
-          semanage port -a -t http_port_t -p tcp 8080
-          echo "Added port 8080 to http_port_t"
-        fi
-      register: selinux_result
-      changed_when: "'already configured' not in selinux_result.stdout"
+      community.general.seport:
+        ports: 8080
+        proto: tcp
+        setype: http_port_t
+        state: present
     
     # Requirement 3: Configure httpd to listen on port 8080
     - name: Configure httpd to listen on port 8080

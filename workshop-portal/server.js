@@ -904,7 +904,12 @@ curl http://node3
                 <li><strong>challenge6-provision-webserver.yml</strong> (Target: node1)
                     <ul>
                         <li>Install <code>httpd</code>, <code>php</code>, <code>php-pgsql</code>, and <code>policycoreutils-python-utils</code> packages</li>
-                        <li><strong>SELinux:</strong> Check if port 8080 configured, add if not present</li>
+                        <li><strong>SELinux:</strong> Use <code>community.general.seport</code> module to configure port 8080
+                            <ul>
+                                <li><strong>💡 Tip:</strong> Use the pre-configured <code>ansible-common-ee</code> execution environment for this playbook</li>
+                                <li>This EE includes <code>community.general 5.8.3</code> collection with SELinux modules</li>
+                            </ul>
+                        </li>
                         <li>Configure httpd to listen on port <code>8080</code></li>
                         <li>Start and enable <code>httpd</code> service</li>
                         <li>Allow port <code>8080/tcp</code> in firewalld</li>
@@ -990,16 +995,18 @@ curl http://node3
                         <li>Target: node1</li>
                         <li>Install Apache/httpd, PHP, and php-pgsql packages</li>
                         <li><strong>CRITICAL:</strong> Install <code>policycoreutils-python-utils</code> (for semanage)</li>
-                        <li><strong>SELinux Option 1 (If community.general available):</strong> Use <code>community.general.seport</code> module
+                        <li><strong>✅ RECOMMENDED - Use <code>ansible-common-ee</code> Execution Environment:</strong>
                             <ul>
-                                <li><code>ports: 8080</code>, <code>proto: tcp</code>, <code>setype: http_port_t</code>, <code>state: present</code></li>
+                                <li>This EE is pre-configured in your AAP instance</li>
+                                <li>Includes <code>community.general 5.8.3</code> collection</li>
+                                <li>Select it in your Job Template's "Execution Environment" field</li>
                             </ul>
                         </li>
-                        <li><strong>SELinux Option 2 (EE compatible):</strong> Use shell with semanage
+                        <li><strong>SELinux Configuration with <code>community.general.seport</code> module:</strong>
                             <ul>
-                                <li>Check if port 8080 exists with: <code>semanage port -l | grep "http_port_t" | grep -w "8080"</code></li>
-                                <li>Use <code>changed_when</code> to detect if already configured</li>
-                                <li>Try <code>semanage port -m</code> first, fallback to <code>semanage port -a</code></li>
+                                <li>Use module: <code>community.general.seport</code></li>
+                                <li>Parameters: <code>ports: 8080</code>, <code>proto: tcp</code>, <code>setype: http_port_t</code>, <code>state: present</code></li>
+                                <li>This is the preferred, idempotent approach</li>
                             </ul>
                         </li>
                         <li>Configure httpd: Use <code>lineinfile</code> to set Listen 8080</li>
@@ -1296,29 +1303,13 @@ curl http://node3
       register: web_install
     
     # Requirement 2: Configure SELinux to allow httpd on port 8080
-    
-    # OPTION 1: Using community.general.seport module (if available in EE)
-    # - name: Configure SELinux to allow httpd on port 8080
-    #   community.general.seport:
-    #     ports: 8080
-    #     proto: tcp
-    #     setype: http_port_t
-    #     state: present
-    
-    # OPTION 2: Using shell (for EE compatibility)
+    # Using community.general.seport module (available in ansible-common-ee)
     - name: Configure SELinux to allow httpd on port 8080
-      ansible.builtin.shell: |
-        if semanage port -l | grep "http_port_t" | grep -wq "8080"; then
-          echo "Port 8080 already configured for http_port_t"
-          exit 0
-        elif semanage port -m -t http_port_t -p tcp 8080 2&gt;/dev/null; then
-          echo "Modified port 8080 to http_port_t"
-        else
-          semanage port -a -t http_port_t -p tcp 8080
-          echo "Added port 8080 to http_port_t"
-        fi
-      register: selinux_result
-      changed_when: "'already configured' not in selinux_result.stdout"
+      community.general.seport:
+        ports: 8080
+        proto: tcp
+        setype: http_port_t
+        state: present
     
     # Requirement 3: Configure httpd to listen on port 8080
     - name: Configure httpd to listen on port 8080
