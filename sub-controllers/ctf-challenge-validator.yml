@@ -496,14 +496,16 @@
                ('provision-database' in (workflow_playbooks_ordered | join(' ') | lower) or 'provision_database' in (workflow_playbooks_ordered | join(' ') | lower) or 'database' in (workflow_playbooks_ordered | join(' ') | lower)) and
                ('provision-webserver' in (workflow_playbooks_ordered | join(' ') | lower) or 'provision_webserver' in (workflow_playbooks_ordered | join(' ') | lower) or 'webserver' in (workflow_playbooks_ordered | join(' ') | lower) or 'web-server' in (workflow_playbooks_ordered | join(' ') | lower)) and
                ('deploy-application' in (workflow_playbooks_ordered | join(' ') | lower) or 'deploy_application' in (workflow_playbooks_ordered | join(' ') | lower) or 'application' in (workflow_playbooks_ordered | join(' ') | lower)) and
-               ('validate-service' in (workflow_playbooks_ordered | join(' ') | lower) or 'validate_service' in (workflow_playbooks_ordered | join(' ') | lower) or 'validation' in (workflow_playbooks_ordered | join(' ') | lower)))
+               ('validate-service' in (workflow_playbooks_ordered | join(' ') | lower) or 'validate_service' in (workflow_playbooks_ordered | join(' ') | lower) or 'validation' in (workflow_playbooks_ordered | join(' ') | lower)) and
+               (challenge6_step1_db_provisioned | default(false) | bool or hostvars['node2']['challenge6_step1_db_provisioned'] | default(false) | bool))
             }}"
 
         - name: Evaluate Challenge 6 - Step 6 (Approval Node)
           set_fact:
             challenge6_step6_approval_node: "{{
               (workflow_nodes is succeeded and 
-               workflow_nodes.json.results | default([]) | selectattr('summary_fields.unified_job_template.unified_job_type', 'equalto', 'workflow_approval') | list | length > 0)
+               workflow_nodes.json.results | default([]) | selectattr('summary_fields.unified_job_template.unified_job_type', 'equalto', 'workflow_approval') | list | length > 0 and
+               (challenge6_step1_db_provisioned | default(false) | bool or hostvars['node2']['challenge6_step1_db_provisioned'] | default(false) | bool))
             }}"
 
         # Calculate total points (5 points per step)
