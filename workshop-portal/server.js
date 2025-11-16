@@ -1098,6 +1098,7 @@ curl http://node3
                         <li><strong>Project:</strong> Your workshop project</li>
                         <li><strong>Playbook:</strong> challenge6-provision-database.yml</li>
                         <li><strong>Credentials:</strong> Your SSH credentials</li>
+                        <li><strong>Execution Environment:</strong> <code>ansible-common-ee</code> (optional, for SELinux module support)</li>
                     </ul>
                     <li>Click <strong>Save</strong></li>
                     <li>Repeat for all four playbooks (Database, Web Server, Application, Validation)</li>
@@ -1105,6 +1106,18 @@ curl http://node3
                 
                 <div class="alert alert-info">
                     <strong>📚 Learning Point:</strong> Job Templates are reusable definitions for running playbooks. Think of them as saved configurations.
+                </div>
+                
+                <div class="hint-box" style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; margin: 15px 0;">
+                    <strong>💡 Custom Execution Environment Available:</strong>
+                    <p style="margin: 10px 0;">A custom execution environment called <code>ansible-common-ee</code> has been pre-configured in your AAP instance for Challenge 6.</p>
+                    <ul style="margin: 5px 0 5px 20px;">
+                        <li><strong>Image:</strong> <code>quay.io/dleong/ansible-common-ee:2.0</code></li>
+                        <li><strong>Includes:</strong> <code>community.general 5.8.3</code> collection (Python 3.6 compatible)</li>
+                        <li><strong>Purpose:</strong> Provides <code>community.general.seport</code> module for SELinux port management</li>
+                        <li><strong>When to use:</strong> Optional for job templates, but recommended for <code>challenge6-provision-webserver.yml</code></li>
+                    </ul>
+                    <p style="margin: 10px 0 0 0;"><strong>Note:</strong> If you don't use this EE, you can still complete Challenge 6 using the shell command approach shown in the solution (Option 2).</p>
                 </div>
             </div>
 
