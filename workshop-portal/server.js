@@ -884,7 +884,7 @@ curl http://node3
                 <li><strong>Create 1 Workflow Template</strong> with proper dependency ordering</li>
                 <li><strong>Implement success path:</strong> Database → Web → App → Validation</li>
                 <li><strong>Implement failure path:</strong> Validation fail → Rollback Web → Rollback DB</li>
-                <li><strong>Extra Credit:</strong> Add an approval gate before execution (+10 pts)</li>
+                <li><strong>Approval gate:</strong> Add an approval gate before execution</li>
             </ol>
 
             <h4>Required Playbooks:</h4>

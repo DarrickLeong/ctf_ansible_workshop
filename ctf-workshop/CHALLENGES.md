@@ -194,7 +194,7 @@ ansible-galaxy collection install ansible.posix
 
 ---
 
-### Challenge 6: The Phoenix Protocol (30 Points + 10 Extra Credit)
+### Challenge 6: The Phoenix Protocol (30 Points)
 
 **Difficulty**: ⭐⭐⭐⭐⭐ Advanced - Full Stack Disaster Recovery!
 
