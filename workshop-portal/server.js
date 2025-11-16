@@ -986,10 +986,18 @@ curl http://node3
                         <li>Target: node1</li>
                         <li>Install Apache/httpd, PHP, and php-pgsql packages</li>
                         <li><strong>CRITICAL:</strong> Install <code>policycoreutils-python-utils</code> (for semanage)</li>
-                        <li><strong>SELinux:</strong> Check if port 8080 exists with word boundary check</li>
-                        <li>Use <code>shell</code>: <code>semanage port -l | grep "http_port_t" | grep -w "8080"</code></li>
-                        <li>Use <code>when</code> condition to only add if not present</li>
-                        <li>Add <code>failed_when</code> to handle "already defined" error</li>
+                        <li><strong>SELinux Option 1 (If community.general available):</strong> Use <code>community.general.seport</code> module
+                            <ul>
+                                <li><code>ports: 8080</code>, <code>proto: tcp</code>, <code>setype: http_port_t</code>, <code>state: present</code></li>
+                            </ul>
+                        </li>
+                        <li><strong>SELinux Option 2 (EE compatible):</strong> Use shell with semanage
+                            <ul>
+                                <li>Check if port 8080 exists with: <code>semanage port -l | grep "http_port_t" | grep -w "8080"</code></li>
+                                <li>Use <code>changed_when</code> to detect if already configured</li>
+                                <li>Try <code>semanage port -m</code> first, fallback to <code>semanage port -a</code></li>
+                            </ul>
+                        </li>
                         <li>Configure httpd: Use <code>lineinfile</code> to set Listen 8080</li>
                         <li>Start and enable httpd service</li>
                         <li><strong>Firewall:</strong> Ensure firewalld is started and enabled</li>
@@ -1271,7 +1279,16 @@ curl http://node3
       register: web_install
     
     # Requirement 2: Configure SELinux to allow httpd on port 8080
-    # Note: Using shell instead of community.general.seport module due to EE constraints
+    
+    # OPTION 1: Using community.general.seport module (if available in EE)
+    # - name: Configure SELinux to allow httpd on port 8080
+    #   community.general.seport:
+    #     ports: 8080
+    #     proto: tcp
+    #     setype: http_port_t
+    #     state: present
+    
+    # OPTION 2: Using shell (for EE compatibility)
     - name: Configure SELinux to allow httpd on port 8080
       ansible.builtin.shell: |
         if semanage port -l | grep "http_port_t" | grep -wq "8080"; then
