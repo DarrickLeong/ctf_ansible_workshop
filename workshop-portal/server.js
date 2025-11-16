@@ -1438,22 +1438,38 @@ curl http://node3
                 <p style="margin-top: 10px; color: #fbbf24;"><strong>💡 Recommended:</strong> Use <code>challenge6-workflow</code> for consistency</p>
             </div>
             <h5>Workflow Structure:</h5>
-            <pre>
-START
-  │
-  ▼
-[Provision Database] ──On Success──▶ [Provision Web Server] ──On Success──▶ [Deploy Application] ──On Success──▶ [Validate Service]
-            </pre>
+            <div style="background: #fffbeb; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 15px 0;">
+                <p style="margin: 0; font-family: monospace; line-height: 2;">
+                    <strong>START</strong><br>
+                    &nbsp;&nbsp;↓<br>
+                    <span style="background: #fef3c7; padding: 5px 10px; border-radius: 4px;">[Provision Database]</span><br>
+                    &nbsp;&nbsp;↓ (On Success)<br>
+                    <span style="background: #fef3c7; padding: 5px 10px; border-radius: 4px;">[Provision Web Server]</span><br>
+                    &nbsp;&nbsp;↓ (On Success)<br>
+                    <span style="background: #fef3c7; padding: 5px 10px; border-radius: 4px;">[Deploy Application]</span><br>
+                    &nbsp;&nbsp;↓ (On Success)<br>
+                    <span style="background: #fef3c7; padding: 5px 10px; border-radius: 4px;">[Validate Service]</span>
+                </p>
+            </div>
 
             <h4>Step 6: Add Approval Node</h4>
             <p>Add an Approval node at the START of the workflow:</p>
             <h5>Complete Workflow with Approval:</h5>
-            <pre>
-START
-  │
-  ▼
-[Go/No-Go Approval] ──On Success (Approved)──▶ [Provision Database] ──On Success──▶ [Provision Web Server] ──On Success──▶ [Deploy Application] ──On Success──▶ [Validate Service]
-            </pre>
+            <div style="background: #d1fae5; padding: 20px; border-radius: 8px; border-left: 4px solid #10b981; margin: 15px 0;">
+                <p style="margin: 0; font-family: monospace; line-height: 2; color: #065f46;">
+                    <strong>START</strong><br>
+                    &nbsp;&nbsp;↓<br>
+                    <span style="background: #10b981; color: white; padding: 5px 10px; border-radius: 4px; font-weight: bold;">[Go/No-Go Approval]</span><br>
+                    &nbsp;&nbsp;↓ (On Success - Approved)<br>
+                    <span style="background: #a7f3d0; color: #065f46; padding: 5px 10px; border-radius: 4px;">[Provision Database]</span><br>
+                    &nbsp;&nbsp;↓ (On Success)<br>
+                    <span style="background: #a7f3d0; color: #065f46; padding: 5px 10px; border-radius: 4px;">[Provision Web Server]</span><br>
+                    &nbsp;&nbsp;↓ (On Success)<br>
+                    <span style="background: #a7f3d0; color: #065f46; padding: 5px 10px; border-radius: 4px;">[Deploy Application]</span><br>
+                    &nbsp;&nbsp;↓ (On Success)<br>
+                    <span style="background: #a7f3d0; color: #065f46; padding: 5px 10px; border-radius: 4px;">[Validate Service]</span>
+                </p>
+            </div>
 
             <h4>Testing the Solution:</h4>
             <ol>
