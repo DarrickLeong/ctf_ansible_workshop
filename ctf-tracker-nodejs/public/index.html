@@ -721,9 +721,20 @@
                 
                 const activityHTML = results.slice(0, 5).map(result => {
                     const challengeName = challengeNames[result.challenge_type] || result.challenge_type;
+                    // Format timestamp in GMT+8 (Singapore/Asia timezone)
+                    const timestamp = new Date(result.timestamp).toLocaleString('en-US', {
+                        timeZone: 'Asia/Singapore',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: true
+                    });
                     return `
                         <div class="activity-item">
-                            <div class="activity-time">${new Date(result.timestamp).toLocaleString()}</div>
+                            <div class="activity-time">${timestamp}</div>
                             <div><strong>${result.attendee_name}</strong> completed <em>${challengeName}</em></div>
                             <div class="success">+${result.points_earned} points</div>
                         </div>
