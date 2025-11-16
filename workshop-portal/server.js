@@ -85,8 +85,7 @@ const workshops = {
                 title: "The Phoenix Protocol - Workflows & Orchestration",
                 points: 30,
                 difficulty: "⭐⭐⭐⭐⭐ Hard",
-                time: "90 minutes",
-                extra_credit: 10
+                time: "90 minutes"
             }
         ]
     }
