@@ -614,7 +614,7 @@ Architecture: {{ ansible_architecture }}</code></pre>
                     <summary><strong>🔍 Show me the module syntax</strong></summary>
                     <pre><code class="language-yaml">- name: Deploy MOTD template
   ansible.builtin.template:
-    src: templates/motd.j2
+    src: motd.j2
     dest: /etc/motd
     owner: root
     group: root
@@ -658,7 +658,7 @@ Architecture: {{ ansible_architecture }}
   tasks:
     - name: Deploy consistent MOTD using template
       ansible.builtin.template:
-        src: templates/motd.j2
+        src: motd.j2
         dest: /etc/motd
         owner: root
         group: root
@@ -666,7 +666,7 @@ Architecture: {{ ansible_architecture }}
 
                     <h4>Explanation:</h4>
                     <ul>
-                        <li><code>src: templates/motd.j2</code> - Relative path from playbook</li>
+                        <li><code>src: motd.j2</code> - Ansible automatically looks in the <code>templates/</code> subdirectory</li>
                         <li><code>{{ ansible_hostname }}</code> - Automatically replaced with each server's hostname</li>
                         <li><code>mode: '0644'</code> - Readable by everyone, writable by root only</li>
                     </ul>
