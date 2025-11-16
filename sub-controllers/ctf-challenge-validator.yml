@@ -353,34 +353,29 @@
           ignore_errors: yes
           when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
 
-        # Step 4: Check Validation Playbook Exists (5 points)
-        # Award points if the participant has created a correct validate-service playbook
-        - name: Check if challenge6-validate-service.yml playbook exists
-          ansible.builtin.stat:
-            path: "{{ playbook_dir }}/challenge6-validate-service.yml"
-          register: validate_playbook_exists
+        # Step 4: Validate Service - Test the actual endpoint (5 points)
+        # Award points if the application is actually working and validated
+        - name: Test HTTP endpoint on port 8080 to validate service
+          ansible.builtin.uri:
+            url: "http://node1:8080/index.php"
+            method: GET
+            status_code: 200
+            return_content: yes
+            timeout: 10
+          register: validation_http_test
           delegate_to: localhost
           run_once: true
           ignore_errors: yes
+          when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
 
-        - name: Read challenge6-validate-service.yml playbook content (if exists)
-          ansible.builtin.slurp:
-            path: "{{ playbook_dir }}/challenge6-validate-service.yml"
-          register: validate_playbook_content
-          delegate_to: localhost
-          run_once: true
-          ignore_errors: yes
-          when: validate_playbook_exists.stat.exists | default(false)
-
-        - name: Check validate playbook has required content
+        - name: Check validation HTTP test result
           set_fact:
-            validate_playbook_has_httpd_check: "{{ 'httpd' in (validate_playbook_content.content | b64decode | lower) if validate_playbook_content.content is defined else false }}"
-            validate_playbook_has_postgresql_check: "{{ 'postgresql' in (validate_playbook_content.content | b64decode | lower) if validate_playbook_content.content is defined else false }}"
-            validate_playbook_has_uri_module: "{{ 'uri' in (validate_playbook_content.content | b64decode | lower) if validate_playbook_content.content is defined else false }}"
-            validate_playbook_has_port_8080: "{{ '8080' in (validate_playbook_content.content | b64decode) if validate_playbook_content.content is defined else false }}"
-            validate_playbook_has_assert_or_failed_when: "{{ ('assert' in (validate_playbook_content.content | b64decode | lower) or 'failed_when' in (validate_playbook_content.content | b64decode | lower)) if validate_playbook_content.content is defined else false }}"
+            validation_endpoint_working: "{{ 
+              (validation_http_test.status | default(0) == 200) and
+              ('healthy' in (validation_http_test.content | default('')) or 'Phoenix' in (validation_http_test.content | default('')))
+            }}"
           run_once: true
-          when: validate_playbook_exists.stat.exists | default(false)
+          when: validation_http_test is defined
 
         # Steps 5 & 6: Workflow Template and Approval Gate checks (5 points each)
         # These are validated by checking AAP for workflow template and approval node
@@ -489,16 +484,10 @@
           set_fact:
             challenge6_step3_app_deployed: "{{ app_deployed.stat.exists if app_deployed.stat is defined else false }}"
 
-        - name: Evaluate Challenge 6 - Step 4 (Validate Service Playbook Created)
+        - name: Evaluate Challenge 6 - Step 4 (Validate Service)
           set_fact:
-            challenge6_step4_validated: "{{
-              (validate_playbook_exists.stat.exists | default(false)) and
-              (validate_playbook_has_httpd_check | default(false)) and
-              (validate_playbook_has_postgresql_check | default(false)) and
-              (validate_playbook_has_uri_module | default(false)) and
-              (validate_playbook_has_port_8080 | default(false)) and
-              (validate_playbook_has_assert_or_failed_when | default(false))
-            }}"
+            challenge6_step4_validated: "{{ validation_endpoint_working | default(false) }}"
+
 
         - name: Evaluate Challenge 6 - Step 5 (Workflow Template)
           set_fact:
@@ -568,7 +557,7 @@
                       'step1_database_provisioned': (hostvars['node2']['challenge6_step1_db_provisioned'] | default(false) | bool) or (challenge6_step1_db_provisioned | default(false) | bool),
                       'step2_webserver_provisioned': (hostvars['node1']['challenge6_step2_web_provisioned'] | default(false) | bool) or (challenge6_step2_web_provisioned | default(false) | bool),
                       'step3_application_deployed': (hostvars['node1']['challenge6_step3_app_deployed'] | default(false) | bool) or (challenge6_step3_app_deployed | default(false) | bool),
-                      'step4_validate_playbook_created': challenge6_step4_validated | default(false) | bool,
+                      'step4_validation_passed': challenge6_step4_validated | default(false) | bool,
                       'step5_workflow_created': challenge6_step5_workflow_created | default(false) | bool,
                       'step6_approval_node': challenge6_step6_approval_node | default(false) | bool,
                       'hostname': inventory_hostname
@@ -636,7 +625,7 @@
             ├─ Step 1 (Provision Database): {{ '+5' if challenge_results.challenge6_phoenix.details.step1_database_provisioned else '0' }} pts
             ├─ Step 2 (Provision Web Server): {{ '+5' if challenge_results.challenge6_phoenix.details.step2_webserver_provisioned else '0' }} pts
             ├─ Step 3 (Deploy Application): {{ '+5' if challenge_results.challenge6_phoenix.details.step3_application_deployed else '0' }} pts
-            ├─ Step 4 (Create Validate Playbook): {{ '+5' if challenge_results.challenge6_phoenix.details.step4_validate_playbook_created else '0' }} pts
+            ├─ Step 4 (Validate Service): {{ '+5' if challenge_results.challenge6_phoenix.details.step4_validation_passed else '0' }} pts
             ├─ Step 5 (Create Workflow Template): {{ '+5' if challenge_results.challenge6_phoenix.details.step5_workflow_created else '0' }} pts
             └─ Step 6 (Add Approval Node): {{ '+5' if challenge_results.challenge6_phoenix.details.step6_approval_node else '0' }} pts
           
