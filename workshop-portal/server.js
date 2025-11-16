@@ -892,7 +892,12 @@ curl http://node3
                 <li><strong>challenge6-provision-database.yml</strong> (Target: node2)
                     <ul>
                         <li>Install <code>postgresql-server</code>, <code>postgresql</code>, and <code>python3-psycopg2</code> packages</li>
-                        <li>Initialize PostgreSQL: <code>postgresql-setup --initdb</code> (use <code>creates:</code> to make idempotent)</li>
+                        <li>Initialize PostgreSQL using <code>command: postgresql-setup --initdb</code>
+                            <ul>
+                                <li>Add <code>creates: /var/lib/pgsql/data/postgresql.conf</code> to make it idempotent</li>
+                                <li>This prevents re-initialization if database already exists</li>
+                            </ul>
+                        </li>
                         <li>Start and enable <code>postgresql</code> service</li>
                         <li>Wait for port <code>5432</code> to be ready using <code>wait_for</code> module</li>
                     </ul>
