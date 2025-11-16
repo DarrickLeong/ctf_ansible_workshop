@@ -222,10 +222,10 @@ app.post('/api/challenge_results', (req, res) => {
 
                 // Only record results with points > 0 to avoid cluttering activity feed
                 if (points > 0) {
-                    // For multi-host challenges like challenge6_phoenix, use a normalized hostname
-                    // to prevent duplicate scoring across node1, node2, node3
-                    const normalizedHostname = challenge_type === 'challenge6_phoenix' ? 
-                        'controller' : hostname;
+                    // Normalize hostname for ALL challenges to prevent duplicate scoring
+                    // across node1, node2, node3. All challenges are reported per attendee,
+                    // not per node, so we use 'controller' as the normalized hostname.
+                    const normalizedHostname = 'controller';
                     
                     // Check if this challenge already exists for this attendee
                     insertPromises.push(new Promise((resolve, reject) => {
@@ -503,7 +503,7 @@ app.get('/api/recent_results', (req, res) => {
             WHERE cr.id IN (
                 SELECT MAX(id) 
                 FROM challenge_results 
-                GROUP BY attendee_id, hostname, challenge_type
+                GROUP BY attendee_id, challenge_type
             )
             ORDER BY cr.timestamp DESC
             LIMIT 20`, (err, rows) => {
