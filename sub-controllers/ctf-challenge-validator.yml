@@ -366,7 +366,6 @@
           delegate_to: localhost
           run_once: true
           ignore_errors: yes
-          when: inventory_hostname == 'node1' or 'node1' in inventory_hostname
 
         - name: Check validation HTTP test result
           set_fact:
@@ -375,7 +374,7 @@
               ('healthy' in (validation_http_test.content | default('')) or 'Phoenix' in (validation_http_test.content | default('')))
             }}"
           run_once: true
-          when: validation_http_test is defined
+
 
         # Steps 5 & 6: Workflow Template and Approval Gate checks (5 points each)
         # These are validated by checking AAP for workflow template and approval node
