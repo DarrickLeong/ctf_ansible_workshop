@@ -62,18 +62,6 @@
       register: web_service
     
     # Requirement 5: Allow port 8080/tcp in firewalld
-    - name: Check if firewalld is installed
-      ansible.builtin.command: which firewall-cmd
-      register: firewalld_check
-      failed_when: false
-      changed_when: false
-    
-    - name: Install firewalld if not present
-      ansible.builtin.dnf:
-        name: firewalld
-        state: present
-      when: firewalld_check.rc != 0
-    
     - name: Ensure firewalld is started and enabled
       ansible.builtin.service:
         name: firewalld
@@ -81,16 +69,11 @@
         enabled: yes
     
     - name: Allow port 8080 through firewall
-      ansible.builtin.command: firewall-cmd --permanent --add-port=8080/tcp
-      register: firewall_add
-      changed_when: "'ALREADY_ENABLED' not in firewall_add.stderr"
-      failed_when:
-        - firewall_add.rc != 0
-        - "'ALREADY_ENABLED' not in firewall_add.stderr"
-    
-    - name: Reload firewall to apply changes
-      ansible.builtin.command: firewall-cmd --reload
-      when: firewall_add.changed
+      ansible.posix.firewalld:
+        port: 8080/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes
     
     - name: Display result
       ansible.builtin.debug:
