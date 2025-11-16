@@ -175,6 +175,9 @@
           loop:
             - /etc/httpd/conf.d/custom.conf
             - /var/www/html/index.php
+            - /opt/challenge6_step1_complete
+            - /opt/challenge6_step2_complete
+            - /opt/challenge6_step3_complete
           ignore_errors: yes
         
         - name: Reset httpd Listen port to 80

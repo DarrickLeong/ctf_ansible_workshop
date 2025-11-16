@@ -293,6 +293,13 @@
     - name: Challenge 6 - Check Phoenix Protocol completion
       block:
         # Step 1: Check Database Provisioning (5 points)
+        - name: Check Challenge 6 Step 1 marker file (node2)
+          stat:
+            path: /opt/challenge6_step1_complete
+          register: challenge6_step1_marker
+          ignore_errors: yes
+          when: inventory_hostname == 'node2' or 'node2' in inventory_hostname
+
         - name: Check if PostgreSQL service is running (node2)
           systemd:
             name: postgresql
@@ -449,6 +456,7 @@
         - name: Evaluate Challenge 6 - Step 1 (Provision Database)
           set_fact:
             challenge6_step1_db_provisioned: "{{ 
+              (challenge6_step1_marker.stat.exists if challenge6_step1_marker.stat is defined else false) and
               (db_service_check.status.ActiveState == 'active' if db_service_check.status is defined else false) and
               (db_initialized.stat.exists if db_initialized.stat is defined else false)
             }}"

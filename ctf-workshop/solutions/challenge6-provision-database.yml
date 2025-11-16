@@ -42,6 +42,13 @@
         host: localhost
         timeout: 30
     
+    # Create marker file to track Challenge 6 completion
+    - name: Create Challenge 6 Step 1 marker
+      ansible.builtin.file:
+        path: /opt/challenge6_step1_complete
+        state: touch
+        mode: '0644'
+    
     - name: Display result
       ansible.builtin.debug:
         msg: "✅ Database provisioned on {{ inventory_hostname }}!"
