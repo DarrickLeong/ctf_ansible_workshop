@@ -549,8 +549,8 @@
                     return;
                 }
 
-                // Generate enhanced leaderboard HTML
-                const leaderboardHTML = leaderboard.slice(0, 10).map((attendee, index) => {
+                // Generate enhanced leaderboard HTML - show all attendees
+                const leaderboardHTML = leaderboard.map((attendee, index) => {
                     const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
                     
                     // Format timestamp
