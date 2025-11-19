@@ -1941,7 +1941,7 @@ app.get('/', (req, res) => {
                 <div class="alert alert-success">
                     <h4>🔗 Workshop Materials & Git Repository</h4>
                     <p><strong>Access your personal Git repository:</strong></p>
-                    <p>🌐 <strong>Gitea URL:</strong> <a href="https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com" target="_blank" style="color: #d97706; text-decoration: underline;">https://gitea-gitea-persistent.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com</a></p>
+                    <p>🌐 <strong>Gitea URL:</strong> <a href="http://gitea-gitea.apps.cluster-6zjzq.6zjzq.sandbox5539.opentlc.com</a></p>
                     
                     <h5 style="margin-top: 15px;">🔐 Login Credentials:</h5>
                     <div style="background: #d1fae5; padding: 15px; border-radius: 6px; border-left: 4px solid #10b981; margin-bottom: 15px; color: #065f46;">
